@@ -1,59 +1,128 @@
-import { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+'use client';
 
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload, CheckCircle, FileText, X } from 'lucide-react';
 
 interface FileUploadProps {
   file: File | null;
   onDrop: (files: File[]) => void;
-  accept?: string;
-  label?: string;
+  onRemove?: () => void;
+  title: string;
+  description: string;
+  disabled?: boolean;
+  maxSize?: number;
+  className?: string;
 }
 
-export default function FileUpload({ file, onDrop, accept, label }: FileUploadProps) {
+export default function FileUpload({
+  file,
+  onDrop,
+  onRemove,
+  title,
+  description,
+  disabled = false,
+  maxSize = 1024 * 1024 * 1000, // 1GB
+  className = ''
+}: FileUploadProps) {
+  const handleDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    if (disabled) return;
+    
+    if (rejectedFiles.length > 0) {
+      const error = rejectedFiles[0].errors[0];
+      alert(`File rejected: ${error.message}`);
+      return;
+    }
+    
+    if (acceptedFiles.length > 0) {
+      onDrop(acceptedFiles);
+    }
+  }, [onDrop, disabled]);
 
-  const handleDrop = useCallback((acceptedFiles: File[]) => {
-    onDrop(acceptedFiles);
-  }, [onDrop]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop: handleDrop,
-    accept: accept ? { 'text/csv': [accept] } : undefined,
+    accept: { 'text/csv': ['.csv'] },
     maxFiles: 1,
-    multiple: false
+    maxSize,
+    multiple: false,
+    disabled
   });
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getDragStyles = () => {
+    if (disabled) return 'opacity-50 cursor-not-allowed';
+    if (isDragReject) return 'border-red-300 bg-red-50';
+    if (isDragActive) return 'border-blue-400 bg-blue-50';
+    if (file) return 'border-green-300 bg-green-50';
+    return 'border-gray-200 hover:border-gray-300 bg-white';
+  };
+
   return (
-    <div
-      {...getRootProps()}
-      className={`
-        border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-        ${isDragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-        ${file ? 'bg-green-50 border-green-300' : ''}
-      `}
-    >
-      <input {...getInputProps()} />
+    <div className={`space-y-3 ${className}`}>
+      <div className="space-y-1">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-600">{description}</p>
+      </div>
       
-      {file ? (
-        <div className="space-y-2">
-          <svg className="w-8 h-8 mx-auto text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-sm font-medium text-gray-900">{file.name}</p>
-          <p className="text-xs text-gray-500">
-            {(file.size / (1024 * 1024)).toFixed(2)} MB
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <svg className="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <p className="text-sm text-gray-600">
-            {isDragActive ? 'Drop the file here' : label || 'Drag & drop or click to select'}
-          </p>
-          <p className="text-xs text-gray-500">CSV files only</p>
-        </div>
-      )}
+      <div
+        {...getRootProps()}
+        className={`
+          relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer 
+          transition-all duration-200 ${getDragStyles()}
+        `}
+      >
+        <input {...getInputProps()} />
+        
+        {file ? (
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
+              <FileText className="w-8 h-8 text-green-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 truncate">{file.name}</p>
+              <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Uploaded {new Date().toLocaleTimeString()}
+              </p>
+            </div>
+            {onRemove && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+                className="absolute top-3 right-3 p-1 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto">
+              <Upload className="w-8 h-8 text-gray-600" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-base font-medium text-gray-900">
+                {isDragActive ? 'Drop your CSV file here' : 'Upload CSV file'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Drag and drop or click to browse
+              </p>
+              <p className="text-xs text-gray-400">
+                Maximum file size: {formatFileSize(maxSize)}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
