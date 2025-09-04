@@ -1,101 +1,198 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
+import FileUpload from '@/components/FileUpload';
+import StatusDisplay from '@/components/StatusDisplay';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+interface FileState {
+  claims: File | null;
+  mcnVerdicts: File | null;
+  jfmVerdicts: File | null;
+}
+
+interface PipelineStatus {
+  running: boolean;
+  status: string;
+  error: string | null;
+  result?: any;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  
+  const [files, setFiles] = useState<FileState>({
+    claims: null,
+    mcnVerdicts: null,
+    jfmVerdicts: null,
+  });
+  const [claimsSource, setClaimsSource] = useState('matter_entertainment');
+  const [status, setStatus] = useState<PipelineStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [polling, setPolling] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // Poll for status
+  useEffect(() => {
+    if (!polling) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/status`);
+        setStatus(response.data);
+        
+        if (!response.data.running) {
+          setPolling(false);
+        }
+      } catch (error) {
+        console.error('Status poll error:', error);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [polling]);
+
+  const handleFileDrop = useCallback((acceptedFiles: File[], fileType: keyof FileState) => {
+    if (acceptedFiles.length > 0) {
+      setFiles(prev => ({
+        ...prev,
+        [fileType]: acceptedFiles[0]
+      }));
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!files.claims && !files.mcnVerdicts && !files.jfmVerdicts) {
+      alert('Please upload at least one file');
+      return;
+    }
+
+    setLoading(true);
+    const formData = new FormData();
+    
+    if (files.claims) {
+      formData.append('claims', files.claims);
+      formData.append('claims_source', claimsSource);
+    }
+    if (files.mcnVerdicts) {
+      formData.append('mcn_verdicts', files.mcnVerdicts);
+    }
+    if (files.jfmVerdicts) {
+      formData.append('jfm_verdicts', files.jfmVerdicts);
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/api/run`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      console.log('Pipeline started:', response.data);
+      setPolling(true);
+      
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      alert(error.response?.data?.error || 'Failed to start pipeline');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setFiles({
+      claims: null,
+      mcnVerdicts: null,
+      jfmVerdicts: null,
+    });
+    setStatus(null);
+    setPolling(false);
+  };
+
+  return (
+    <main className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          YouTube MCN Pipeline
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg shadow p-6">
+          {/* Claims File */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Claims Report (Optional)
+            </label>
+            <FileUpload
+              file={files.claims}
+              onDrop={(files) => handleFileDrop(files, 'claims')}
+              accept=".csv"
+              label="Drop claims CSV here or click to browse"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            {files.claims && (
+              <select
+                value={claimsSource}
+                onChange={(e) => setClaimsSource(e.target.value)}
+                className="mt-2 px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="matter_entertainment">Matter Entertainment</option>
+                <option value="matter_2">Matter 2</option>
+              </select>
+            )}
+          </div>
+
+          {/* MCN Verdicts */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              MCN Verdicts (Optional)
+            </label>
+            <FileUpload
+              file={files.mcnVerdicts}
+              onDrop={(files) => handleFileDrop(files, 'mcnVerdicts')}
+              accept=".csv"
+              label="Drop MCN verdicts CSV here or click to browse"
+            />
+          </div>
+
+          {/* JFM Verdicts */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              JFM Verdicts (Optional)
+            </label>
+            <FileUpload
+              file={files.jfmVerdicts}
+              onDrop={(files) => handleFileDrop(files, 'jfmVerdicts')}
+              accept=".csv"
+              label="Drop JFM verdicts CSV here or click to browse"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              disabled={loading || (status?.running ?? false)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Starting...' : status?.running ? 'Pipeline Running' : 'Run Pipeline'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+
+        {/* Status Display */}
+        {status && (
+          <div className="mt-8">
+            <StatusDisplay status={status} />
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
