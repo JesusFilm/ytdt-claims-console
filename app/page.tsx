@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { PlayCircle, Pause, Settings, Activity } from 'lucide-react';
+import { PlayCircle, Pause, Settings, Activity, AlertTriangle } from 'lucide-react';
 import FileUpload from '@/components/FileUpload';
 import PipelineStatus from '@/components/PipelineStatus';
 import PipelineHistory from '@/components/PipelineHistory';
@@ -20,6 +20,17 @@ interface PipelineStatusState {
   status: string;
   error: string | null;
   result?: any;
+  steps?: any[];
+  progress?: number;
+}
+
+interface SystemHealth {
+  status: string;
+  uptime: number;
+  memory: {
+    used: number;
+    total: number;
+  };
 }
 
 export default function Home() {
@@ -38,52 +49,45 @@ export default function Home() {
   
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'upload' | 'status' | 'history'>('upload');
-  
-  // Mock pipeline history - replace with real data from your API
-  const [pipelineRuns] = useState<PipelineRun[]>([
-    {
-      id: '1',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      status: 'completed',
-      duration: 11 * 60 * 1000 + 42 * 1000, // 11m 42s
-      files: {
-        claims: 'matter_2.csv',
-        claimsSource: 'matter_2',
-        jfmVerdicts: 'jfm_verdicts_20250903.csv'
-      },
-      results: {
-        claimsProcessed: { total: 2847, new: 1293 },
-        verdictsProcessed: 456,
-        exportsGenerated: 3,
-        invalidMCIDs: 0
+  const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([]);
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
+
+  // Fetch system health
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/health`);
+        const health = await response.json();
+        setSystemHealth(health);
+      } catch (error) {
+        console.error('Health check failed:', error);
+        setSystemHealth({ 
+          status: 'error', 
+          uptime: 0, 
+          memory: { used: 0, total: 0 } 
+        });
       }
-    },
-    {
-      id: '2',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      status: 'completed',
-      duration: 8 * 60 * 1000 + 15 * 1000, // 8m 15s
-      files: {
-        claims: 'matter_entertainment.csv',
-        claimsSource: 'matter_entertainment'
-      },
-      results: {
-        claimsProcessed: { total: 1847, new: 892 },
-        exportsGenerated: 3
+    };
+
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch pipeline history
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/runs/history`);
+        const data = await response.json();
+        setPipelineRuns(data.runs || []);
+      } catch (error) {
+        console.error('Failed to fetch history:', error);
       }
-    },
-    {
-      id: '3',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-      status: 'failed',
-      files: {
-        claims: 'matter_2.csv',
-        claimsSource: 'matter_2',
-        mcnVerdicts: 'mcn_verdicts_20250901.csv'
-      },
-      error: 'VPN connection timeout after 30s'
-    }
-  ]);
+    };
+
+    fetchHistory();
+  }, [status.running]); // Refresh when pipeline completes
 
   // Poll for status when pipeline is running
   useEffect(() => {
@@ -94,6 +98,18 @@ export default function Home() {
         const response = await fetch(`${API_URL}/api/status`);
         const data = await response.json();
         setStatus(data);
+        
+        // If pipeline completed, refresh history
+        if (data.running === false && status.running === true) {
+          setTimeout(() => {
+            const fetchHistory = async () => {
+              const historyResponse = await fetch(`${API_URL}/api/runs/history`);
+              const historyData = await historyResponse.json();
+              setPipelineRuns(historyData.runs || []);
+            };
+            fetchHistory();
+          }, 1000);
+        }
       } catch (error) {
         console.error('Status poll error:', error);
       }
@@ -146,7 +162,8 @@ export default function Home() {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       
       const result = await response.json();
@@ -170,14 +187,18 @@ export default function Home() {
     setActiveTab('upload');
   };
 
-  const handleRetry = (runId: string) => {
-    console.log('Retry run:', runId);
-    // Implement retry logic
+  const handleRetry = async (runId: string) => {
+    try {
+      // For now, just show message - full retry would need file recreation
+      alert('Retry functionality requires re-uploading files. Please use the upload tab.');
+    } catch (error) {
+      console.error('Retry error:', error);
+    }
   };
 
   const handleDownload = (runId: string) => {
-    console.log('Download exports for run:', runId);
-    // Implement download logic
+    // Open exports list or direct download
+    window.open(`${API_URL}/api/exports`, '_blank');
   };
 
   const isRunning = status.running || loading;
@@ -196,8 +217,17 @@ export default function Home() {
             
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-gray-600">System healthy</span>
+                {systemHealth?.status === 'ok' ? (
+                  <>
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-gray-600">System healthy</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                    <span className="text-red-600">System offline</span>
+                  </>
+                )}
               </div>
               
               <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
@@ -243,7 +273,7 @@ export default function Home() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                History
+                History ({pipelineRuns.length})
               </button>
             </nav>
           </div>
@@ -281,7 +311,7 @@ export default function Home() {
                 onDrop={(files) => handleFileDrop(files, 'mcnVerdicts')}
                 onRemove={() => handleFileRemove('mcnVerdicts')}
                 title="MCN Verdicts"
-                description="Ben's verdict decisions for MCN claims"
+                description="Verdict decisions for MCN claims"
                 disabled={isRunning}
               />
               
