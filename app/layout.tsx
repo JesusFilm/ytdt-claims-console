@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "YouTube MCN Pipeline Dashboard",
   description: "Multi-Channel Network claims processing and management dashboard",
   keywords: ["youtube", "mcn", "claims", "pipeline", "dashboard"],
-  authors: [{ name: "Your Company" }],
+  authors: [{ name: "Jesus Film Project" }],
   viewport: "width=device-width, initial-scale=1",
   themeColor: "#3B82F6",
   robots: "noindex, nofollow", // Remove for production

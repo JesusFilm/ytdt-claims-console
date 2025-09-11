@@ -7,7 +7,7 @@ import PipelineStatus from '@/components/PipelineStatus';
 import PipelineHistory from '@/components/PipelineHistory';
 import type { PipelineRun } from '@/components/PipelineHistory';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 interface FileState {
   claims: File | null;

@@ -109,7 +109,7 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
 };
 
 export default function PipelineStatus({ status }: PipelineStatusProps) {
-  // Mock pipeline steps based on your backend structure
+  // Mock pipeline steps based on backend structure
   const steps: PipelineStep[] = [
     { id: 'connect_vpn', name: 'VPN Connection', description: 'Establishing secure connection', status: status.running ? 'completed' : 'pending' },
     { id: 'backup_tables', name: 'Database Backup', description: 'Creating backup tables', status: status.running ? 'completed' : 'pending' },
