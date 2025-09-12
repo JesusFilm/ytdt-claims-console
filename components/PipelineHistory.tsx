@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  CheckCircle, 
-  AlertCircle, 
-  Clock, 
-  Download, 
+import {
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Download,
   RotateCcw,
   Calendar,
   FileText,
@@ -40,7 +40,7 @@ interface PipelineHistoryProps {
 
 const StatusIcon: React.FC<{ status: PipelineRun['status'] }> = ({ status }) => {
   const iconProps = { className: "w-5 h-5" };
-  
+
   switch (status) {
     case 'completed':
       return <CheckCircle {...iconProps} className="w-5 h-5 text-green-600" />;
@@ -70,8 +70,8 @@ const StatusBadge: React.FC<{ status: PipelineRun['status'] }> = ({ status }) =>
   );
 };
 
-const RunCard: React.FC<{ 
-  run: PipelineRun; 
+const RunCard: React.FC<{
+  run: PipelineRun;
   onRetry?: (runId: string) => void;
   onDownload?: (runId: string) => void;
 }> = ({ run, onRetry, onDownload }) => {
@@ -81,7 +81,8 @@ const RunCard: React.FC<{
     return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
   };
 
-  const formatTimestamp = (date: Date) => {
+  const formatTimestamp = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -89,7 +90,7 @@ const RunCard: React.FC<{
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
-    }).format(date);
+    }).format(dateObj);
   };
 
   const getRunFiles = () => {
@@ -106,9 +107,9 @@ const RunCard: React.FC<{
     return files.join(' • ');
   };
 
-  const cardBg = run.status === 'failed' ? 'bg-red-50 border-red-200' : 
-                run.status === 'running' ? 'bg-blue-50 border-blue-200' :
-                'bg-white border-gray-200';
+  const cardBg = run.status === 'failed' ? 'bg-red-50 border-red-200' :
+    run.status === 'running' ? 'bg-blue-50 border-blue-200' :
+      'bg-white border-gray-200';
 
   return (
     <div className={`border rounded-2xl p-6 transition-all hover:shadow-md ${cardBg}`}>
@@ -122,11 +123,11 @@ const RunCard: React.FC<{
               <h3 className="font-semibold text-gray-900">{formatTimestamp(run.timestamp)}</h3>
               <StatusBadge status={run.status} />
             </div>
-            
+
             {getRunFiles() && (
               <p className="text-sm text-gray-600 mb-2">{getRunFiles()}</p>
             )}
-            
+
             <div className="flex items-center gap-4 text-xs text-gray-500">
               {run.duration && (
                 <span className="flex items-center gap-1">
@@ -134,7 +135,7 @@ const RunCard: React.FC<{
                   {formatDuration(run.duration)}
                 </span>
               )}
-              
+
               {run.status === 'running' && (
                 <span className="flex items-center gap-1 text-blue-600">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
@@ -144,7 +145,7 @@ const RunCard: React.FC<{
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {run.status === 'completed' && onDownload && (
             <button
@@ -155,7 +156,7 @@ const RunCard: React.FC<{
               <Download className="w-4 h-4" />
             </button>
           )}
-          
+
           {run.status === 'failed' && onRetry && (
             <button
               onClick={() => onRetry(run.id)}
@@ -193,7 +194,7 @@ const RunCard: React.FC<{
               </p>
             </div>
           )}
-          
+
           {run.results.verdictsProcessed && (
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <div className="flex items-center gap-2 mb-1">
@@ -206,7 +207,7 @@ const RunCard: React.FC<{
               <p className="text-xs text-gray-500">processed</p>
             </div>
           )}
-          
+
           {run.results.exportsGenerated && (
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <div className="flex items-center gap-2 mb-1">
@@ -217,7 +218,7 @@ const RunCard: React.FC<{
               <p className="text-xs text-gray-500">files generated</p>
             </div>
           )}
-          
+
           {run.results.invalidMCIDs && run.results.invalidMCIDs > 0 && (
             <div className="bg-white rounded-lg p-3 border border-orange-200">
               <div className="flex items-center gap-2 mb-1">
@@ -234,18 +235,18 @@ const RunCard: React.FC<{
   );
 };
 
-export default function PipelineHistory({ 
-  runs, 
-  onRetry, 
-  onDownload, 
-  className = '' 
+export default function PipelineHistory({
+  runs,
+  onRetry,
+  onDownload,
+  className = ''
 }: PipelineHistoryProps) {
   const getStats = () => {
     const total = runs.length;
     const successful = runs.filter(r => r.status === 'completed').length;
     const failed = runs.filter(r => r.status === 'failed').length;
     const successRate = total > 0 ? Math.round((successful / total) * 100) : 0;
-    
+
     return { total, successful, failed, successRate };
   };
 
@@ -259,7 +260,7 @@ export default function PipelineHistory({
           <h2 className="text-2xl font-bold text-gray-900">Pipeline History</h2>
           <p className="text-gray-600 mt-1">Track all your pipeline runs and results</p>
         </div>
-        
+
         <div className="flex items-center gap-6 text-sm">
           <div className="text-center">
             <p className="font-semibold text-gray-900">{stats.total}</p>
@@ -285,7 +286,7 @@ export default function PipelineHistory({
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-100 rounded-lg">
@@ -297,7 +298,7 @@ export default function PipelineHistory({
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
