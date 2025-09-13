@@ -3,9 +3,10 @@
 This is a [Next.js](https://nextjs.org) frontend for [`ytdt-claims-pipeline`](https://github.com/ceduth/ytdt-claims-pipeline).
 
 ![](./app/images/screenshot-1.png)
-<div style="display:flex; gap:8px;">
-  <img src="./app/images/screenshot-2.png" alt="screenshot-2" style="height:300px;width:50%; object-fit:cover;"/>
-  <img src="./app/images/screenshot-3.png" alt="screenshot-3" style="height:300px;width:50%; object-fit:cover;"/>
+<div style="display:flex; gap:5px;">
+  <img src="./app/images/screenshot-2.png" alt="screenshot-2" style="height:200px;width:33%; object-fit:cover;"/>
+  <img src="./app/images/screenshot-3.png" alt="screenshot-3" style="height:200px;width:33%; object-fit:cover;"/>
+  <img src="./app/images/screenshot-4.png" alt="screenshot-3" style="height:200px;width:33%; object-fit:cover;"/>
 </div>
 
 

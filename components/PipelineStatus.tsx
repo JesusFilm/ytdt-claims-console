@@ -1,76 +1,36 @@
 import React from 'react';
-import { 
-  CheckCircle, 
-  AlertCircle, 
-  Clock, 
-  Loader2,
-  Database,
-  Upload as UploadIcon,
-  Cpu,
-  Cloud
+import {
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Loader2
 } from 'lucide-react';
-
-export interface PipelineStep {
-  id: string;
-  name: string;
-  description?: string;
-  status: 'pending' | 'running' | 'completed' | 'error' | 'skipped';
-  startTime?: Date;
-  endTime?: Date;
-  error?: string;
-}
+import RefreshButton from './RefreshButton';
+import PipelineSteps, { PipelineStep } from './PipelineSteps';
 
 export interface PipelineStatusProps {
   status: {
     running: boolean;
     status: string;
     error: string | null;
-    result?: {
-      success: boolean;
-      duration: number;
-      outputs?: {
-        claimsProcessed?: { total: number; new: number };
-        mcnVerdicts?: { processed: number; invalidMCIDs: number };
-        jfmVerdicts?: { processed: number; invalidMCIDs: number };
-        exports?: Record<string, { rows: number; path: string }>;
-        driveUploads?: Array<{ name: string; size: number; rows: number }>;
-      };
+    progress?: number;
+    steps: PipelineStep[];
+    currentStep?: string;
+    startTime?: Date;
+  };
+  lastRun?: {
+    timestamp: Date;
+    duration: number;
+    status: 'completed' | 'failed';
+    error?: string;
+    results?: {
+      claimsProcessed?: { total: number; new: number };
+      exports?: Record<string, any>;
+      mcnVerdicts?: { invalidMCIDs: number };
     };
   };
+  onRefresh?: () => Promise<void>;
 }
-
-const PipelineStepIcon: React.FC<{ step: PipelineStep }> = ({ step }) => {
-  const iconProps = { className: "w-5 h-5" };
-  
-  switch (step.status) {
-    case 'completed':
-      return <CheckCircle {...iconProps} className="w-5 h-5 text-green-600" />;
-    case 'running':
-      return <Loader2 {...iconProps} className="w-5 h-5 text-blue-600 animate-spin" />;
-    case 'error':
-      return <AlertCircle {...iconProps} className="w-5 h-5 text-red-600" />;
-    case 'skipped':
-      return <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-gray-100" />;
-    default:
-      return <div className="w-5 h-5 rounded-full border-2 border-gray-300" />;
-  }
-};
-
-const getStepIcon = (stepId: string) => {
-  const iconMap: Record<string, React.ComponentType<any>> = {
-    'connect_vpn': Cloud,
-    'backup_tables': Database,
-    'process_claims': UploadIcon,
-    'process_mcn_verdicts': CheckCircle,
-    'process_jfm_verdicts': CheckCircle,
-    'export_views': Database,
-    'enrich_ml': Cpu,
-    'upload_drive': Cloud
-  };
-  
-  const Icon = iconMap[stepId] || Clock;
-  return <Icon className="w-4 h-4" />;
-};
 
 const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, running }) => {
   if (running) {
@@ -108,29 +68,36 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
   );
 };
 
-export default function PipelineStatus({ status }: PipelineStatusProps) {
-  // Mock pipeline steps based on backend structure
-  const steps: PipelineStep[] = [
-    { id: 'connect_vpn', name: 'VPN Connection', description: 'Establishing secure connection', status: status.running ? 'completed' : 'pending' },
-    { id: 'backup_tables', name: 'Database Backup', description: 'Creating backup tables', status: status.running ? 'completed' : 'pending' },
-    { id: 'process_claims', name: 'Process Claims', description: 'Importing new claims data', status: status.running ? 'completed' : 'pending' },
-    { id: 'process_mcn_verdicts', name: 'MCN Verdicts', description: 'Applying verdict updates', status: status.running ? 'completed' : 'pending' },
-    { id: 'process_jfm_verdicts', name: 'JFM Verdicts', description: 'Processing channel verdicts', status: status.running ? 'running' : 'pending' },
-    { id: 'export_views', name: 'Export Views', description: 'Generating export files', status: 'pending' },
-    { id: 'enrich_ml', name: 'ML Enrichment', description: 'Adding predictions', status: 'pending' },
-    { id: 'upload_drive', name: 'Upload to Drive', description: 'Syncing to Google Drive', status: 'pending' }
-  ];
+const formatDuration = (ms: number) => {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
+};
 
-  const formatDuration = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-  };
+export default function PipelineStatus({ status, onRefresh }: PipelineStatusProps) {
+  const showIdleState = !status.running;
+  const lastRun = status.lastRun;
 
   const getProgress = () => {
-    const completed = steps.filter(s => s.status === 'completed').length;
-    return (completed / steps.length) * 100;
+    if (status.progress !== undefined) return status.progress;
+    if (!status.steps) return 0;
+    const completed = status.steps.filter(s => s.status === 'completed').length;
+    return (completed / status.steps.length) * 100;
   };
+
+  const getCurrentStepInfo = () => {
+    if (!status.running || !status.steps) return null;
+    const runningStep = status.steps.find(s => s.status === 'running');
+    const completedCount = status.steps.filter(s => s.status === 'completed').length;
+
+    return {
+      current: runningStep?.name || status.currentStep,
+      step: completedCount + 1,
+      total: status.steps.length
+    };
+  };
+
+  const currentStep = getCurrentStepInfo();
 
   return (
     <div className="space-y-8">
@@ -138,24 +105,56 @@ export default function PipelineStatus({ status }: PipelineStatusProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Pipeline Status</h2>
-          <p className="text-gray-600 mt-1">Multi-Channel Network claims processing</p>
+          <p className="text-gray-600 mt-1">
+            {status.running
+              ? `Processing: ${currentStep?.current || 'Running...'}`
+              : 'Multi-Channel Network claims processing'
+            }
+          </p>
         </div>
-        <StatusBadge status={status.status} running={status.running} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={status.status} running={status.running} />
+          {onRefresh && (
+            <RefreshButton
+              onRefresh={onRefresh}
+              disabled={status.running}
+            />
+          )}
+        </div>
       </div>
 
-      {/* Progress Bar */}
+      {/* Live Progress (only when running) */}
       {status.running && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Progress</span>
-            <span className="font-medium">{Math.round(getProgress())}% complete</span>
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-blue-900">
+                {currentStep ? `Step ${currentStep.step} of ${currentStep.total}` : 'Processing'}
+              </h3>
+              <p className="text-blue-700 text-sm mt-1">
+                {currentStep?.current || 'Pipeline in progress...'}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-blue-900">
+                {Math.round(getProgress())}%
+              </div>
+              <div className="text-xs text-blue-600">Complete</div>
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-            <div 
+
+          <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
+            <div
               className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${getProgress()}%` }}
             />
           </div>
+
+          {status.startTime && (
+            <div className="mt-3 text-xs text-blue-600">
+              Started: {new Date(status.startTime).toLocaleTimeString()}
+            </div>
+          )}
         </div>
       )}
 
@@ -172,78 +171,90 @@ export default function PipelineStatus({ status }: PipelineStatusProps) {
         </div>
       )}
 
-      {/* Pipeline Steps */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">Pipeline Steps</h3>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {steps.map((step, index) => (
-            <div key={step.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100">
-                  {getStepIcon(step.id)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <h4 className="font-medium text-gray-900">{step.name}</h4>
-                    <PipelineStepIcon step={step} />
-                  </div>
-                  {step.description && (
-                    <p className="text-sm text-gray-500 mt-1">{step.description}</p>
-                  )}
-                  {step.error && (
-                    <p className="text-sm text-red-600 mt-1">{step.error}</p>
-                  )}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Step {index + 1}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Idle State - Show Last Run Status */}
+      {showIdleState && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+          {lastRun ? (
+            <div>
+              {lastRun.status === 'completed' ? (
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900">Last Run Completed</h3>
+                    <p className="text-gray-600 mt-1">
+                      Finished {new Date(lastRun.timestamp).toLocaleString()} •
+                      Duration: {formatDuration(lastRun.duration)}
+                    </p>
 
-      {/* Results Summary */}
-      {status.result && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-green-900">Pipeline Completed Successfully</h3>
-              <p className="text-green-700 mt-1">
-                Duration: {formatDuration(status.result.duration)}
-              </p>
-              
-              {status.result.outputs && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {status.result.outputs.claimsProcessed && (
-                    <div className="bg-white rounded-lg p-3 border border-green-200">
-                      <p className="text-sm font-medium text-gray-900">Claims Processed</p>
-                      <p className="text-xl font-bold text-green-600 mt-1">
-                        {status.result.outputs.claimsProcessed.new.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {status.result.outputs.claimsProcessed.total.toLocaleString()} total
-                      </p>
-                    </div>
-                  )}
-                  
-                  {status.result.outputs.exports && (
-                    <div className="bg-white rounded-lg p-3 border border-green-200">
-                      <p className="text-sm font-medium text-gray-900">Files Exported</p>
-                      <p className="text-xl font-bold text-green-600 mt-1">
-                        {Object.keys(status.result.outputs.exports).length}
-                      </p>
-                      <p className="text-xs text-gray-500">CSV files</p>
-                    </div>
-                  )}
+                    {lastRun.results && (
+                      <div className="mt-3 text-sm text-gray-700">
+                        {lastRun.results.claimsProcessed && (
+                          <span>
+                            {lastRun.results.claimsProcessed.new} new claims processed
+                          </span>
+                        )}
+                        {lastRun.results.exports && lastRun.results.claimsProcessed && (
+                          <span> • </span>
+                        )}
+                        {lastRun.results.exports && (
+                          <span>
+                            {Object.keys(lastRun.results.exports).length} files exported
+                          </span>
+                        )}
+                        {lastRun.results.mcnVerdicts?.invalidMCIDs && lastRun.results.mcnVerdicts.invalidMCIDs > 0 && (
+                          <span className="text-orange-600">
+                            {lastRun.results.exports ? ' • ' : ''}
+                            {lastRun.results.mcnVerdicts.invalidMCIDs} invalid MCIDs
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="text-green-700 text-sm mt-3 font-medium">
+                      ✓ Ready to process next batch
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900">Last Run Failed</h3>
+                    <p className="text-gray-600 mt-1">
+                      Failed {new Date(lastRun.timestamp).toLocaleString()}
+                    </p>
+
+                    {lastRun.error && (
+                      <p className="text-red-700 text-sm mt-2">{lastRun.error}</p>
+                    )}
+
+                    <p className="text-red-700 text-sm mt-3 font-medium">
+                      System ready but previous run had issues
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
+          ) : (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-gray-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">System Ready</h3>
+              <p className="text-gray-600">
+                Pipeline is ready to process claims and verdicts
+              </p>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Pipeline Steps - Only show when running or when showing idle state */}
+      {(status.running || showIdleState) && (
+        <PipelineSteps
+          steps={status.steps}
+          showDescriptions={!status.running} // Hide descriptions during active run for cleaner view
+        />
       )}
     </div>
   );

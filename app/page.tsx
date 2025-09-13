@@ -5,7 +5,9 @@ import { PlayCircle, Pause, Settings, Activity, AlertTriangle } from 'lucide-rea
 import FileUpload from '@/components/FileUpload';
 import PipelineStatus from '@/components/PipelineStatus';
 import PipelineHistory from '@/components/PipelineHistory';
-import type { PipelineRun } from '@/components/PipelineHistory';
+
+import { formatRunFiles } from '@/utils/formatFiles';
+import type { PipelineRun } from '@/types/PipelineRun';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -22,6 +24,13 @@ interface PipelineStatusState {
   result?: any;
   steps?: any[];
   progress?: number;
+  lastRun?: {
+    timestamp: Date;
+    duration: number;
+    status: 'completed' | 'failed';
+    error?: string;
+    results?: any;
+  };
 }
 
 interface SystemHealth {
@@ -39,14 +48,15 @@ export default function Home() {
     mcnVerdicts: null,
     jfmVerdicts: null,
   });
-  
+
   const [claimsSource, setClaimsSource] = useState('matter_entertainment');
   const [status, setStatus] = useState<PipelineStatusState>({
     running: false,
     status: 'idle',
-    error: null
+    error: null,
+    steps: []
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'upload' | 'status' | 'history'>('upload');
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([]);
@@ -61,10 +71,10 @@ export default function Home() {
         setSystemHealth(health);
       } catch (error) {
         console.error('Health check failed:', error);
-        setSystemHealth({ 
-          status: 'error', 
-          uptime: 0, 
-          memory: { used: 0, total: 0 } 
+        setSystemHealth({
+          status: 'error',
+          uptime: 0,
+          memory: { used: 0, total: 0 }
         });
       }
     };
@@ -97,18 +107,35 @@ export default function Home() {
       try {
         const response = await fetch(`${API_URL}/api/status`);
         const data = await response.json();
-        setStatus(data);
-        
-        // If pipeline completed, refresh history
+
+        // If pipeline just finished, fetch last run and stop polling
         if (data.running === false && status.running === true) {
+          const historyResponse = await fetch(`${API_URL}/api/runs/history?limit=1`);
+          const historyData = await historyResponse.json();
+          const lastRun = historyData.runs?.[0];
+
+          setStatus({
+            ...data,
+            lastRun: lastRun ? {
+              timestamp: new Date(lastRun.timestamp),
+              duration: lastRun.duration,
+              status: lastRun.status,
+              error: lastRun.error,
+              results: lastRun.results
+            } : undefined
+          });
+
+          // Refresh full history
           setTimeout(() => {
             const fetchHistory = async () => {
-              const historyResponse = await fetch(`${API_URL}/api/runs/history`);
-              const historyData = await historyResponse.json();
-              setPipelineRuns(historyData.runs || []);
+              const fullHistoryResponse = await fetch(`${API_URL}/api/runs/history`);
+              const fullHistoryData = await fullHistoryResponse.json();
+              setPipelineRuns(fullHistoryData.runs || []);
             };
             fetchHistory();
           }, 1000);
+        } else {
+          setStatus(data);
         }
       } catch (error) {
         console.error('Status poll error:', error);
@@ -143,7 +170,7 @@ export default function Home() {
 
     setLoading(true);
     const formData = new FormData();
-    
+
     if (files.claims) {
       formData.append('claims', files.claims);
       formData.append('claims_source', claimsSource);
@@ -160,19 +187,19 @@ export default function Home() {
         method: 'POST',
         body: formData
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
-      
+
       const result = await response.json();
       console.log('Pipeline started:', result);
-      
+
       // Switch to status view and start polling
       setActiveTab('status');
       setStatus({ running: true, status: 'starting', error: null });
-      
+
     } catch (error: any) {
       console.error('Upload error:', error);
       alert(`Failed to start pipeline: ${error.message}`);
@@ -196,9 +223,40 @@ export default function Home() {
     }
   };
 
-  const handleDownload = (runId: string) => {
-    // Open exports list or direct download
-    window.open(`${API_URL}/api/exports`, '_blank');
+  const handleDownload = async (runId: string) => {
+    try {
+      // Fetch exports list
+      const response = await fetch(`${API_URL}/api/exports`);
+      const data = await response.json();
+
+      // Download each file
+      for (const file of data.files) {
+        const link = document.createElement('a');
+        link.href = `${API_URL}/api/exports/${file.name}`;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Small delay between downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback to opening exports page
+      window.open(`${API_URL}/api/exports`, '_blank');
+    }
+  };
+
+  // Manual refresh function - clears lastRun and shows ready state
+  const handleStatusRefresh = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/status`);
+      const data = await response.json();
+      setStatus({ ...data, lastRun: undefined }); 
+    } catch (error) {
+      console.error('Manual refresh error:', error);
+    }
   };
 
   const isRunning = status.running || loading;
@@ -214,7 +272,7 @@ export default function Home() {
               <h1 className="text-2xl font-bold text-gray-900">YouTube MCN Pipeline</h1>
               <p className="text-gray-600">Multi-Channel Network claims processing dashboard</p>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm">
                 {systemHealth?.status === 'ok' ? (
@@ -229,33 +287,31 @@ export default function Home() {
                   </>
                 )}
               </div>
-              
+
               <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
                 <Settings className="w-5 h-5" />
               </button>
             </div>
           </div>
-          
+
           {/* Navigation Tabs */}
           <div className="mt-6 border-b border-gray-200">
             <nav className="flex space-x-8">
               <button
                 onClick={() => setActiveTab('upload')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'upload'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'upload'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 Upload & Run
               </button>
               <button
                 onClick={() => setActiveTab('status')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'status'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'status'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
@@ -267,11 +323,10 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'history'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'history'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 History ({pipelineRuns.length})
               </button>
@@ -290,7 +345,7 @@ export default function Home() {
                 Process YouTube MCN Claims
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Upload your claims reports and verdict files to automatically process 
+                Upload your claims reports and verdict files to automatically process
                 YouTube Multi-Channel Network data through our secure pipeline.
               </p>
             </div>
@@ -305,7 +360,7 @@ export default function Home() {
                 description="Latest MCN claims CSV from YouTube Studio"
                 disabled={isRunning}
               />
-              
+
               <FileUpload
                 file={files.mcnVerdicts}
                 onDrop={(files) => handleFileDrop(files, 'mcnVerdicts')}
@@ -314,7 +369,7 @@ export default function Home() {
                 description="Verdict decisions for MCN claims"
                 disabled={isRunning}
               />
-              
+
               <FileUpload
                 file={files.jfmVerdicts}
                 onDrop={(files) => handleFileDrop(files, 'jfmVerdicts')}
@@ -367,7 +422,7 @@ export default function Home() {
               >
                 Reset Files
               </button>
-              
+
               <button
                 onClick={handleRunPipeline}
                 disabled={isRunning || !hasFiles}
@@ -397,15 +452,7 @@ export default function Home() {
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
                 <h3 className="font-semibold text-blue-900 mb-2">Ready to Process</h3>
                 <div className="text-sm text-blue-700 space-y-1">
-                  {files.claims && (
-                    <p>• Claims: {files.claims.name} ({claimsSource})</p>
-                  )}
-                  {files.mcnVerdicts && (
-                    <p>• MCN Verdicts: {files.mcnVerdicts.name}</p>
-                  )}
-                  {files.jfmVerdicts && (
-                    <p>• JFM Verdicts: {files.jfmVerdicts.name}</p>
-                  )}
+                  {formatRunFiles(files, true).map(file => <p key={file}>• {file}</p>)}
                 </div>
               </div>
             )}
@@ -414,12 +461,15 @@ export default function Home() {
 
         {/* Status Tab */}
         {activeTab === 'status' && (
-          <PipelineStatus status={status} />
+          <PipelineStatus
+            status={status}
+            onRefresh={handleStatusRefresh}
+          />
         )}
 
         {/* History Tab */}
         {activeTab === 'history' && (
-          <PipelineHistory 
+          <PipelineHistory
             runs={pipelineRuns}
             onRetry={handleRetry}
             onDownload={handleDownload}
