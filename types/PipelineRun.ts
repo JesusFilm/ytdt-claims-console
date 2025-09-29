@@ -18,7 +18,7 @@ export interface PipelineRun {
     driveUploads?: Array<{ name: string; size: number; rows: number }>;
   };
   error?: string;
-  completedSteps: Array<{
+  startedSteps: Array<{
     name: string;
     status: 'completed' | 'error' | 'skipped';
     timestamp: Date;

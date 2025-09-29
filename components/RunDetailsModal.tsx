@@ -40,8 +40,8 @@ const formatStepName = (stepId: string) => {
 export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModalProps) {
   if (!isOpen) return null;
 
-  // Convert backend completedSteps to PipelineStep format
-  const steps: PipelineStep[] = run.completedSteps.map(step => ({
+  // Convert backend startedSteps to PipelineStep format
+  const steps: PipelineStep[] = run.startedSteps.map(step => ({
     id: step.name,
     name: formatStepName(step.name),
     status: step.status,

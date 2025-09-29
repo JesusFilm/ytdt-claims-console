@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import RefreshButton from './RefreshButton';
 import PipelineSteps, { PipelineStep } from './PipelineSteps';
+import { PipelineRun } from '@/types/PipelineRun';
 
 export interface PipelineStatusProps {
   status: {
@@ -18,17 +19,7 @@ export interface PipelineStatusProps {
     currentStep?: string;
     startTime?: Date;
   };
-  lastRun?: {
-    timestamp: Date;
-    duration: number;
-    status: 'completed' | 'failed';
-    error?: string;
-    results?: {
-      claimsProcessed?: { total: number; new: number };
-      exports?: Record<string, any>;
-      mcnVerdicts?: { invalidMCIDs: number };
-    };
-  };
+  lastRun?: PipelineRun
   onRefresh?: () => Promise<void>;
 }
 
@@ -74,9 +65,11 @@ const formatDuration = (ms: number) => {
   return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 };
 
-export default function PipelineStatus({ status, onRefresh }: PipelineStatusProps) {
+export default function PipelineStatus({ status, lastRun, onRefresh }: PipelineStatusProps) {
+  console.log('XXXX status', status)
+  console.log('XXXX lastRun', lastRun)
+
   const showIdleState = !status.running;
-  const lastRun = status.lastRun;
 
   const getProgress = () => {
     if (status.progress !== undefined) return status.progress;
@@ -139,7 +132,9 @@ export default function PipelineStatus({ status, onRefresh }: PipelineStatusProp
               <div className="text-2xl font-bold text-blue-900">
                 {Math.round(getProgress())}%
               </div>
-              <div className="text-xs text-blue-600">Complete</div>
+              <div className="text-xs text-blue-600">
+                  {getProgress() === 100 ? 'Complete' : 'In Progress'}
+              </div>
             </div>
           </div>
 

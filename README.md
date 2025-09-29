@@ -14,8 +14,8 @@ This is a [Next.js](https://nextjs.org) frontend for [`ytdt-claims-pipeline`](ht
 
 
 1. Start the backend. RTD at [`ytdt-claims-pipeline`](https://github.com/ceduth/ytdt-claims-pipeline)
-
-2. Run the development server:
+2. Start ML enrichment sub-pipeline [`YT-Validator`](https://github.com/matthew-jf/YT-Validator) 
+3. Run the development server:
 
 ```bash
 PORT=3001 \
@@ -28,7 +28,7 @@ Optionally reading envs from file:
 cp .env.example .env.local
 ```
 
-3. Point your browser at [http://localhost:3001](http://localhost:3001).
+3. Point your browser at [http://localhost:3002](http://localhost:3002).
 
 
 
