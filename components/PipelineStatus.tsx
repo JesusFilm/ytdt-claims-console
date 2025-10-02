@@ -50,6 +50,15 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
       </div>
     );
   }
+  
+  if (status === 'timeout') {
+    return (
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+        <Clock className="w-4 h-4" />
+        Timed Out
+      </div>
+    );
+  }
 
   return (
     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
@@ -133,7 +142,7 @@ export default function PipelineStatus({ status, lastRun, onRefresh }: PipelineS
                 {Math.round(getProgress())}%
               </div>
               <div className="text-xs text-blue-600">
-                  {getProgress() === 100 ? 'Complete' : 'In Progress'}
+                {getProgress() === 100 ? 'Complete' : 'In Progress'}
               </div>
             </div>
           </div>

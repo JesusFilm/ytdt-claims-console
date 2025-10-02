@@ -2,7 +2,7 @@
 export interface PipelineRun {
   id: string;
   startTime: Date;
-  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  status: 'running' | 'completed' | 'failed' | 'cancelled' | 'timeout';
   duration?: number;
   files: {
     claims?: string;

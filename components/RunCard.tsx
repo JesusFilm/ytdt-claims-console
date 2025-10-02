@@ -24,6 +24,8 @@ const StatusIcon: React.FC<{ status: PipelineRun['status'] }> = ({ status }) => 
       return <AlertCircle {...iconProps} className="w-5 h-5 text-red-600" />;
     case 'cancelled':
       return <Clock {...iconProps} className="w-5 h-5 text-gray-500" />;
+    case 'timeout':
+      return <Clock {...iconProps} className="w-5 h-5 text-orange-600" />;
     default:
       return <Clock {...iconProps} className="w-5 h-5 text-gray-400" />;
   }
@@ -34,7 +36,8 @@ const StatusBadge: React.FC<{ status: PipelineRun['status'] }> = ({ status }) =>
     running: 'bg-blue-100 text-blue-700 border-blue-200',
     completed: 'bg-green-100 text-green-700 border-green-200',
     failed: 'bg-red-100 text-red-700 border-red-200',
-    cancelled: 'bg-gray-100 text-gray-700 border-gray-200'
+    cancelled: 'bg-gray-100 text-gray-700 border-gray-200',
+    timeout: 'bg-orange-100 text-orange-700 border-orange-200'
   };
 
   return (
@@ -131,7 +134,7 @@ export default function RunCard({
             </button>
           )}
 
-          {run.status === 'failed' && onRetry && (
+          {(run.status === 'failed' || run.status === 'timeout') && onRetry && (
             <button
               onClick={() => onRetry(run.id)}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
