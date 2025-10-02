@@ -68,7 +68,7 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
                   Pipeline Run Details
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  {formatTimestamp(run.timestamp)}
+                  {formatTimestamp(run.startTime)}
                   {run.duration && (
                     <span className="ml-2">• Duration: {formatDuration(run.duration)}</span>
                   )}

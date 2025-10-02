@@ -177,7 +177,7 @@ export default function PipelineStatus({ status, lastRun, onRefresh }: PipelineS
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">Last Run Completed</h3>
                     <p className="text-gray-600 mt-1">
-                      Finished {new Date(lastRun.timestamp).toLocaleString()} •
+                      Finished {new Date(lastRun.startTime).toLocaleString()} •
                       Duration: {formatDuration(lastRun.duration)}
                     </p>
 
@@ -216,7 +216,7 @@ export default function PipelineStatus({ status, lastRun, onRefresh }: PipelineS
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">Last Run Failed</h3>
                     <p className="text-gray-600 mt-1">
-                      Failed {new Date(lastRun.timestamp).toLocaleString()}
+                      Failed {new Date(lastRun.startTime).toLocaleString()}
                     </p>
 
                     {lastRun.error && (

@@ -9,6 +9,9 @@ import PipelineHistory from '@/components/PipelineHistory';
 import { formatRunFiles } from '@/utils/formatFiles';
 import type { PipelineRun } from '@/types/PipelineRun';
 
+const { format } = require('date-fns');
+
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 interface FileState {
@@ -25,7 +28,7 @@ interface PipelineStatusState {
   steps?: any[];
   progress?: number;
   lastRun?: {
-    timestamp: Date;
+    startTime: Date;
     duration: number;
     status: 'completed' | 'failed';
     error?: string;
@@ -117,7 +120,7 @@ export default function Home() {
           setStatus({
             ...data,
             lastRun: lastRun ? {
-              timestamp: new Date(lastRun.timestamp),
+              startTime: new Date(lastRun.startTime),
               duration: lastRun.duration,
               status: lastRun.status,
               error: lastRun.error,
@@ -226,13 +229,13 @@ export default function Home() {
   const handleDownload = async (runId: string) => {
     try {
       // Fetch exports list
-      const response = await fetch(`${API_URL}/api/exports`);
+      const response = await fetch(`${API_URL}/api/exports/run/${runId}`);
       const data = await response.json();
 
       // Download each file
       for (const file of data.files) {
         const link = document.createElement('a');
-        link.href = `${API_URL}/api/exports/${file.name}`;
+        link.href = `${API_URL}/api/exports/run/${runId}/${file.name}`;
         link.download = file.name;
         document.body.appendChild(link);
         link.click();
@@ -241,10 +244,10 @@ export default function Home() {
         // Small delay between downloads
         await new Promise(resolve => setTimeout(resolve, 500));
       }
+
     } catch (error) {
       console.error('Download error:', error);
-      // Fallback to opening exports page
-      window.open(`${API_URL}/api/exports`, '_blank');
+      alert('Download failed - unable to determine export folder');
     }
   };
 
@@ -253,7 +256,7 @@ export default function Home() {
     try {
       const response = await fetch(`${API_URL}/api/status`);
       const data = await response.json();
-      setStatus({ ...data, lastRun: undefined }); 
+      setStatus({ ...data, lastRun: undefined });
     } catch (error) {
       console.error('Manual refresh error:', error);
     }

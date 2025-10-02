@@ -1,7 +1,7 @@
 // types/PipelineRun.ts
 export interface PipelineRun {
   id: string;
-  timestamp: Date;
+  startTime: Date;
   status: 'running' | 'completed' | 'failed' | 'cancelled';
   duration?: number;
   files: {
