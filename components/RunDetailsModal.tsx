@@ -1,11 +1,9 @@
 import React from 'react';
-import {
-  X,
-  AlertCircle,
-} from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import PipelineSteps, { PipelineStep } from './PipelineSteps';
-import { formatRunFiles } from '@/utils/formatFiles';
 import type { PipelineRun } from '@/types/PipelineRun';
+import ProcessedFilesSection from './ProcessedFilesSection';
+import UploadedFilesSection from './UploadedFilesSection';
 
 interface RunDetailsModalProps {
   run: PipelineRun;
@@ -53,7 +51,7 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div 
+        <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
           onClick={onClose}
         />
@@ -85,13 +83,12 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
 
           {/* Content */}
           <div className="px-6 py-6 max-h-96 overflow-y-auto">
-            {/* Run Info */}
-            <div className="mb-6">
-              <h4 className="font-medium text-gray-900 mb-3">Files Processed</h4>
-              <div className="text-sm text-gray-600 space-y-1">
-                {formatRunFiles(run.files).map(file => <p key={file}>• {file}</p>)}
-              </div>
-            </div>
+
+            {/* Input Files - downloadable */}
+            <UploadedFilesSection files={run.files} />
+
+            {/* Processed Files - downloadable */}
+            <ProcessedFilesSection runId={run.id} />
 
             {/* Error */}
             {run.error && (
@@ -109,8 +106,8 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
             {/* Pipeline Steps */}
             <div className="mb-6">
               <h4 className="font-medium text-gray-900 mb-4">Pipeline Steps</h4>
-              <PipelineSteps 
-                steps={steps} 
+              <PipelineSteps
+                steps={steps}
                 compact={true}
                 className="border-0"
               />

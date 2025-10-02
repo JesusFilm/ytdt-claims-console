@@ -65,6 +65,7 @@ export default function PipelineHistory({
 
   return (
     <div className={`space-y-6 ${className}`}>
+      
       {/* Header with Stats */}
       <div className="flex items-center justify-between">
         <div>
