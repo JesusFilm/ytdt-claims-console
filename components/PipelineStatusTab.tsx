@@ -74,7 +74,7 @@ const formatDuration = (ms: number) => {
   return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 };
 
-export default function PipelineStatus({ status, lastRun, onRefresh }: PipelineStatusProps) {
+export default function PipelineStatusTab({ status, lastRun, onRefresh }: PipelineStatusProps) {
   console.log('XXXX status', status)
   console.log('XXXX lastRun', lastRun)
 
