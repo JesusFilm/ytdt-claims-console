@@ -61,6 +61,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'upload' | 'status' | 'history'>('upload');
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
+  const [hasNewRun, setHasNewRun] = useState(false);
 
   // Fetch system health
   useEffect(() => {
@@ -110,6 +111,7 @@ export default function Home() {
 
         // If pipeline just finished, fetch last run and stop polling
         if (data.running === false && status.running === true) {
+          
           const historyResponse = await fetch(`${API_URL}/api/runs/history?limit=1`);
           const historyData = await historyResponse.json();
           const lastRun = historyData.runs?.[0];
@@ -125,6 +127,9 @@ export default function Home() {
             } : undefined
           });
 
+          // Mark new run available
+          setHasNewRun(true);
+
           // Refresh full history
           setTimeout(() => {
             const fetchHistory = async () => {
@@ -134,11 +139,12 @@ export default function Home() {
             };
             fetchHistory();
           }, 1000);
+
         } else {
           // setStatus(data);
           setStatus(prevStatus => ({
             ...data,
-            lastRun: prevStatus.lastRun 
+            lastRun: prevStatus.lastRun
           }));
         }
       } catch (error) {
@@ -325,13 +331,21 @@ export default function Home() {
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('history')}
+                onClick={() => {
+                  setActiveTab('history');
+                  setHasNewRun(false);
+                }}
                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'history'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
               >
-                History ({pipelineRuns.length})
+                <div className="flex items-center gap-2">
+                  History ({pipelineRuns.length})
+                  {hasNewRun && (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  )}
+                </div>
               </button>
             </nav>
           </div>
