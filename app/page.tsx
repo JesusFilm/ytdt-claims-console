@@ -111,7 +111,7 @@ export default function Home() {
 
         // If pipeline just finished, fetch last run and stop polling
         if (data.running === false && status.running === true) {
-          
+
           const historyResponse = await fetch(`${API_URL}/api/runs/history?limit=1`);
           const historyData = await historyResponse.json();
           const lastRun = historyData.runs?.[0];
@@ -226,10 +226,30 @@ export default function Home() {
 
   const handleRetry = async (runId: string) => {
     try {
-      // For now, just show message - full retry would need file recreation
-      alert('Retry functionality requires re-uploading files. Please use the upload tab.');
-    } catch (error) {
+      setLoading(true);
+
+      // Start the retry
+      const response = await fetch(`${API_URL}/api/runs/${runId}/retry`, {
+        method: 'POST'  // Change to POST since we're starting a pipeline
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Pipeline retry started:', result);
+
+      // Switch to status view and start polling
+      setActiveTab('status');
+      setStatus({ running: true, status: 'starting', error: null });
+
+    } catch (error: any) {
       console.error('Retry error:', error);
+      alert(`Failed to retry pipeline: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -68,9 +68,8 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
                   {formatTimestamp(run.startTime)}
-                  {run.duration && (
-                    <span className="ml-2">• Duration: {formatDuration(run.duration)}</span>
-                  )}
+                  {run.duration && ( <span className="ml-2">• Duration: {formatDuration(run.duration)}</span> )}
+                  <span className="ml-2">• ID: {run.id}</span>
                 </p>
               </div>
               <button
