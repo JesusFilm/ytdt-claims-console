@@ -36,10 +36,8 @@ interface PipelineStatusState {
 interface SystemHealth {
   status: string;
   uptime: number;
-  memory: {
-    used: number;
-    total: number;
-  };
+  memory: { used: number; total: number; };
+  enrich_ml_status?: 'healthy' | 'unhealthy';
 }
 
 export default function Home() {
@@ -308,6 +306,14 @@ export default function Home() {
                   <>
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-gray-600">System healthy</span>
+                  </>
+                ) : systemHealth?.status === 'degraded' ? (
+                  <>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                    <span className="text-orange-600">System degraded</span>
+                    {systemHealth.enrich_ml_status === 'unhealthy' && (
+                      <span className="text-orange-600 ml-2">• ML service down</span>
+                    )}
                   </>
                 ) : (
                   <>
