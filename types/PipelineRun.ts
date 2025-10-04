@@ -20,6 +20,8 @@ export interface PipelineRun {
   error?: string;
   startedSteps: Array<{
     name: string;
+    title: string;
+    description: string;
     status: 'completed' | 'error' | 'skipped';
     timestamp: Date;
     duration?: number;

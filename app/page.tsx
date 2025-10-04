@@ -135,7 +135,11 @@ export default function Home() {
             fetchHistory();
           }, 1000);
         } else {
-          setStatus(data);
+          // setStatus(data);
+          setStatus(prevStatus => ({
+            ...data,
+            lastRun: prevStatus.lastRun 
+          }));
         }
       } catch (error) {
         console.error('Status poll error:', error);
@@ -336,7 +340,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        
+
         {/* Upload Tab */}
         {activeTab === 'upload' && (
           <UploadTab

@@ -18,8 +18,8 @@ export interface PipelineStatusProps {
     steps: PipelineStep[];
     currentStep?: string;
     startTime?: Date;
+    lastRun?: PipelineRun
   };
-  lastRun?: PipelineRun
   onRefresh?: () => Promise<void>;
 }
 
@@ -69,15 +69,14 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
 };
 
 const formatDuration = (ms: number) => {
+  if (!ms) return `♾️`;
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 };
 
-export default function PipelineStatusTab({ status, lastRun, onRefresh }: PipelineStatusProps) {
-  console.log('XXXX status', status)
-  console.log('XXXX lastRun', lastRun)
-
+export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusProps) {
+  
   const showIdleState = !status.running;
 
   const getProgress = () => {
@@ -178,37 +177,37 @@ export default function PipelineStatusTab({ status, lastRun, onRefresh }: Pipeli
       {/* Idle State - Show Last Run Status */}
       {showIdleState && (
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-          {lastRun ? (
+          {status.lastRun ? (
             <div>
-              {lastRun.status === 'completed' ? (
+              {status.lastRun.status === 'completed' ? (
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">Last Run Completed</h3>
                     <p className="text-gray-600 mt-1">
-                      Finished {new Date(lastRun.startTime).toLocaleString()} •
-                      Duration: {formatDuration(lastRun.duration)}
+                      Finished {new Date(status.lastRun.startTime).toLocaleString()} •
+                      Duration: {formatDuration(status.lastRun.duration)}
                     </p>
 
-                    {lastRun.results && (
+                    {status.lastRun.results && (
                       <div className="mt-3 text-sm text-gray-700">
-                        {lastRun.results.claimsProcessed && (
+                        {status.lastRun.results.claimsProcessed && (
                           <span>
-                            {lastRun.results.claimsProcessed.new} new claims processed
+                            {status.lastRun.results.claimsProcessed.new} new claims processed
                           </span>
                         )}
-                        {lastRun.results.exports && lastRun.results.claimsProcessed && (
+                        {status.lastRun.results.exports && status.lastRun.results.claimsProcessed && (
                           <span> • </span>
                         )}
-                        {lastRun.results.exports && (
+                        {status.lastRun.results.exports && (
                           <span>
-                            {Object.keys(lastRun.results.exports).length} files exported
+                            {Object.keys(status.lastRun.results.exports).length} files exported
                           </span>
                         )}
-                        {lastRun.results.mcnVerdicts?.invalidMCIDs && lastRun.results.mcnVerdicts.invalidMCIDs > 0 && (
+                        {status.lastRun.results.mcnVerdicts?.invalidMCIDs && status.lastRun.results.mcnVerdicts.invalidMCIDs > 0 && (
                           <span className="text-orange-600">
-                            {lastRun.results.exports ? ' • ' : ''}
-                            {lastRun.results.mcnVerdicts.invalidMCIDs} invalid MCIDs
+                            {status.lastRun.results.exports ? ' • ' : ''}
+                            {status.lastRun.results.mcnVerdicts.invalidMCIDs} invalid MCIDs
                           </span>
                         )}
                       </div>
@@ -225,11 +224,11 @@ export default function PipelineStatusTab({ status, lastRun, onRefresh }: Pipeli
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">Last Run Failed</h3>
                     <p className="text-gray-600 mt-1">
-                      Failed {new Date(lastRun.startTime).toLocaleString()}
+                      Failed {new Date(status.lastRun.startTime).toLocaleString()}
                     </p>
 
-                    {lastRun.error && (
-                      <p className="text-red-700 text-sm mt-2">{lastRun.error}</p>
+                    {status.lastRun.error && (
+                      <p className="text-red-700 text-sm mt-2">{status.lastRun.error}</p>
                     )}
 
                     <p className="text-red-700 text-sm mt-3 font-medium">
@@ -257,7 +256,7 @@ export default function PipelineStatusTab({ status, lastRun, onRefresh }: Pipeli
       {(status.running || showIdleState) && (
         <PipelineSteps
           steps={status.steps}
-          showDescriptions={!status.running} // Hide descriptions during active run for cleaner view
+          showDescriptions={status.running} // Hide descriptions during active run for cleaner view
         />
       )}
     </div>

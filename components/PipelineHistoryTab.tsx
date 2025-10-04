@@ -16,7 +16,7 @@ interface PipelineHistoryProps {
   className?: string;
 }
 
-export default function PipelineHistory({
+export default function PipelineHistoryTab({
   runs,
   onRetry,
   onDownload,
