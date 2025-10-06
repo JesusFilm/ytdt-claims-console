@@ -4,30 +4,14 @@ import PipelineSteps, { PipelineStep } from './PipelineSteps';
 import type { PipelineRun } from '@/types/PipelineRun';
 import ProcessedFilesSection from './ProcessedFilesSection';
 import UploadedFilesSection from './UploadedFilesSection';
+import { formatDuration, formatTimestamp } from '@/utils/formatTime';
+
 
 interface RunDetailsModalProps {
   run: PipelineRun;
   isOpen: boolean;
   onClose: () => void;
 }
-
-const formatDuration = (ms: number) => {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-};
-
-const formatTimestamp = (date: Date | string) => {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  }).format(dateObj);
-};
 
 const formatStepName = (stepId: string) => {
   return stepId

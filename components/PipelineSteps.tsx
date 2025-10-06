@@ -9,6 +9,8 @@ import {
   Cpu,
   Cloud
 } from 'lucide-react';
+import { formatDuration } from '@/utils/formatTime';
+
 
 export interface PipelineStep {
   id: string;
@@ -67,11 +69,6 @@ const formatStepName = (stepId: string) => {
     .replace(/\b\w/g, l => l.toUpperCase());
 };
 
-const formatDuration = (ms: number) => {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-};
 
 export default function PipelineSteps({
   steps,

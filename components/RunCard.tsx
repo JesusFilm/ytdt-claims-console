@@ -10,6 +10,7 @@ import {
 
 import ResultsSummary from './ResultsSummary';
 import type { PipelineRun } from '@/types/PipelineRun';
+import { formatTimestamp } from '@/utils/formatTime';
 
 
 const StatusIcon: React.FC<{ status: PipelineRun['status'] }> = ({ status }) => {
@@ -66,18 +67,6 @@ export default function RunCard({
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-  };
-
-  const formatTimestamp = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }).format(dateObj);
   };
 
   const cardBg = run.status === 'failed' ? 'bg-red-50 border-red-200' :

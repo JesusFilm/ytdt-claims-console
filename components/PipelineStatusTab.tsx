@@ -8,6 +8,8 @@ import {
 import RefreshButton from './RefreshButton';
 import PipelineSteps, { PipelineStep } from './PipelineSteps';
 import { PipelineRun } from '@/types/PipelineRun';
+import { formatDuration } from '@/utils/formatTime';
+
 
 export interface PipelineStatusProps {
   status: {
@@ -50,7 +52,7 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
       </div>
     );
   }
-  
+
   if (status === 'timeout') {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
@@ -68,15 +70,9 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
   );
 };
 
-const formatDuration = (ms: number) => {
-  if (!ms) return `♾️`;
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-};
 
 export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusProps) {
-  
+
   const showIdleState = !status.running;
 
   const getProgress = () => {
@@ -111,6 +107,9 @@ export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusP
               ? `Processing: ${currentStep?.current || 'Running...'}`
               : 'Multi-Channel Network claims processing'
             }
+            {status.runId && (
+              <span className="text-gray-400 ml-2">• Run ID: {status.runId}</span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -187,6 +186,9 @@ export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusP
                     <p className="text-gray-600 mt-1">
                       Finished {new Date(status.lastRun.startTime).toLocaleString()} •
                       Duration: {formatDuration(status.lastRun.duration)}
+                      {status.lastRun.id && (
+                        <span className="text-gray-400 ml-2">• ID: {status.lastRun.id}</span>
+                      )}
                     </p>
 
                     {status.lastRun.results && (
