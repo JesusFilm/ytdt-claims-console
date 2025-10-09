@@ -16,6 +16,7 @@ export interface PipelineRun {
     jfmVerdicts?: { processed: number; invalidMCIDs: string[] };
     exports?: Record<string, { rows: number; path: string }>;
     driveUploads?: Array<{ name: string; size: number; rows: number }>;
+    driveFolderUrl?: string; 
   };
   error?: string;
   startedSteps: Array<{

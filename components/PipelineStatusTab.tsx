@@ -218,6 +218,26 @@ export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusP
                     <p className="text-green-700 text-sm mt-3 font-medium">
                       ✓ Ready to process next batch
                     </p>
+                    
+                    {/* Show Google Drive Link */}
+                    {status.lastRun.results?.driveFolderUrl && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-blue-800 font-medium mb-2">
+                          📁 Files uploaded to Google Drive:
+                        </p>
+                        <a
+                          href={status.lastRun.results.driveFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
+                        >
+                          View Shared Drive Folder
+                          <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

@@ -4,6 +4,7 @@ import PipelineSteps, { PipelineStep } from './PipelineSteps';
 import type { PipelineRun } from '@/types/PipelineRun';
 import ProcessedFilesSection from './ProcessedFilesSection';
 import UploadedFilesSection from './UploadedFilesSection';
+import GoogleDriveLinkSection from './GoogleDriveLinkSection';
 import { formatDuration, formatTimestamp } from '@/utils/formatTime';
 
 
@@ -73,6 +74,9 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
 
             {/* Processed Files - downloadable */}
             <ProcessedFilesSection runId={run.id} />
+
+            {/* Google Drive Link Section */}
+            <GoogleDriveLinkSection driveFolderUrl={run.results?.driveFolderUrl} />
 
             {/* Error */}
             {run.error && (
