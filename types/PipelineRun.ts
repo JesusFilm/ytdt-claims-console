@@ -12,8 +12,8 @@ export interface PipelineRun {
   };
   results?: {
     claimsProcessed?: { total: number; new: number };
-    mcnVerdicts?: { processed: number; invalidMCIDs: string[] };
-    jfmVerdicts?: { processed: number; invalidMCIDs: string[] };
+    mcnVerdicts?: { processed: number; invalidMCIDs: string[]; invalidLanguageIDs: string[]; };
+    jfmVerdicts?: { processed: number; invalidMCIDs: string[]; invalidLanguageIDs: string[]; };
     exports?: Record<string, { rows: number; path: string }>;
     driveUploads?: Array<{ name: string; size: number; rows: number }>;
     driveFolderUrl?: string; 

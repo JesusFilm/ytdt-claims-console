@@ -37,8 +37,8 @@ export default function PipelineHistoryTab({
     const run = runs.find(r => r.id === runId);
     if (!run?.results) return;
 
-    const invalidMCIDs = type === 'mcn' 
-      ? run.results.mcnVerdicts?.invalidMCIDs 
+    const invalidMCIDs = type === 'mcn'
+      ? run.results.mcnVerdicts?.invalidMCIDs
       : run.results.jfmVerdicts?.invalidMCIDs;
 
     if (!invalidMCIDs?.length) return;
@@ -61,11 +61,39 @@ export default function PipelineHistoryTab({
     URL.revokeObjectURL(url);
   };
 
+  const downloadInvalidLanguageIDs = (runId: string, type: 'mcn' | 'jfm') => {
+    const run = runs.find(r => r.id === runId);
+    if (!run?.results) return;
+
+    const invalidLanguageIDs = type === 'mcn'
+      ? run.results.mcnVerdicts?.invalidLanguageIDs
+      : run.results.jfmVerdicts?.invalidLanguageIDs;
+
+    if (!invalidLanguageIDs?.length) return;
+
+    // Generate CSV content
+    const csvContent = [
+      'language_id',
+      ...invalidLanguageIDs
+    ].join('\n');
+
+    // Create download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invalid-language-ids-${type}-${runId}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const stats = getStats();
 
   return (
     <div className={`space-y-6 ${className}`}>
-      
+
       {/* Header with Stats */}
       <div className="flex items-center justify-between">
         <div>
@@ -143,6 +171,7 @@ export default function PipelineHistoryTab({
               onDownload={onDownload}
               onViewDetails={setSelectedRun}
               onDownloadInvalidMCIDs={downloadInvalidMCIDs}
+              onDownloadInvalidLanguageIDs={downloadInvalidLanguageIDs}
             />
           ))
         )}

@@ -13,13 +13,15 @@ interface ResultsSummaryProps {
   runId: string;
   className?: string;
   onDownloadInvalidMCIDs?: (runId: string, type: 'mcn' | 'jfm') => void;
+  onDownloadInvalidLanguageIDs?: (runId: string, type: 'mcn' | 'jfm') => void;
 }
 
 export default function ResultsSummary({
   results,
   runId,
   className = '',
-  onDownloadInvalidMCIDs
+  onDownloadInvalidMCIDs,
+  onDownloadInvalidLanguageIDs
 }: ResultsSummaryProps) {
   if (!results) return null;
 
@@ -27,6 +29,16 @@ export default function ResultsSummary({
     const mcnCount = results.mcnVerdicts?.invalidMCIDs?.length || 0;
     const jfmCount = results.jfmVerdicts?.invalidMCIDs?.length || 0;
     return mcnCount + jfmCount;
+  };
+
+  const getTotalInvalidLanguageIDs = () => {
+    const mcnCount = results.mcnVerdicts?.invalidLanguageIDs?.length || 0;
+    const jfmCount = results.jfmVerdicts?.invalidLanguageIDs?.length || 0;
+    return mcnCount + jfmCount;
+  };
+
+  const getTotalIssues = () => {
+    return getTotalInvalidMCIDs() + getTotalInvalidLanguageIDs();
   };
 
   const handleDownloadMCIDs = () => {
@@ -37,6 +49,17 @@ export default function ResultsSummary({
       onDownloadInvalidMCIDs(runId, 'mcn');
     } else if (results.jfmVerdicts?.invalidMCIDs?.length) {
       onDownloadInvalidMCIDs(runId, 'jfm');
+    }
+  };
+
+  const handleDownloadLanguageIDs = () => {
+    if (!onDownloadInvalidLanguageIDs) return;
+
+    // Download MCN if available, otherwise JFM
+    if (results.mcnVerdicts?.invalidLanguageIDs?.length) {
+      onDownloadInvalidLanguageIDs(runId, 'mcn');
+    } else if (results.jfmVerdicts?.invalidLanguageIDs?.length) {
+      onDownloadInvalidLanguageIDs(runId, 'jfm');
     }
   };
 
@@ -93,7 +116,7 @@ export default function ResultsSummary({
         </div>
       )}
 
-      {getTotalInvalidMCIDs() > 0 && (
+      {getTotalIssues() > 0 && (
         <div className="bg-white rounded-lg p-3 border border-orange-200">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-4 h-4 text-orange-500" />
@@ -101,19 +124,33 @@ export default function ResultsSummary({
           </div>
           <div className="flex items-center justify-between">
             <span className="font-semibold text-orange-600">
-              {getTotalInvalidMCIDs()}
+              {getTotalIssues()}
             </span>
-            <span className="text-xs text-orange-500">
-              {onDownloadInvalidMCIDs && (
+            <div className="flex flex-col gap-1">
+              {onDownloadInvalidMCIDs && getTotalInvalidMCIDs() > 0 && (
                 <button
                   onClick={handleDownloadMCIDs}
-                  className="flex items-center gap-1 mt-2 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
+                  className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
                 >
                   <Download className="w-3 h-3" />
                   invalid MCIDs
                 </button>
               )}
-            </span>
+              {onDownloadInvalidLanguageIDs && getTotalInvalidLanguageIDs() > 0 && (
+                <button
+                  onClick={handleDownloadLanguageIDs}
+                  className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                  invalid Lang IDs
+                </button>
+              )}
+              <span className="text-xs text-orange-500">
+                {getTotalInvalidMCIDs() > 0 && `${getTotalInvalidMCIDs()} MCIDs`}
+                {getTotalInvalidMCIDs() > 0 && getTotalInvalidLanguageIDs() > 0 && ', '}
+                {getTotalInvalidLanguageIDs() > 0 && `${getTotalInvalidLanguageIDs()} Lang IDs`}
+              </span>
+            </div>
           </div>
         </div>
       )}

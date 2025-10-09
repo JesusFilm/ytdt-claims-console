@@ -54,6 +54,7 @@ interface RunCardProps {
   onDownload?: (runId: string) => void;
   onViewDetails?: (run: PipelineRun) => void;
   onDownloadInvalidMCIDs?: (runId: string, type: 'mcn' | 'jfm') => void;
+  onDownloadInvalidLanguageIDs?: (runId: string, type: 'mcn' | 'jfm') => void;
 }
 
 export default function RunCard({
@@ -61,7 +62,8 @@ export default function RunCard({
   onRetry,
   onDownload,
   onViewDetails,
-  onDownloadInvalidMCIDs
+  onDownloadInvalidMCIDs,
+  onDownloadInvalidLanguageIDs
 }: RunCardProps) {
   const formatDuration = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
@@ -149,6 +151,7 @@ export default function RunCard({
           results={run.results}
           runId={run.id}
           onDownloadInvalidMCIDs={onDownloadInvalidMCIDs}
+          onDownloadInvalidLanguageIDs={onDownloadInvalidLanguageIDs}
         />
       )}
     </div>
