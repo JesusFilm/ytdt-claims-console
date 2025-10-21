@@ -5,11 +5,10 @@ import { Settings, Activity, AlertTriangle } from 'lucide-react';
 import UploadTab from '@/components/UploadTab';
 import PipelineStatusTab from '@/components/PipelineStatusTab';
 import PipelineHistoryTab from '@/components/PipelineHistoryTab';
+import UserMenu from '@/components/UserMenu';
 import type { PipelineRun } from '@/types/PipelineRun';
+import { authFetch } from '@/utils/auth';
 
-const { format } = require('date-fns');
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 interface FileState {
   claims: File | null;
@@ -40,7 +39,9 @@ interface SystemHealth {
   enrich_ml_status?: 'healthy' | 'unhealthy';
 }
 
+
 export default function Home() {
+
   const [files, setFiles] = useState<FileState>({
     claims: null,
     mcnVerdicts: null,
@@ -65,7 +66,7 @@ export default function Home() {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/health`);
+        const response = await authFetch(`/api/health`);
         const health = await response.json();
         setSystemHealth(health);
       } catch (error) {
@@ -87,7 +88,7 @@ export default function Home() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/runs/history`);
+        const response = await authFetch(`/api/runs/history`);
         const data = await response.json();
         setPipelineRuns(data.runs || []);
       } catch (error) {
@@ -104,13 +105,13 @@ export default function Home() {
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${API_URL}/api/status`);
+        const response = await authFetch(`/api/status`);
         const data = await response.json();
 
         // If pipeline just finished, fetch last run and stop polling
         if (data.running === false && status.running === true) {
 
-          const historyResponse = await fetch(`${API_URL}/api/runs/history?limit=1`);
+          const historyResponse = await authFetch(`/api/runs/history?limit=1`);
           const historyData = await historyResponse.json();
           const lastRun = historyData.runs?.[0];
 
@@ -131,7 +132,7 @@ export default function Home() {
           // Refresh full history
           setTimeout(() => {
             const fetchHistory = async () => {
-              const fullHistoryResponse = await fetch(`${API_URL}/api/runs/history`);
+              const fullHistoryResponse = await authFetch(`/api/runs/history`);
               const fullHistoryData = await fullHistoryResponse.json();
               setPipelineRuns(fullHistoryData.runs || []);
             };
@@ -191,7 +192,7 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/run`, {
+      const response = await authFetch(`/api/run`, {
         method: 'POST',
         body: formData
       });
@@ -227,7 +228,7 @@ export default function Home() {
       setLoading(true);
 
       // Start the retry
-      const response = await fetch(`${API_URL}/api/runs/${runId}/retry`, {
+      const response = await authFetch(`/api/runs/${runId}/retry`, {
         method: 'POST'  // Change to POST since we're starting a pipeline
       });
 
@@ -254,13 +255,13 @@ export default function Home() {
   const handleDownload = async (runId: string) => {
     try {
       // Fetch exports list
-      const response = await fetch(`${API_URL}/api/exports/run/${runId}`);
+      const response = await authFetch(`/api/exports/run/${runId}`);
       const data = await response.json();
 
       // Download each file
       for (const file of data.files) {
         const link = document.createElement('a');
-        link.href = `${API_URL}/api/exports/run/${runId}/${file.name}`;
+        link.href = `/api/exports/run/${runId}/${file.name}`;
         link.download = file.name;
         document.body.appendChild(link);
         link.click();
@@ -279,7 +280,7 @@ export default function Home() {
   // Manual refresh function - clears lastRun and shows ready state
   const handleStatusRefresh = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/status`);
+      const response = await authFetch(`/api/status`);
       const data = await response.json();
       setStatus({ ...data, lastRun: undefined });
     } catch (error) {
@@ -323,9 +324,10 @@ export default function Home() {
                 )}
               </div>
 
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                <Settings className="w-5 h-5" />
-              </button>
+              <div className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                {/* <Settings className="w-5 h-5" /> */}
+                <UserMenu />
+              </div>
             </div>
           </div>
 

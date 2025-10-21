@@ -1,3 +1,4 @@
+import { authFetch } from "@/utils/auth";
 import { Database, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -10,7 +11,7 @@ export default function ExportedFilesSection({ runId }: { runId: string }) {
   useEffect(() => {
     const fetchExportedFiles = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/run/${runId}`);
+        const response = await authFetch(`/api/exports/run/${runId}`);
         const data = await response.json();
         setExportedFiles(data.files || []);
       } catch (error) {

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { AuthProvider } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import "./globals.css";
 
 const inter = Inter({ 
@@ -33,9 +35,13 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className={`${inter.className} antialiased bg-gray-50 text-gray-900`}>
-        <div id="root" className="min-h-screen">
-          {children}
-        </div>
+        <AuthProvider>
+          <ProtectedRoute>
+            <div id="root" className="min-h-screen">
+              {children}
+            </div>
+          </ProtectedRoute>
+        </AuthProvider>
         
         {/* Portal container for modals/overlays */}
         <div id="portal-root" />
