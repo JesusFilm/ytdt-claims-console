@@ -7,8 +7,8 @@ import PipelineStatusTab from '@/components/PipelineStatusTab';
 import PipelineHistoryTab from '@/components/PipelineHistoryTab';
 import UserMenu from '@/components/UserMenu';
 import type { PipelineRun } from '@/types/PipelineRun';
+import type { PipelineStep } from '@/components/PipelineSteps';
 import { authFetch } from '@/utils/auth';
-
 
 interface FileState {
   claims: File | null;
@@ -21,7 +21,7 @@ interface PipelineStatusState {
   status: string;
   error: string | null;
   result?: any;
-  steps?: [];
+  steps: PipelineStep[];
   progress?: number;
   lastRun?: {
     startTime: Date;
