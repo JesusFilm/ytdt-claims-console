@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Loader2,
-  Database,
-  Upload as UploadIcon,
-  Cpu,
-  Cloud
-} from 'lucide-react';
+import { CheckCircle, Clock, Loader2, Database, Upload as UploadIcon, Cpu, Cloud, Circle, MinusCircle, XCircle } from 'lucide-react';
 import { formatDuration } from '@/utils/formatTime';
 
 
@@ -33,6 +24,7 @@ interface PipelineStepsProps {
 const getStepIcon = (stepId: string) => {
   const iconMap: Record<string, React.ComponentType<any>> = {
     'connect_vpn': Cloud,
+    'validate_input_csvs': Clock, 
     'backup_tables': Database,
     'process_claims': UploadIcon,
     'process_mcn_verdicts': CheckCircle,
@@ -46,20 +38,30 @@ const getStepIcon = (stepId: string) => {
   return <Icon className="w-4 h-4" />;
 };
 
-const StepStatusIcon: React.FC<{ step: PipelineStep }> = ({ step }) => {
-  const iconProps = { className: "w-5 h-5" };
-
+const StepStatusIcon: React.FC<{ step: PipelineStep; className?: string }> = ({ step, className = "w-5 h-5" }) => {
+  if (step.id === 'enrich_ml') {
+    console.log('Status value:', step.status);
+    // console.log('Status type:', typeof step.status);
+    // console.log('Strict equality skipped:', step.status === 'skipped');
+    // console.log('Status JSON:', JSON.stringify(step.status));
+  }
   switch (step.status) {
     case 'completed':
-      return <CheckCircle {...iconProps} className="w-5 h-5 text-green-600" />;
+      return <CheckCircle className={`${className} text-green-600`} />;
     case 'running':
-      return <Loader2 {...iconProps} className="w-5 h-5 text-blue-600 animate-spin" />;
+      return <Loader2 className={`${className} text-blue-600 animate-spin`} />;
     case 'error':
-      return <AlertCircle {...iconProps} className="w-5 h-5 text-red-600" />;
+    case 'failed':
+      return <XCircle className={`${className} text-red-600`} />;
+    case 'stopped':
+      return <MinusCircle className={`${className} text-gray-600`} />;
     case 'skipped':
-      return <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-gray-100" />;
+      return <Circle className={`${className} text-gray-400`} />;
+    case 'timeout':
+      return <Clock className={`${className} text-orange-600`} />;
+    case 'pending':
     default:
-      return <div className="w-5 h-5 rounded-full border-2 border-gray-300" />;
+      return <Circle className={`${className} text-gray-300`} />;
   }
 };
 

@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Loader2
-} from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
 import RefreshButton from './RefreshButton';
 import PipelineSteps, { PipelineStep } from './PipelineSteps';
 import { PipelineRun } from '@/types/PipelineRun';
@@ -20,9 +15,10 @@ export interface PipelineStatusProps {
     steps: PipelineStep[];
     currentStep?: string;
     startTime?: Date;
-    lastRun?: PipelineRun
+    lastRun?: PipelineRun;
   };
   onRefresh?: () => Promise<void>;
+  onStop?: (runId: string) => Promise<void>;
 }
 
 const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, running }) => {
@@ -62,6 +58,15 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
     );
   }
 
+  if (status === 'stopped') {
+    return (
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+        <XCircle className="w-4 h-4" />
+        Stopped
+      </div>
+    );
+  }
+
   return (
     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
       <Clock className="w-4 h-4" />
@@ -71,7 +76,7 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
 };
 
 
-export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusProps) {
+export default function PipelineStatusTab({ status, onRefresh, onStop }: PipelineStatusProps) {
 
   const showIdleState = !status.running;
 
@@ -114,6 +119,18 @@ export default function PipelineStatusTab({ status, onRefresh }: PipelineStatusP
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={status.status} running={status.running} />
+          
+          {status.running && status.runId && onStop && (
+            <button
+              onClick={() => onStop(status.runId!)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors font-medium"
+              title="Stop pipeline"
+            >
+              <XCircle className="w-4 h-4" />
+              Stop Pipeline
+            </button>
+          )}
+
           {onRefresh && (
             <RefreshButton
               onRefresh={onRefresh}

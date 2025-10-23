@@ -21,7 +21,7 @@ interface PipelineStatusState {
   status: string;
   error: string | null;
   result?: any;
-  steps?: any[];
+  steps?: [];
   progress?: number;
   lastRun?: {
     startTime: Date;
@@ -252,6 +252,42 @@ export default function Home() {
     }
   };
 
+  const handleStop = async (runId: string) => {
+    if (!confirm('Are you sure you want to stop the running pipeline?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await authFetch(`/api/runs/${runId}/stop`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Pipeline stopped:', result);
+
+      // Immediately update status to show stopped state
+      setStatus(prev => ({
+        ...prev,
+        running: false,
+        status: 'stopped',
+        error: 'Pipeline stopped by user'
+      }));
+
+    } catch (error: any) {
+      console.error('Stop error:', error);
+      alert(`Failed to stop pipeline: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownload = async (runId: string) => {
     try {
       // Fetch exports list
@@ -403,6 +439,7 @@ export default function Home() {
           <PipelineStatusTab
             status={status}
             onRefresh={handleStatusRefresh}
+            onStop={handleStop}
           />
         )}
 

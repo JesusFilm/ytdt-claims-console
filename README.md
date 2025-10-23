@@ -32,3 +32,13 @@ cp .env.example .env.local
 
 
 
+## Deploy ytdt-console to Vercel (Or create in Vercel console)
+
+
+```shell
+# Enter backend URL (e.g., https://ytdt-claims-pipeline-xyz.run.app)
+vercel env add NEXT_PUBLIC_API_URL production
+
+# Deploy
+vercel --prod
+```
