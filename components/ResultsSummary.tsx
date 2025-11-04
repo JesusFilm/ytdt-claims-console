@@ -71,18 +71,35 @@ export default function ResultsSummary({
             <FileText className="w-4 h-4 text-gray-500" />
             <span className="text-xs font-medium text-gray-600">Claims</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-900">
-              {results.claimsProcessed.new.toLocaleString()}
-            </span>
-            <span className="text-xs text-gray-500">new</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-900">
-              {results.claimsProcessed.total.toLocaleString()}
-            </span>
-            <span className="text-xs text-gray-500">total</span>
-          </div>
+          {(() => {
+            const me = results.claimsProcessed.matter_entertainment;
+            const m2 = results.claimsProcessed.matter_2;
+            const totalNew = (me?.new || 0) + (m2?.new || 0);
+            const totalAll = (me?.total || 0) + (m2?.total || 0);
+
+            return (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-900">
+                    {totalNew.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-500">new</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-900">
+                    {totalAll.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-500">total</span>
+                </div>
+                {me && m2 && (
+                  <div className="text-xs text-gray-500 mt-2 space-y-1">
+                    <div>ME: {me.new.toLocaleString()} new</div>
+                    <div>M2: {m2.new.toLocaleString()} new</div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 

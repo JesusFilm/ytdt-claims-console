@@ -11,7 +11,8 @@ import type { PipelineStep } from '@/components/PipelineSteps';
 import { authFetch } from '@/utils/auth';
 
 interface FileState {
-  claims: File | null;
+  claimsME: File | null;
+  claimsM2: File | null;
   mcnVerdicts: File | null;
   jfmVerdicts: File | null;
 }
@@ -43,12 +44,12 @@ interface SystemHealth {
 export default function Home() {
 
   const [files, setFiles] = useState<FileState>({
-    claims: null,
+    claimsME: null,
+    claimsM2: null,
     mcnVerdicts: null,
     jfmVerdicts: null,
   });
 
-  const [claimsSource, setClaimsSource] = useState('matter_entertainment');
   const [status, setStatus] = useState<PipelineStatusState>({
     running: false,
     status: 'idle',
@@ -171,7 +172,7 @@ export default function Home() {
   }, []);
 
   const handleRunPipeline = async () => {
-    const hasFiles = files.claims || files.mcnVerdicts || files.jfmVerdicts;
+    const hasFiles = files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts;
     if (!hasFiles) {
       alert('Please upload at least one file');
       return;
@@ -180,9 +181,11 @@ export default function Home() {
     setLoading(true);
     const formData = new FormData();
 
-    if (files.claims) {
-      formData.append('claims', files.claims);
-      formData.append('claims_source', claimsSource);
+    if (files.claimsME) {
+      formData.append('claims_matter_entertainment', files.claimsME);
+    }
+    if (files.claimsM2) {
+      formData.append('claims_matter_2', files.claimsM2);
     }
     if (files.mcnVerdicts) {
       formData.append('mcn_verdicts', files.mcnVerdicts);
@@ -218,7 +221,7 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    setFiles({ claims: null, mcnVerdicts: null, jfmVerdicts: null });
+    setFiles({ claimsME: null, claimsM2: null, mcnVerdicts: null, jfmVerdicts: null });
     setStatus({ running: false, status: 'idle', error: null });
     setActiveTab('upload');
   };
@@ -423,12 +426,10 @@ export default function Home() {
         {activeTab === 'upload' && (
           <UploadTab
             files={files}
-            claimsSource={claimsSource}
             isRunning={isRunning}
             loading={loading}
             handleFileDrop={handleFileDrop}
             handleFileRemove={handleFileRemove}
-            setClaimsSource={setClaimsSource}
             handleRunPipeline={handleRunPipeline}
             handleReset={handleReset}
           />

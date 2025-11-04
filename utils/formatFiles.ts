@@ -1,14 +1,18 @@
 import { PipelineRun } from "@/types/PipelineRun";
 
 export function formatRunFiles(
-  files: PipelineRun['files'] | { claims?: File; mcnVerdicts?: File; jfmVerdicts?: File; }, 
+  files: PipelineRun['files'] | { claimsME?: File; claimsM2?: File; mcnVerdicts?: File; jfmVerdicts?: File; }, 
   useFileName = false
 ): string[] {
   const fileList = [];
   
-  if (files.claims) {
-    const name = useFileName ? files.claims.name : files.claims;
-    fileList.push(`Claims: ${name}${!useFileName && files.claimsSource ? ` (${files.claimsSource})` : ''}`);
+  if (files.claimsME) {
+    const name = useFileName ? files.claimsME.name : files.claimsME;
+    fileList.push(`Claims (ME): ${name}`);
+  }
+  if (files.claimsM2) {
+    const name = useFileName ? files.claimsM2.name : files.claimsM2;
+    fileList.push(`Claims (M2): ${name}`);
   }
   if (files.mcnVerdicts) {
     const name = useFileName ? files.mcnVerdicts.name : files.mcnVerdicts;

@@ -6,35 +6,32 @@ import FileUpload from '@/components/FileUpload';
 import { formatRunFiles } from '@/utils/formatFiles';
 
 interface FileState {
-  claims: File | null;
+  claimsME: File | null;
+  claimsM2: File | null;
   mcnVerdicts: File | null;
   jfmVerdicts: File | null;
 }
 
 interface UploadTabProps {
   files: FileState;
-  claimsSource: string;
   isRunning: boolean;
   loading: boolean;
   handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void;
   handleFileRemove: (fileType: keyof FileState) => void;
-  setClaimsSource: (source: string) => void;
   handleRunPipeline: () => void;
   handleReset: () => void;
 }
 
 export default function UploadTab({
   files,
-  claimsSource,
   isRunning,
   loading,
   handleFileDrop,
   handleFileRemove,
-  setClaimsSource,
   handleRunPipeline,
   handleReset
 }: UploadTabProps) {
-  const hasFiles = files.claims || files.mcnVerdicts || files.jfmVerdicts;
+  const hasFiles = files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts;
 
   return (
     <div className="space-y-8">
@@ -49,67 +46,59 @@ export default function UploadTab({
       </div>
 
       {/* File Upload Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <FileUpload
-          file={files.claims}
-          onDrop={(files) => handleFileDrop(files, 'claims')}
-          onRemove={() => handleFileRemove('claims')}
-          title="Claims Report"
-          description="Latest MCN claims CSV from YouTube Studio"
-          disabled={isRunning}
-        />
-
-        <FileUpload
-          file={files.mcnVerdicts}
-          onDrop={(files) => handleFileDrop(files, 'mcnVerdicts')}
-          onRemove={() => handleFileRemove('mcnVerdicts')}
-          title="MCN Verdicts"
-          description="Verdict decisions for MCN claims"
-          disabled={isRunning}
-        />
-
-        <FileUpload
-          file={files.jfmVerdicts}
-          onDrop={(files) => handleFileDrop(files, 'jfmVerdicts')}
-          onRemove={() => handleFileRemove('jfmVerdicts')}
-          title="JFM Verdicts"
-          description="Verdict decisions for owned channel videos"
-          disabled={isRunning}
-        />
-      </div>
-
-      {/* Claims Source Selection */}
-      {files.claims && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Claims Source</h3>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="claimsSource"
-                value="matter_entertainment"
-                checked={claimsSource === 'matter_entertainment'}
-                onChange={(e) => setClaimsSource(e.target.value)}
-                disabled={isRunning}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className="text-gray-700">Matter Entertainment</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="claimsSource"
-                value="matter_2"
-                checked={claimsSource === 'matter_2'}
-                onChange={(e) => setClaimsSource(e.target.value)}
-                disabled={isRunning}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className="text-gray-700">Matter 2</span>
-            </label>
+      <div className="space-y-8">
+        {/* Claims Section */}
+        <div className="bg-white rounded-2xl border-2 border-gray-200 p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Claims Files</h3>
+            <p className="text-sm text-gray-600">Upload one or both sources</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <FileUpload
+              file={files.claimsME}
+              onDrop={(files) => handleFileDrop(files, 'claimsME')}
+              onRemove={() => handleFileRemove('claimsME')}
+              title="Matter Entertainment"
+              description="MCN claims CSV"
+              disabled={isRunning}
+            />
+            <FileUpload
+              file={files.claimsM2}
+              onDrop={(files) => handleFileDrop(files, 'claimsM2')}
+              onRemove={() => handleFileRemove('claimsM2')}
+              title="Matter 2"
+              description="MCN claims CSV"
+              disabled={isRunning}
+            />
           </div>
         </div>
-      )}
+
+        {/* Verdicts Section */}
+        <div className="bg-blue-50 rounded-2xl border-2 border-blue-200 p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Verdicts</h3>
+            <p className="text-sm text-gray-600">Optional - Apply to all uploaded claims</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <FileUpload
+              file={files.mcnVerdicts}
+              onDrop={(files) => handleFileDrop(files, 'mcnVerdicts')}
+              onRemove={() => handleFileRemove('mcnVerdicts')}
+              title="MCN Verdicts"
+              description="Verdict decisions for MCN claims"
+              disabled={isRunning}
+            />
+            <FileUpload
+              file={files.jfmVerdicts}
+              onDrop={(files) => handleFileDrop(files, 'jfmVerdicts')}
+              onRemove={() => handleFileRemove('jfmVerdicts')}
+              title="JFM Verdicts"
+              description="Verdict decisions for owned videos"
+              disabled={isRunning}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex items-center justify-center gap-4">

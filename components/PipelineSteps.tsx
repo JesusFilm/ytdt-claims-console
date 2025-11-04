@@ -22,29 +22,19 @@ interface PipelineStepsProps {
 }
 
 const getStepIcon = (stepId: string) => {
-  const iconMap: Record<string, React.ComponentType<any>> = {
-    'connect_vpn': Cloud,
-    'validate_input_csvs': Clock, 
-    'backup_tables': Database,
-    'process_claims': UploadIcon,
-    'process_mcn_verdicts': CheckCircle,
-    'process_jfm_verdicts': CheckCircle,
-    'export_views': Database,
-    'enrich_ml': Cpu,
-    'upload_drive': Cloud
-  };
-
-  const Icon = iconMap[stepId] || Clock;
-  return <Icon className="w-4 h-4" />;
+  // Match by keyword in step name, not exact ID
+  if (stepId.includes('vpn')) return <Cloud className="w-4 h-4" />;
+  if (stepId.includes('backup')) return <Database className="w-4 h-4" />;
+  if (stepId.includes('claims')) return <UploadIcon className="w-4 h-4" />;
+  if (stepId.includes('verdicts')) return <CheckCircle className="w-4 h-4" />;
+  if (stepId.includes('export')) return <Database className="w-4 h-4" />;
+  if (stepId.includes('ml')) return <Cpu className="w-4 h-4" />;
+  if (stepId.includes('drive')) return <Cloud className="w-4 h-4" />;
+  
+  return <Clock className="w-4 h-4" />;
 };
 
 const StepStatusIcon: React.FC<{ step: PipelineStep; className?: string }> = ({ step, className = "w-5 h-5" }) => {
-  if (step.id === 'enrich_ml') {
-    console.log('Status value:', step.status);
-    // console.log('Status type:', typeof step.status);
-    // console.log('Strict equality skipped:', step.status === 'skipped');
-    // console.log('Status JSON:', JSON.stringify(step.status));
-  }
   switch (step.status) {
     case 'completed':
       return <CheckCircle className={`${className} text-green-600`} />;

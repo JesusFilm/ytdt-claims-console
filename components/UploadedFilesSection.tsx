@@ -38,7 +38,7 @@ function FileItem({ label, filePath, source }: FileItemProps) {
 }
 
 export default function UploadedFilesSection({ files }: UploadedFilesSectionProps) {
-  const hasFiles = files.claims || files.mcnVerdicts || files.jfmVerdicts;
+  const hasFiles = files.claims_matter_entertainment || files.claims_matter_2 || files.mcnVerdicts || files.jfmVerdicts;
   
   if (!hasFiles) return null;
 
@@ -46,11 +46,16 @@ export default function UploadedFilesSection({ files }: UploadedFilesSectionProp
     <div className="mb-6">
       <h4 className="font-medium text-gray-900 mb-3">Uploaded Files</h4>
       <div className="space-y-2">
-        {files.claims && (
+        {files.claims_matter_entertainment && (
           <FileItem 
-            label="Claims" 
-            filePath={files.claims} 
-            source={files.claimsSource} 
+            label="Claims (Matter Entertainment)" 
+            filePath={files.claims_matter_entertainment} 
+          />
+        )}
+        {files.claims_matter_2 && (
+          <FileItem 
+            label="Claims (Matter 2)" 
+            filePath={files.claims_matter_2} 
           />
         )}
         {files.mcnVerdicts && (
