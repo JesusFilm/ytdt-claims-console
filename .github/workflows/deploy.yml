@@ -41,13 +41,10 @@ jobs:
         id: deploy
         run: |
           set +e
-          OUTPUT=$(pnpm vercel deploy --prebuilt ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }} --json 2>&1)
+          OUTPUT=$(pnpm vercel deploy --prebuilt ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }} 2>&1)
           EXIT_CODE=$?
           echo "$OUTPUT"
-          DEPLOY_URL=$(echo "$OUTPUT" | tail -1 | jq -r '.url // empty' 2>/dev/null)
-          if [ -z "$DEPLOY_URL" ]; then
-            DEPLOY_URL=$(echo "$OUTPUT" | grep -oE 'https://[^[:space:]]+\.vercel\.app' | head -1)
-          fi
+          DEPLOY_URL=$(echo "$OUTPUT" | grep -oE 'https://[^[:space:]]+\.vercel\.app' | head -1)
           if [ -n "$DEPLOY_URL" ]; then
             echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
             echo "Deployment URL: $DEPLOY_URL"
