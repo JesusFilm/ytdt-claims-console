@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { AuthProvider } from "@/contexts/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
@@ -16,9 +16,13 @@ export const metadata: Metadata = {
     "Multi-Channel Network claims processing and management dashboard",
   keywords: ["youtube", "mcn", "claims", "pipeline", "dashboard"],
   authors: [{ name: "Jesus Film Project" }],
-  viewport: "width=device-width, initial-scale=1",
-  themeColor: "#3B82F6",
   robots: "noindex, nofollow", // Remove for production
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#3B82F6",
 }
 
 export default function RootLayout({
