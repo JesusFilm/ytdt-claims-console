@@ -17,8 +17,6 @@ This is a [Next.js](https://nextjs.org) frontend for [`ytdt-claims-pipeline`](ht
 3. Run the development server:
 
 ```bash
-PORT=3001 \
-NEXT_PUBLIC_API_URL=http://localhost:3000 \
 npm run dev
 ```
 

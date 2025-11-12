@@ -19,8 +19,6 @@ Thank you for your interest in contributing to ytdt-claims-console!
 ### Running the Development Server
 
 ```bash
-PORT=3001 \
-NEXT_PUBLIC_API_URL=http://localhost:3000 \
 pnpm dev
 ```
 
