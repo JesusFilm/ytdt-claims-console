@@ -1,5 +1,5 @@
 {
-  "name": "YTDT Claims Console",
+  "name": "ytdt-claims-console",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
 
   "features": {
