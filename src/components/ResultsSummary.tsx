@@ -1,4 +1,3 @@
-import React from "react"
 import {
   CheckCircle,
   AlertCircle,
@@ -6,6 +5,7 @@ import {
   Database,
   Download,
 } from "lucide-react"
+
 import type { PipelineRun } from "@/types/PipelineRun"
 
 interface ResultsSummaryProps {

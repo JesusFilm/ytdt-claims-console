@@ -1,7 +1,7 @@
 "use client"
 
-import React from "react"
 import { PlayCircle, Pause } from "lucide-react"
+
 import FileUpload from "@/components/FileUpload"
 import { formatRunFiles } from "@/utils/formatFiles"
 

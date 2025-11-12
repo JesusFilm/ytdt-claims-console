@@ -1,7 +1,9 @@
-import type { Config } from "tailwindcss"
+import aspectRatio from "@tailwindcss/aspect-ratio"
 import forms from "@tailwindcss/forms"
 import typography from "@tailwindcss/typography"
-import aspectRatio from "@tailwindcss/aspect-ratio"
+import { PluginAPI } from "tailwindcss/types/config"
+
+import type { Config } from "tailwindcss"
 
 const config: Config = {
   content: [
@@ -194,7 +196,7 @@ const config: Config = {
     typography,
     aspectRatio,
     // Custom plugin for utilities
-    function ({ addUtilities, theme }: any) {
+    function ({ addUtilities, theme }: PluginAPI) {
       const newUtilities = {
         ".gradient-primary": {
           background: `linear-gradient(135deg, ${theme("colors.primary.500")}, ${theme("colors.primary.600")})`,

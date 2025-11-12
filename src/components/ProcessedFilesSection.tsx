@@ -1,10 +1,18 @@
-import { authFetch } from "@/utils/auth"
-import { Database, Download } from "lucide-react"
 import { useState, useEffect } from "react"
+
+import { Database, Download } from "lucide-react"
+
 import { env } from "@/env"
+import { authFetch } from "@/utils/auth"
+
+interface ExportedFile {
+  name: string
+  size: number
+  modified: string
+}
 
 export default function ExportedFilesSection({ runId }: { runId: string }) {
-  const [exportedFiles, setExportedFiles] = useState<any[]>([])
+  const [exportedFiles, setExportedFiles] = useState<ExportedFile[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

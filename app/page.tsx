@@ -1,13 +1,15 @@
 "use client"
 
-import React, { useState, useCallback, useEffect } from "react"
-import { Settings, Activity, AlertTriangle } from "lucide-react"
-import UploadTab from "@/components/UploadTab"
-import PipelineStatusTab from "@/components/PipelineStatusTab"
+import { useState, useCallback, useEffect } from "react"
+
+import { Activity, AlertTriangle } from "lucide-react"
+
 import PipelineHistoryTab from "@/components/PipelineHistoryTab"
+import PipelineStatusTab from "@/components/PipelineStatusTab"
+import type { PipelineStep } from "@/components/PipelineSteps"
+import UploadTab from "@/components/UploadTab"
 import UserMenu from "@/components/UserMenu"
 import type { PipelineRun } from "@/types/PipelineRun"
-import type { PipelineStep } from "@/components/PipelineSteps"
 import { authFetch } from "@/utils/auth"
 
 interface FileState {
@@ -24,13 +26,7 @@ interface PipelineStatusState {
   result?: any
   steps: PipelineStep[]
   progress?: number
-  lastRun?: {
-    startTime: Date
-    duration: number
-    status: "completed" | "failed"
-    error?: string
-    results?: any
-  }
+  lastRun?: PipelineRun
 }
 
 interface SystemHealth {
@@ -214,10 +210,12 @@ export default function Home() {
 
       // Switch to status view and start polling
       setActiveTab("status")
-      setStatus({ running: true, status: "starting", error: null })
-    } catch (error: any) {
+      setStatus({ running: true, status: "starting", error: null, steps: [] })
+    } catch (error) {
       console.error("Upload error:", error)
-      alert(`Failed to start pipeline: ${error.message}`)
+      if (error instanceof Error) {
+        alert(`Failed to start pipeline: ${error.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -230,7 +228,7 @@ export default function Home() {
       mcnVerdicts: null,
       jfmVerdicts: null,
     })
-    setStatus({ running: false, status: "idle", error: null })
+    setStatus({ running: false, status: "idle", error: null, steps: [] })
     setActiveTab("upload")
   }
 
@@ -253,10 +251,12 @@ export default function Home() {
 
       // Switch to status view and start polling
       setActiveTab("status")
-      setStatus({ running: true, status: "starting", error: null })
-    } catch (error: any) {
+      setStatus({ running: true, status: "starting", error: null, steps: [] })
+    } catch (error) {
       console.error("Retry error:", error)
-      alert(`Failed to retry pipeline: ${error.message}`)
+      if (error instanceof Error) {
+        alert(`Failed to retry pipeline: ${error.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -289,9 +289,11 @@ export default function Home() {
         status: "stopped",
         error: "Pipeline stopped by user",
       }))
-    } catch (error: any) {
+    } catch (error) {
       console.error("Stop error:", error)
-      alert(`Failed to stop pipeline: ${error.message}`)
+      if (error instanceof Error) {
+        alert(`Failed to stop pipeline: ${error.message}`)
+      }
     } finally {
       setLoading(false)
     }

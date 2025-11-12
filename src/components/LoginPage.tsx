@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+
 import { getAuthUrl } from "@/utils/auth"
 
 export default function LoginPage() {

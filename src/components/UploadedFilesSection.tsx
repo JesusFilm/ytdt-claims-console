@@ -1,7 +1,7 @@
-import React from "react"
 import { FileText, Download } from "lucide-react"
-import type { PipelineRun } from "@/types/PipelineRun"
+
 import { env } from "@/env"
+import type { PipelineRun } from "@/types/PipelineRun"
 
 interface UploadedFilesSectionProps {
   files: PipelineRun["files"]

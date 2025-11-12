@@ -7,7 +7,8 @@ import {
   useEffect,
   ReactNode,
 } from "react"
-import { getCurrentUser, getToken, setToken, removeToken } from "@/utils/auth"
+
+import { getCurrentUser, setToken } from "@/utils/auth"
 
 interface User {
   id: string

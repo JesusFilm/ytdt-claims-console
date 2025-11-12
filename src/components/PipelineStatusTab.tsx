@@ -1,12 +1,15 @@
-import React from "react"
+import { FC } from "react"
+
 import { CheckCircle, AlertCircle, Clock, XCircle } from "lucide-react"
-import RefreshButton from "@/components/RefreshButton"
+
 import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
+import RefreshButton from "@/components/RefreshButton"
 import { PipelineRun } from "@/types/PipelineRun"
 import { formatDuration } from "@/utils/formatTime"
 
 export interface PipelineStatusProps {
   status: {
+    runId?: string
     running: boolean
     status: string
     error: string | null
@@ -20,7 +23,7 @@ export interface PipelineStatusProps {
   onStop?: (runId: string) => Promise<void>
 }
 
-const StatusBadge: React.FC<{ status: string; running: boolean }> = ({
+const StatusBadge: FC<{ status: string; running: boolean }> = ({
   status,
   running,
 }) => {
@@ -223,10 +226,16 @@ export default function PipelineStatusTab({
 
                     {status.lastRun.results && (
                       <div className="mt-3 text-sm text-gray-700">
-                        {status.lastRun.results.claimsProcessed && (
+                        {(status.lastRun.results.claimsProcessed
+                          ?.matter_entertainment?.new ||
+                          status.lastRun.results.claimsProcessed?.matter_2
+                            ?.new) && (
                           <span>
-                            {status.lastRun.results.claimsProcessed.new} new
-                            claims processed
+                            {(status.lastRun.results.claimsProcessed
+                              ?.matter_entertainment?.new ?? 0) +
+                              (status.lastRun.results.claimsProcessed?.matter_2
+                                ?.new ?? 0)}{" "}
+                            new claims processed
                           </span>
                         )}
                         {status.lastRun.results.exports &&
@@ -240,8 +249,8 @@ export default function PipelineStatusTab({
                           </span>
                         )}
                         {status.lastRun.results.mcnVerdicts?.invalidMCIDs &&
-                          status.lastRun.results.mcnVerdicts.invalidMCIDs >
-                            0 && (
+                          status.lastRun.results.mcnVerdicts.invalidMCIDs
+                            .length > 0 && (
                             <span className="text-orange-600">
                               {status.lastRun.results.exports ? " • " : ""}
                               {

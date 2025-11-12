@@ -1,7 +1,12 @@
-import type { Metadata, Viewport } from "next"
+import { ReactNode } from "react"
+
 import { Inter } from "next/font/google"
-import { AuthProvider } from "@/contexts/AuthContext"
+
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { AuthProvider } from "@/contexts/AuthContext"
+
+import type { Metadata, Viewport } from "next"
+
 import "./globals.css"
 
 const inter = Inter({
@@ -25,11 +30,7 @@ export const viewport: Viewport = {
   themeColor: "#3B82F6",
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <head>

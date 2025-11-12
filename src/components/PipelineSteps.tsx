@@ -1,4 +1,5 @@
-import React from "react"
+import { FC } from "react"
+
 import {
   CheckCircle,
   Clock,
@@ -11,13 +12,22 @@ import {
   MinusCircle,
   XCircle,
 } from "lucide-react"
+
 import { formatDuration } from "@/utils/formatTime"
 
 export interface PipelineStep {
   id: string
   name: string
   description?: string
-  status: "pending" | "running" | "completed" | "error" | "skipped"
+  status:
+    | "pending"
+    | "running"
+    | "completed"
+    | "error"
+    | "skipped"
+    | "stopped"
+    | "timeout"
+    | "failed"
   startTime?: Date
   endTime?: Date
   duration?: number
@@ -44,7 +54,7 @@ const getStepIcon = (stepId: string) => {
   return <Clock className="w-4 h-4" />
 }
 
-const StepStatusIcon: React.FC<{ step: PipelineStep; className?: string }> = ({
+const StepStatusIcon: FC<{ step: PipelineStep; className?: string }> = ({
   step,
   className = "w-5 h-5",
 }) => {

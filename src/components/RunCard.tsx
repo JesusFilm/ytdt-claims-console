@@ -1,4 +1,5 @@
-import React from "react"
+import { FC } from "react"
+
 import {
   CheckCircle,
   AlertCircle,
@@ -12,9 +13,7 @@ import ResultsSummary from "@/components/ResultsSummary"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { formatTimestamp } from "@/utils/formatTime"
 
-const StatusIcon: React.FC<{ status: PipelineRun["status"] }> = ({
-  status,
-}) => {
+const StatusIcon: FC<{ status: PipelineRun["status"] }> = ({ status }) => {
   const iconProps = { className: "w-5 h-5" }
 
   switch (status) {
@@ -35,9 +34,7 @@ const StatusIcon: React.FC<{ status: PipelineRun["status"] }> = ({
   }
 }
 
-const StatusBadge: React.FC<{ status: PipelineRun["status"] }> = ({
-  status,
-}) => {
+const StatusBadge: FC<{ status: PipelineRun["status"] }> = ({ status }) => {
   const styles = {
     running: "bg-blue-100 text-blue-700 border-blue-200",
     completed: "bg-green-100 text-green-700 border-green-200",

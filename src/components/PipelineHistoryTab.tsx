@@ -1,5 +1,7 @@
-import React, { useState } from "react"
+import { useState } from "react"
+
 import { CheckCircle, AlertCircle, Calendar, TrendingUp } from "lucide-react"
+
 import RunCard from "@/components/RunCard"
 import RunDetailsModal from "@/components/RunDetailsModal"
 import type { PipelineRun } from "@/types/PipelineRun"

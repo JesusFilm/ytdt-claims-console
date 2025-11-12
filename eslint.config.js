@@ -1,11 +1,58 @@
 import { globalIgnores } from "eslint/config"
-import prettierConfig from "eslint-config-prettier"
 import nextVitals from "eslint-config-next/core-web-vitals"
 import nextTypescript from "eslint-config-next/typescript"
+import prettierConfig from "eslint-config-prettier"
 
-export default [
+const config = [
   ...nextVitals,
   ...nextTypescript,
   prettierConfig,
+  {
+    settings: {
+      "import/resolver": {
+        typescript: {
+          alwaysTryTypes: true,
+        },
+      },
+    },
+    rules: {
+      "import/order": [
+        "error",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+            "object",
+            "type",
+          ],
+          "newlines-between": "always",
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+          pathGroups: [
+            {
+              pattern: "react",
+              group: "external",
+              position: "before",
+            },
+            {
+              pattern: "@/**",
+              group: "internal",
+            },
+          ],
+          pathGroupsExcludedImportTypes: ["react"],
+        },
+      ],
+      "react/react-in-jsx-scope": "off",
+      "react/jsx-uses-react": "off",
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]
+
+export default config

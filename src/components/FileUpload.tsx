@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useCallback } from "react"
-import { useDropzone } from "react-dropzone"
-import { Upload, CheckCircle, FileText, X } from "lucide-react"
+import { useCallback } from "react"
+
+import { Upload, FileText, X } from "lucide-react"
+import { FileRejection, useDropzone } from "react-dropzone"
 
 interface FileUploadProps {
   file: File | null
@@ -26,7 +27,7 @@ export default function FileUpload({
   className = "",
 }: FileUploadProps) {
   const handleDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: any[]) => {
+    (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
       if (disabled) return
 
       if (rejectedFiles.length > 0) {
