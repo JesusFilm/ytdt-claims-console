@@ -21,7 +21,7 @@ describe("AuthContext", () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     delete (window as any).location
-    window.location = { ...window.location, search: "" } as Location
+    window.location = { ...window.location, search: "" } as any
     const { getCurrentUser } = await import("@/utils/auth")
     vi.mocked(getCurrentUser).mockResolvedValue(null)
   })

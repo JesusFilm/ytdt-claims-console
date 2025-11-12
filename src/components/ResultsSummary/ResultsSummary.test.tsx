@@ -14,7 +14,7 @@ describe("ResultsSummary", () => {
 
   it("should return null when results are not provided", () => {
     const { container } = render(
-      <ResultsSummary results={null} runId="test-1" />
+      <ResultsSummary results={undefined} runId="test-1" />
     )
     expect(container.firstChild).toBeNull()
   })

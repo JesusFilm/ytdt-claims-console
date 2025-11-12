@@ -14,7 +14,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --project tsconfig.app.json && tsc --noEmit --project tsconfig.test.json",
     "clean": "rm -rf .next out dist"
   },
   "dependencies": {

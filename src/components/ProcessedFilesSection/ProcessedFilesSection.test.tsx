@@ -24,7 +24,10 @@ describe("ProcessedFilesSection", () => {
     vi.mocked(authFetch).mockImplementation(
       () =>
         new Promise((resolve) =>
-          setTimeout(() => resolve({ json: async () => ({ files: [] }) }), 100)
+          setTimeout(
+            () => resolve({ json: async () => ({ files: [] }) } as any),
+            100
+          )
         )
     )
 

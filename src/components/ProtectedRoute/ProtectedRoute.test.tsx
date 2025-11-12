@@ -17,7 +17,7 @@ describe("ProtectedRoute", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     delete (window as any).location
-    window.location = { ...window.location, search: "" } as Location
+    window.location = { ...window.location, search: "" } as any
   })
 
   it("should show loading state when auth is loading", async () => {

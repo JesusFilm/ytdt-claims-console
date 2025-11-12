@@ -10,7 +10,7 @@ describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     delete (window as any).location
-    window.location = { ...window.location, href: "" } as Location
+    window.location = { ...window.location, href: "" } as any
   })
 
   it("should render title and description", () => {
