@@ -1,333 +1,338 @@
-'use client';
+"use client"
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Settings, Activity, AlertTriangle } from 'lucide-react';
-import UploadTab from '@/components/UploadTab';
-import PipelineStatusTab from '@/components/PipelineStatusTab';
-import PipelineHistoryTab from '@/components/PipelineHistoryTab';
-import UserMenu from '@/components/UserMenu';
-import type { PipelineRun } from '@/types/PipelineRun';
-import type { PipelineStep } from '@/components/PipelineSteps';
-import { authFetch } from '@/utils/auth';
+import React, { useState, useCallback, useEffect } from "react"
+import { Settings, Activity, AlertTriangle } from "lucide-react"
+import UploadTab from "@/components/UploadTab"
+import PipelineStatusTab from "@/components/PipelineStatusTab"
+import PipelineHistoryTab from "@/components/PipelineHistoryTab"
+import UserMenu from "@/components/UserMenu"
+import type { PipelineRun } from "@/types/PipelineRun"
+import type { PipelineStep } from "@/components/PipelineSteps"
+import { authFetch } from "@/utils/auth"
 
 interface FileState {
-  claimsME: File | null;
-  claimsM2: File | null;
-  mcnVerdicts: File | null;
-  jfmVerdicts: File | null;
+  claimsME: File | null
+  claimsM2: File | null
+  mcnVerdicts: File | null
+  jfmVerdicts: File | null
 }
 
 interface PipelineStatusState {
-  running: boolean;
-  status: string;
-  error: string | null;
-  result?: any;
-  steps: PipelineStep[];
-  progress?: number;
+  running: boolean
+  status: string
+  error: string | null
+  result?: any
+  steps: PipelineStep[]
+  progress?: number
   lastRun?: {
-    startTime: Date;
-    duration: number;
-    status: 'completed' | 'failed';
-    error?: string;
-    results?: any;
-  };
+    startTime: Date
+    duration: number
+    status: "completed" | "failed"
+    error?: string
+    results?: any
+  }
 }
 
 interface SystemHealth {
-  status: string;
-  uptime: number;
-  memory: { used: number; total: number; };
-  enrich_ml_status?: 'healthy' | 'unhealthy';
+  status: string
+  uptime: number
+  memory: { used: number; total: number }
+  enrich_ml_status?: "healthy" | "unhealthy"
 }
 
-
 export default function Home() {
-
   const [files, setFiles] = useState<FileState>({
     claimsME: null,
     claimsM2: null,
     mcnVerdicts: null,
     jfmVerdicts: null,
-  });
+  })
 
   const [status, setStatus] = useState<PipelineStatusState>({
     running: false,
-    status: 'idle',
+    status: "idle",
     error: null,
-    steps: []
-  });
+    steps: [],
+  })
 
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upload' | 'status' | 'history'>('upload');
-  const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([]);
-  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
-  const [hasNewRun, setHasNewRun] = useState(false);
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<"upload" | "status" | "history">(
+    "upload"
+  )
+  const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([])
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
+  const [hasNewRun, setHasNewRun] = useState(false)
 
   // Fetch system health
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const response = await authFetch(`/api/health`);
-        const health = await response.json();
-        setSystemHealth(health);
+        const response = await authFetch(`/api/health`)
+        const health = await response.json()
+        setSystemHealth(health)
       } catch (error) {
-        console.error('Health check failed:', error);
+        console.error("Health check failed:", error)
         setSystemHealth({
-          status: 'error',
+          status: "error",
           uptime: 0,
-          memory: { used: 0, total: 0 }
-        });
+          memory: { used: 0, total: 0 },
+        })
       }
-    };
+    }
 
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 30000); // Check every 30s
-    return () => clearInterval(interval);
-  }, []);
+    fetchHealth()
+    const interval = setInterval(fetchHealth, 30000) // Check every 30s
+    return () => clearInterval(interval)
+  }, [])
 
   // Fetch pipeline history
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await authFetch(`/api/runs/history`);
-        const data = await response.json();
-        setPipelineRuns(data.runs || []);
+        const response = await authFetch(`/api/runs/history`)
+        const data = await response.json()
+        setPipelineRuns(data.runs || [])
       } catch (error) {
-        console.error('Failed to fetch history:', error);
+        console.error("Failed to fetch history:", error)
       }
-    };
+    }
 
-    fetchHistory();
-  }, [status.running]); // Refresh when pipeline completes
+    fetchHistory()
+  }, [status.running]) // Refresh when pipeline completes
 
   // Poll for status when pipeline is running
   useEffect(() => {
-    if (!status.running) return;
+    if (!status.running) return
 
     const interval = setInterval(async () => {
       try {
-        const response = await authFetch(`/api/status`);
-        const data = await response.json();
+        const response = await authFetch(`/api/status`)
+        const data = await response.json()
 
         // If pipeline just finished, fetch last run and stop polling
         if (data.running === false && status.running === true) {
-
-          const historyResponse = await authFetch(`/api/runs/history?limit=1`);
-          const historyData = await historyResponse.json();
-          const lastRun = historyData.runs?.[0];
+          const historyResponse = await authFetch(`/api/runs/history?limit=1`)
+          const historyData = await historyResponse.json()
+          const lastRun = historyData.runs?.[0]
 
           setStatus({
             ...data,
-            lastRun: lastRun ? {
-              startTime: new Date(lastRun.startTime),
-              duration: lastRun.duration,
-              status: lastRun.status,
-              error: lastRun.error,
-              results: lastRun.results
-            } : undefined
-          });
+            lastRun: lastRun
+              ? {
+                  startTime: new Date(lastRun.startTime),
+                  duration: lastRun.duration,
+                  status: lastRun.status,
+                  error: lastRun.error,
+                  results: lastRun.results,
+                }
+              : undefined,
+          })
 
           // Mark new run available
-          setHasNewRun(true);
+          setHasNewRun(true)
 
           // Refresh full history
           setTimeout(() => {
             const fetchHistory = async () => {
-              const fullHistoryResponse = await authFetch(`/api/runs/history`);
-              const fullHistoryData = await fullHistoryResponse.json();
-              setPipelineRuns(fullHistoryData.runs || []);
-            };
-            fetchHistory();
-          }, 1000);
-
+              const fullHistoryResponse = await authFetch(`/api/runs/history`)
+              const fullHistoryData = await fullHistoryResponse.json()
+              setPipelineRuns(fullHistoryData.runs || [])
+            }
+            fetchHistory()
+          }, 1000)
         } else {
           // setStatus(data);
-          setStatus(prevStatus => ({
+          setStatus((prevStatus) => ({
             ...data,
-            lastRun: prevStatus.lastRun
-          }));
+            lastRun: prevStatus.lastRun,
+          }))
         }
       } catch (error) {
-        console.error('Status poll error:', error);
+        console.error("Status poll error:", error)
       }
-    }, 2000);
+    }, 2000)
 
-    return () => clearInterval(interval);
-  }, [status.running]);
+    return () => clearInterval(interval)
+  }, [status.running])
 
-  const handleFileDrop = useCallback((acceptedFiles: File[], fileType: keyof FileState) => {
-    if (acceptedFiles.length > 0) {
-      setFiles(prev => ({
-        ...prev,
-        [fileType]: acceptedFiles[0]
-      }));
-    }
-  }, []);
+  const handleFileDrop = useCallback(
+    (acceptedFiles: File[], fileType: keyof FileState) => {
+      if (acceptedFiles.length > 0) {
+        setFiles((prev) => ({
+          ...prev,
+          [fileType]: acceptedFiles[0],
+        }))
+      }
+    },
+    []
+  )
 
   const handleFileRemove = useCallback((fileType: keyof FileState) => {
-    setFiles(prev => ({
+    setFiles((prev) => ({
       ...prev,
-      [fileType]: null
-    }));
-  }, []);
+      [fileType]: null,
+    }))
+  }, [])
 
   const handleRunPipeline = async () => {
-    const hasFiles = files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts;
+    const hasFiles =
+      files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts
     if (!hasFiles) {
-      alert('Please upload at least one file');
-      return;
+      alert("Please upload at least one file")
+      return
     }
 
-    setLoading(true);
-    const formData = new FormData();
+    setLoading(true)
+    const formData = new FormData()
 
     if (files.claimsME) {
-      formData.append('claims_matter_entertainment', files.claimsME);
+      formData.append("claims_matter_entertainment", files.claimsME)
     }
     if (files.claimsM2) {
-      formData.append('claims_matter_2', files.claimsM2);
+      formData.append("claims_matter_2", files.claimsM2)
     }
     if (files.mcnVerdicts) {
-      formData.append('mcn_verdicts', files.mcnVerdicts);
+      formData.append("mcn_verdicts", files.mcnVerdicts)
     }
     if (files.jfmVerdicts) {
-      formData.append('jfm_verdicts', files.jfmVerdicts);
+      formData.append("jfm_verdicts", files.jfmVerdicts)
     }
 
     try {
       const response = await authFetch(`/api/run`, {
-        method: 'POST',
-        body: formData
-      });
+        method: "POST",
+        body: formData,
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      const result = await response.json();
-      console.log('Pipeline started:', result);
+      const result = await response.json()
+      console.log("Pipeline started:", result)
 
       // Switch to status view and start polling
-      setActiveTab('status');
-      setStatus({ running: true, status: 'starting', error: null });
-
+      setActiveTab("status")
+      setStatus({ running: true, status: "starting", error: null })
     } catch (error: any) {
-      console.error('Upload error:', error);
-      alert(`Failed to start pipeline: ${error.message}`);
+      console.error("Upload error:", error)
+      alert(`Failed to start pipeline: ${error.message}`)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleReset = () => {
-    setFiles({ claimsME: null, claimsM2: null, mcnVerdicts: null, jfmVerdicts: null });
-    setStatus({ running: false, status: 'idle', error: null });
-    setActiveTab('upload');
-  };
+    setFiles({
+      claimsME: null,
+      claimsM2: null,
+      mcnVerdicts: null,
+      jfmVerdicts: null,
+    })
+    setStatus({ running: false, status: "idle", error: null })
+    setActiveTab("upload")
+  }
 
   const handleRetry = async (runId: string) => {
     try {
-      setLoading(true);
+      setLoading(true)
 
       // Start the retry
       const response = await authFetch(`/api/runs/${runId}/retry`, {
-        method: 'POST'  // Change to POST since we're starting a pipeline
-      });
+        method: "POST", // Change to POST since we're starting a pipeline
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      const result = await response.json();
-      console.log('Pipeline retry started:', result);
+      const result = await response.json()
+      console.log("Pipeline retry started:", result)
 
       // Switch to status view and start polling
-      setActiveTab('status');
-      setStatus({ running: true, status: 'starting', error: null });
-
+      setActiveTab("status")
+      setStatus({ running: true, status: "starting", error: null })
     } catch (error: any) {
-      console.error('Retry error:', error);
-      alert(`Failed to retry pipeline: ${error.message}`);
+      console.error("Retry error:", error)
+      alert(`Failed to retry pipeline: ${error.message}`)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleStop = async (runId: string) => {
-    if (!confirm('Are you sure you want to stop the running pipeline?')) {
-      return;
+    if (!confirm("Are you sure you want to stop the running pipeline?")) {
+      return
     }
 
     try {
-      setLoading(true);
+      setLoading(true)
 
       const response = await authFetch(`/api/runs/${runId}/stop`, {
-        method: 'POST'
-      });
+        method: "POST",
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      const result = await response.json();
-      console.log('Pipeline stopped:', result);
+      const result = await response.json()
+      console.log("Pipeline stopped:", result)
 
       // Immediately update status to show stopped state
-      setStatus(prev => ({
+      setStatus((prev) => ({
         ...prev,
         running: false,
-        status: 'stopped',
-        error: 'Pipeline stopped by user'
-      }));
-
+        status: "stopped",
+        error: "Pipeline stopped by user",
+      }))
     } catch (error: any) {
-      console.error('Stop error:', error);
-      alert(`Failed to stop pipeline: ${error.message}`);
+      console.error("Stop error:", error)
+      alert(`Failed to stop pipeline: ${error.message}`)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDownload = async (runId: string) => {
     try {
       // Fetch exports list
-      const response = await authFetch(`/api/exports/run/${runId}`);
-      const data = await response.json();
+      const response = await authFetch(`/api/exports/run/${runId}`)
+      const data = await response.json()
 
       // Download each file
       for (const file of data.files) {
-        const link = document.createElement('a');
-        link.href = `/api/exports/run/${runId}/${file.name}`;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const link = document.createElement("a")
+        link.href = `/api/exports/run/${runId}/${file.name}`
+        link.download = file.name
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
 
         // Small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500))
       }
-
     } catch (error) {
-      console.error('Download error:', error);
-      alert('Download failed - unable to determine export folder');
+      console.error("Download error:", error)
+      alert("Download failed - unable to determine export folder")
     }
-  };
+  }
 
   // Manual refresh function - clears lastRun and shows ready state
   const handleStatusRefresh = async () => {
     try {
-      const response = await authFetch(`/api/status`);
-      const data = await response.json();
-      setStatus({ ...data, lastRun: undefined });
+      const response = await authFetch(`/api/status`)
+      const data = await response.json()
+      setStatus({ ...data, lastRun: undefined })
     } catch (error) {
-      console.error('Manual refresh error:', error);
+      console.error("Manual refresh error:", error)
     }
-  };
+  }
 
-  const isRunning = status.running || loading;
+  const isRunning = status.running || loading
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -336,23 +341,29 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">YouTube MCN Pipeline</h1>
-              <p className="text-gray-600">Multi-Channel Network claims processing dashboard</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                YouTube MCN Pipeline
+              </h1>
+              <p className="text-gray-600">
+                Multi-Channel Network claims processing dashboard
+              </p>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm">
-                {systemHealth?.status === 'ok' ? (
+                {systemHealth?.status === "ok" ? (
                   <>
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-gray-600">System healthy</span>
                   </>
-                ) : systemHealth?.status === 'degraded' ? (
+                ) : systemHealth?.status === "degraded" ? (
                   <>
                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                     <span className="text-orange-600">System degraded</span>
-                    {systemHealth.enrich_ml_status === 'unhealthy' && (
-                      <span className="text-orange-600 ml-2">• ML service down</span>
+                    {systemHealth.enrich_ml_status === "unhealthy" && (
+                      <span className="text-orange-600 ml-2">
+                        • ML service down
+                      </span>
                     )}
                   </>
                 ) : (
@@ -374,20 +385,22 @@ export default function Home() {
           <div className="mt-6 border-b border-gray-200">
             <nav className="flex space-x-8">
               <button
-                onClick={() => setActiveTab('upload')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'upload'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                onClick={() => setActiveTab("upload")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "upload"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 Upload & Run
               </button>
               <button
-                onClick={() => setActiveTab('status')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'status'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                onClick={() => setActiveTab("status")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "status"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
@@ -399,13 +412,14 @@ export default function Home() {
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('history');
-                  setHasNewRun(false);
+                  setActiveTab("history")
+                  setHasNewRun(false)
                 }}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'history'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "history"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <div className="flex items-center gap-2">
                   History ({pipelineRuns.length})
@@ -421,9 +435,8 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-
         {/* Upload Tab */}
-        {activeTab === 'upload' && (
+        {activeTab === "upload" && (
           <UploadTab
             files={files}
             isRunning={isRunning}
@@ -436,7 +449,7 @@ export default function Home() {
         )}
 
         {/* Status Tab */}
-        {activeTab === 'status' && (
+        {activeTab === "status" && (
           <PipelineStatusTab
             status={status}
             onRefresh={handleStatusRefresh}
@@ -445,7 +458,7 @@ export default function Home() {
         )}
 
         {/* History Tab */}
-        {activeTab === 'history' && (
+        {activeTab === "history" && (
           <PipelineHistoryTab
             runs={pipelineRuns}
             onRetry={handleRetry}
@@ -454,5 +467,5 @@ export default function Home() {
         )}
       </main>
     </div>
-  );
+  )
 }

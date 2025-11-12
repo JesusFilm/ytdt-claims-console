@@ -1,27 +1,31 @@
-import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import React, { useState } from "react"
+import { RefreshCw } from "lucide-react"
 
 interface RefreshButtonProps {
-  onRefresh: () => Promise<void>;
-  disabled?: boolean;
-  className?: string;
+  onRefresh: () => Promise<void>
+  disabled?: boolean
+  className?: string
 }
 
-export default function RefreshButton({ onRefresh, disabled = false, className = '' }: RefreshButtonProps) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
+export default function RefreshButton({
+  onRefresh,
+  disabled = false,
+  className = "",
+}: RefreshButtonProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefresh = async () => {
-    if (disabled || isRefreshing) return;
-    
-    setIsRefreshing(true);
+    if (disabled || isRefreshing) return
+
+    setIsRefreshing(true)
     try {
-      await onRefresh();
+      await onRefresh()
     } catch (error) {
-      console.error('Refresh error:', error);
+      console.error("Refresh error:", error)
     } finally {
-      setIsRefreshing(false);
+      setIsRefreshing(false)
     }
-  };
+  }
 
   return (
     <button
@@ -37,10 +41,8 @@ export default function RefreshButton({ onRefresh, disabled = false, className =
       `}
       title="Refresh status"
     >
-      <RefreshCw 
-        className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
-      />
-      {isRefreshing ? 'Refreshing...' : 'Refresh'}
+      <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+      {isRefreshing ? "Refreshing..." : "Refresh"}
     </button>
-  );
+  )
 }

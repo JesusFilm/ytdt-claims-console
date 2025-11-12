@@ -1,70 +1,72 @@
-import React from 'react';
-import { CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
+import React from "react"
+import { CheckCircle, AlertCircle, Clock, XCircle } from "lucide-react"
 import RefreshButton from "@/components/RefreshButton"
 import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
-import { PipelineRun } from '@/types/PipelineRun';
-import { formatDuration } from '@/utils/formatTime';
-
+import { PipelineRun } from "@/types/PipelineRun"
+import { formatDuration } from "@/utils/formatTime"
 
 export interface PipelineStatusProps {
   status: {
-    running: boolean;
-    status: string;
-    error: string | null;
-    progress?: number;
-    steps: PipelineStep[];
-    currentStep?: string;
-    startTime?: Date;
-    lastRun?: PipelineRun;
-  };
-  onRefresh?: () => Promise<void>;
-  onStop?: (runId: string) => Promise<void>;
+    running: boolean
+    status: string
+    error: string | null
+    progress?: number
+    steps: PipelineStep[]
+    currentStep?: string
+    startTime?: Date
+    lastRun?: PipelineRun
+  }
+  onRefresh?: () => Promise<void>
+  onStop?: (runId: string) => Promise<void>
 }
 
-const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, running }) => {
+const StatusBadge: React.FC<{ status: string; running: boolean }> = ({
+  status,
+  running,
+}) => {
   if (running) {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
         Processing
       </div>
-    );
+    )
   }
 
-  if (status === 'completed') {
+  if (status === "completed") {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-medium">
         <CheckCircle className="w-4 h-4" />
         Completed
       </div>
-    );
+    )
   }
 
-  if (status === 'failed') {
+  if (status === "failed") {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-sm font-medium">
         <AlertCircle className="w-4 h-4" />
         Failed
       </div>
-    );
+    )
   }
 
-  if (status === 'timeout') {
+  if (status === "timeout") {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
         <Clock className="w-4 h-4" />
         Timed Out
       </div>
-    );
+    )
   }
 
-  if (status === 'stopped') {
+  if (status === "stopped") {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
         <XCircle className="w-4 h-4" />
         Stopped
       </div>
-    );
+    )
   }
 
   return (
@@ -72,34 +74,40 @@ const StatusBadge: React.FC<{ status: string; running: boolean }> = ({ status, r
       <Clock className="w-4 h-4" />
       Idle
     </div>
-  );
-};
+  )
+}
 
-
-export default function PipelineStatusTab({ status, onRefresh, onStop }: PipelineStatusProps) {
-
-  const showIdleState = !status.running;
+export default function PipelineStatusTab({
+  status,
+  onRefresh,
+  onStop,
+}: PipelineStatusProps) {
+  const showIdleState = !status.running
 
   const getProgress = () => {
-    if (status.progress !== undefined) return status.progress;
-    if (!status.steps) return 0;
-    const completed = status.steps.filter(s => s.status === 'completed').length;
-    return (completed / status.steps.length) * 100;
-  };
+    if (status.progress !== undefined) return status.progress
+    if (!status.steps) return 0
+    const completed = status.steps.filter(
+      (s) => s.status === "completed"
+    ).length
+    return (completed / status.steps.length) * 100
+  }
 
   const getCurrentStepInfo = () => {
-    if (!status.running || !status.steps) return null;
-    const runningStep = status.steps.find(s => s.status === 'running');
-    const completedCount = status.steps.filter(s => s.status === 'completed').length;
+    if (!status.running || !status.steps) return null
+    const runningStep = status.steps.find((s) => s.status === "running")
+    const completedCount = status.steps.filter(
+      (s) => s.status === "completed"
+    ).length
 
     return {
       current: runningStep?.name || status.currentStep,
       step: completedCount + 1,
-      total: status.steps.length
-    };
-  };
+      total: status.steps.length,
+    }
+  }
 
-  const currentStep = getCurrentStepInfo();
+  const currentStep = getCurrentStepInfo()
 
   return (
     <div className="space-y-8">
@@ -109,17 +117,18 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
           <h2 className="text-2xl font-bold text-gray-900">Pipeline Status</h2>
           <p className="text-gray-600 mt-1">
             {status.running
-              ? `Processing: ${currentStep?.current || 'Running...'}`
-              : 'Multi-Channel Network claims processing'
-            }
+              ? `Processing: ${currentStep?.current || "Running..."}`
+              : "Multi-Channel Network claims processing"}
             {status.runId && (
-              <span className="text-gray-400 ml-2">• Run ID: {status.runId}</span>
+              <span className="text-gray-400 ml-2">
+                • Run ID: {status.runId}
+              </span>
             )}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={status.status} running={status.running} />
-          
+
           {status.running && status.runId && onStop && (
             <button
               onClick={() => onStop(status.runId!)}
@@ -132,10 +141,7 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
           )}
 
           {onRefresh && (
-            <RefreshButton
-              onRefresh={onRefresh}
-              disabled={status.running}
-            />
+            <RefreshButton onRefresh={onRefresh} disabled={status.running} />
           )}
         </div>
       </div>
@@ -146,10 +152,12 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-semibold text-blue-900">
-                {currentStep ? `Step ${currentStep.step} of ${currentStep.total}` : 'Processing'}
+                {currentStep
+                  ? `Step ${currentStep.step} of ${currentStep.total}`
+                  : "Processing"}
               </h3>
               <p className="text-blue-700 text-sm mt-1">
-                {currentStep?.current || 'Pipeline in progress...'}
+                {currentStep?.current || "Pipeline in progress..."}
               </p>
             </div>
             <div className="text-right">
@@ -157,7 +165,7 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
                 {Math.round(getProgress())}%
               </div>
               <div className="text-xs text-blue-600">
-                {getProgress() === 100 ? 'Complete' : 'In Progress'}
+                {getProgress() === 100 ? "Complete" : "In Progress"}
               </div>
             </div>
           </div>
@@ -195,16 +203,21 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
           {status.lastRun ? (
             <div>
-              {status.lastRun.status === 'completed' ? (
+              {status.lastRun.status === "completed" ? (
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">Last Run Completed</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Last Run Completed
+                    </h3>
                     <p className="text-gray-600 mt-1">
-                      Finished {new Date(status.lastRun.startTime).toLocaleString()} •
+                      Finished{" "}
+                      {new Date(status.lastRun.startTime).toLocaleString()} •
                       Duration: {formatDuration(status.lastRun.duration)}
                       {status.lastRun.id && (
-                        <span className="text-gray-400 ml-2">• ID: {status.lastRun.id}</span>
+                        <span className="text-gray-400 ml-2">
+                          • ID: {status.lastRun.id}
+                        </span>
                       )}
                     </p>
 
@@ -212,30 +225,38 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
                       <div className="mt-3 text-sm text-gray-700">
                         {status.lastRun.results.claimsProcessed && (
                           <span>
-                            {status.lastRun.results.claimsProcessed.new} new claims processed
+                            {status.lastRun.results.claimsProcessed.new} new
+                            claims processed
                           </span>
                         )}
-                        {status.lastRun.results.exports && status.lastRun.results.claimsProcessed && (
-                          <span> • </span>
-                        )}
+                        {status.lastRun.results.exports &&
+                          status.lastRun.results.claimsProcessed && (
+                            <span> • </span>
+                          )}
                         {status.lastRun.results.exports && (
                           <span>
-                            {Object.keys(status.lastRun.results.exports).length} files exported
+                            {Object.keys(status.lastRun.results.exports).length}{" "}
+                            files exported
                           </span>
                         )}
-                        {status.lastRun.results.mcnVerdicts?.invalidMCIDs && status.lastRun.results.mcnVerdicts.invalidMCIDs > 0 && (
-                          <span className="text-orange-600">
-                            {status.lastRun.results.exports ? ' • ' : ''}
-                            {status.lastRun.results.mcnVerdicts.invalidMCIDs} invalid MCIDs
-                          </span>
-                        )}
+                        {status.lastRun.results.mcnVerdicts?.invalidMCIDs &&
+                          status.lastRun.results.mcnVerdicts.invalidMCIDs >
+                            0 && (
+                            <span className="text-orange-600">
+                              {status.lastRun.results.exports ? " • " : ""}
+                              {
+                                status.lastRun.results.mcnVerdicts.invalidMCIDs
+                              }{" "}
+                              invalid MCIDs
+                            </span>
+                          )}
                       </div>
                     )}
 
                     <p className="text-green-700 text-sm mt-3 font-medium">
                       ✓ Ready to process next batch
                     </p>
-                    
+
                     {/* Show Google Drive Link */}
                     {status.lastRun.results?.driveFolderUrl && (
                       <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -249,8 +270,18 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
                           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
                         >
                           View Shared Drive Folder
-                          <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          <svg
+                            className="w-3 h-3 ml-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
                           </svg>
                         </a>
                       </div>
@@ -261,13 +292,18 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">Last Run Failed</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Last Run Failed
+                    </h3>
                     <p className="text-gray-600 mt-1">
-                      Failed {new Date(status.lastRun.startTime).toLocaleString()}
+                      Failed{" "}
+                      {new Date(status.lastRun.startTime).toLocaleString()}
                     </p>
 
                     {status.lastRun.error && (
-                      <p className="text-red-700 text-sm mt-2">{status.lastRun.error}</p>
+                      <p className="text-red-700 text-sm mt-2">
+                        {status.lastRun.error}
+                      </p>
                     )}
 
                     <p className="text-red-700 text-sm mt-3 font-medium">
@@ -282,7 +318,9 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-gray-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">System Ready</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                System Ready
+              </h3>
               <p className="text-gray-600">
                 Pipeline is ready to process claims and verdicts
               </p>
@@ -299,5 +337,5 @@ export default function PipelineStatusTab({ status, onRefresh, onStop }: Pipelin
         />
       )}
     </div>
-  );
+  )
 }

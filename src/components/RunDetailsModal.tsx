@@ -1,37 +1,38 @@
-import React from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import React from "react"
+import { X, AlertCircle } from "lucide-react"
 import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
 import type { PipelineRun } from "@/types/PipelineRun"
 import ProcessedFilesSection from "@/components/ProcessedFilesSection"
 import UploadedFilesSection from "@/components/UploadedFilesSection"
 import GoogleDriveLinkSection from "@/components/GoogleDriveLinkSection"
-import { formatDuration, formatTimestamp } from '@/utils/formatTime';
-
+import { formatDuration, formatTimestamp } from "@/utils/formatTime"
 
 interface RunDetailsModalProps {
-  run: PipelineRun;
-  isOpen: boolean;
-  onClose: () => void;
+  run: PipelineRun
+  isOpen: boolean
+  onClose: () => void
 }
 
 const formatStepName = (stepId: string) => {
-  return stepId
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
-};
+  return stepId.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+}
 
-export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModalProps) {
-  if (!isOpen) return null;
+export default function RunDetailsModal({
+  run,
+  isOpen,
+  onClose,
+}: RunDetailsModalProps) {
+  if (!isOpen) return null
 
   // Convert backend startedSteps to PipelineStep format
-  const steps: PipelineStep[] = run.startedSteps.map(step => ({
+  const steps: PipelineStep[] = run.startedSteps.map((step) => ({
     id: step.name,
     name: step.title || formatStepName(step.name),
     description: step.description,
     status: step.status,
     duration: step.duration,
-    error: step.error || undefined
-  }));
+    error: step.error || undefined,
+  }))
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -53,7 +54,11 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
                   {formatTimestamp(run.startTime)}
-                  {run.duration && ( <span className="ml-2">• Duration: {formatDuration(run.duration)}</span> )}
+                  {run.duration && (
+                    <span className="ml-2">
+                      • Duration: {formatDuration(run.duration)}
+                    </span>
+                  )}
                   <span className="ml-2">• ID: {run.id}</span>
                 </p>
               </div>
@@ -68,7 +73,6 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
 
           {/* Content */}
           <div className="px-6 py-6 max-h-96 overflow-y-auto">
-
             {/* Input Files - downloadable */}
             <UploadedFilesSection files={run.files} />
 
@@ -76,7 +80,9 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
             <ProcessedFilesSection runId={run.id} />
 
             {/* Google Drive Link Section */}
-            <GoogleDriveLinkSection driveFolderUrl={run.results?.driveFolderUrl} />
+            <GoogleDriveLinkSection
+              driveFolderUrl={run.results?.driveFolderUrl}
+            />
 
             {/* Error */}
             {run.error && (
@@ -84,7 +90,9 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium text-red-900">Pipeline Failed</h4>
+                    <h4 className="font-medium text-red-900">
+                      Pipeline Failed
+                    </h4>
                     <p className="text-red-700 mt-1 text-sm">{run.error}</p>
                   </div>
                 </div>
@@ -116,5 +124,5 @@ export default function RunDetailsModal({ run, isOpen, onClose }: RunDetailsModa
         </div>
       </div>
     </div>
-  );
+  )
 }

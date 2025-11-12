@@ -1,67 +1,67 @@
-import React from 'react';
+import React from "react"
 import {
   CheckCircle,
   AlertCircle,
   FileText,
   Database,
-  Download
-} from 'lucide-react';
+  Download,
+} from "lucide-react"
 import type { PipelineRun } from "@/types/PipelineRun"
 
 interface ResultsSummaryProps {
-  results: PipelineRun['results'];
-  runId: string;
-  className?: string;
-  onDownloadInvalidMCIDs?: (runId: string, type: 'mcn' | 'jfm') => void;
-  onDownloadInvalidLanguageIDs?: (runId: string, type: 'mcn' | 'jfm') => void;
+  results: PipelineRun["results"]
+  runId: string
+  className?: string
+  onDownloadInvalidMCIDs?: (runId: string, type: "mcn" | "jfm") => void
+  onDownloadInvalidLanguageIDs?: (runId: string, type: "mcn" | "jfm") => void
 }
 
 export default function ResultsSummary({
   results,
   runId,
-  className = '',
+  className = "",
   onDownloadInvalidMCIDs,
-  onDownloadInvalidLanguageIDs
+  onDownloadInvalidLanguageIDs,
 }: ResultsSummaryProps) {
-  if (!results) return null;
+  if (!results) return null
 
   const getTotalInvalidMCIDs = () => {
-    const mcnCount = results.mcnVerdicts?.invalidMCIDs?.length || 0;
-    const jfmCount = results.jfmVerdicts?.invalidMCIDs?.length || 0;
-    return mcnCount + jfmCount;
-  };
+    const mcnCount = results.mcnVerdicts?.invalidMCIDs?.length || 0
+    const jfmCount = results.jfmVerdicts?.invalidMCIDs?.length || 0
+    return mcnCount + jfmCount
+  }
 
   const getTotalInvalidLanguageIDs = () => {
-    const mcnCount = results.mcnVerdicts?.invalidLanguageIDs?.length || 0;
-    const jfmCount = results.jfmVerdicts?.invalidLanguageIDs?.length || 0;
-    return mcnCount + jfmCount;
-  };
+    const mcnCount = results.mcnVerdicts?.invalidLanguageIDs?.length || 0
+    const jfmCount = results.jfmVerdicts?.invalidLanguageIDs?.length || 0
+    return mcnCount + jfmCount
+  }
 
   const getTotalIssues = () => {
-    return getTotalInvalidMCIDs() + getTotalInvalidLanguageIDs();
-  };
+    return getTotalInvalidMCIDs() + getTotalInvalidLanguageIDs()
+  }
 
   const handleDownloadMCIDs = () => {
-    if (!onDownloadInvalidMCIDs) return;
+    if (!onDownloadInvalidMCIDs) return
 
     // Download MCN if available, otherwise JFM
     if (results.mcnVerdicts?.invalidMCIDs?.length) {
-      onDownloadInvalidMCIDs(runId, 'mcn');
+      onDownloadInvalidMCIDs(runId, "mcn")
     } else if (results.jfmVerdicts?.invalidMCIDs?.length) {
-      onDownloadInvalidMCIDs(runId, 'jfm');
+      onDownloadInvalidMCIDs(runId, "jfm")
     }
-  };
+  }
 
   const handleDownloadLanguageIDs = () => {
-    if (!onDownloadInvalidLanguageIDs) return;
+    if (!onDownloadInvalidLanguageIDs) return
 
     // Download MCN if available, otherwise JFM
     if (results.mcnVerdicts?.invalidLanguageIDs?.length) {
-      onDownloadInvalidLanguageIDs(runId, 'mcn');
+      onDownloadInvalidLanguageIDs(runId, "mcn")
     } else if (results.jfmVerdicts?.invalidLanguageIDs?.length) {
-      onDownloadInvalidLanguageIDs(runId, 'jfm');
+      onDownloadInvalidLanguageIDs(runId, "jfm")
     }
-  };
+  }
 
   return (
     <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 ${className}`}>
@@ -72,10 +72,10 @@ export default function ResultsSummary({
             <span className="text-xs font-medium text-gray-600">Claims</span>
           </div>
           {(() => {
-            const me = results.claimsProcessed.matter_entertainment;
-            const m2 = results.claimsProcessed.matter_2;
-            const totalNew = (me?.new || 0) + (m2?.new || 0);
-            const totalAll = (me?.total || 0) + (m2?.total || 0);
+            const me = results.claimsProcessed.matter_entertainment
+            const m2 = results.claimsProcessed.matter_2
+            const totalNew = (me?.new || 0) + (m2?.new || 0)
+            const totalAll = (me?.total || 0) + (m2?.total || 0)
 
             return (
               <>
@@ -98,7 +98,7 @@ export default function ResultsSummary({
                   </div>
                 )}
               </>
-            );
+            )
           })()}
         </div>
       )}
@@ -111,7 +111,10 @@ export default function ResultsSummary({
           </div>
           <div className="flex items-center justify-between">
             <span className="font-semibold text-gray-900">
-              {((results.mcnVerdicts?.processed || 0) + (results.jfmVerdicts?.processed || 0)).toLocaleString()}
+              {(
+                (results.mcnVerdicts?.processed || 0) +
+                (results.jfmVerdicts?.processed || 0)
+              ).toLocaleString()}
             </span>
             <span className="text-xs text-gray-500">processed</span>
           </div>
@@ -153,24 +156,29 @@ export default function ResultsSummary({
                   invalid MCIDs
                 </button>
               )}
-              {onDownloadInvalidLanguageIDs && getTotalInvalidLanguageIDs() > 0 && (
-                <button
-                  onClick={handleDownloadLanguageIDs}
-                  className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
-                >
-                  <Download className="w-3 h-3" />
-                  invalid Lang IDs
-                </button>
-              )}
+              {onDownloadInvalidLanguageIDs &&
+                getTotalInvalidLanguageIDs() > 0 && (
+                  <button
+                    onClick={handleDownloadLanguageIDs}
+                    className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
+                  >
+                    <Download className="w-3 h-3" />
+                    invalid Lang IDs
+                  </button>
+                )}
               <span className="text-xs text-orange-500">
-                {getTotalInvalidMCIDs() > 0 && `${getTotalInvalidMCIDs()} MCIDs`}
-                {getTotalInvalidMCIDs() > 0 && getTotalInvalidLanguageIDs() > 0 && ', '}
-                {getTotalInvalidLanguageIDs() > 0 && `${getTotalInvalidLanguageIDs()} Lang IDs`}
+                {getTotalInvalidMCIDs() > 0 &&
+                  `${getTotalInvalidMCIDs()} MCIDs`}
+                {getTotalInvalidMCIDs() > 0 &&
+                  getTotalInvalidLanguageIDs() > 0 &&
+                  ", "}
+                {getTotalInvalidLanguageIDs() > 0 &&
+                  `${getTotalInvalidLanguageIDs()} Lang IDs`}
               </span>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }

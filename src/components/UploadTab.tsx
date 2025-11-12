@@ -1,25 +1,25 @@
-'use client';
+"use client"
 
-import React from 'react';
-import { PlayCircle, Pause } from 'lucide-react';
-import FileUpload from '@/components/FileUpload';
-import { formatRunFiles } from '@/utils/formatFiles';
+import React from "react"
+import { PlayCircle, Pause } from "lucide-react"
+import FileUpload from "@/components/FileUpload"
+import { formatRunFiles } from "@/utils/formatFiles"
 
 interface FileState {
-  claimsME: File | null;
-  claimsM2: File | null;
-  mcnVerdicts: File | null;
-  jfmVerdicts: File | null;
+  claimsME: File | null
+  claimsM2: File | null
+  mcnVerdicts: File | null
+  jfmVerdicts: File | null
 }
 
 interface UploadTabProps {
-  files: FileState;
-  isRunning: boolean;
-  loading: boolean;
-  handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void;
-  handleFileRemove: (fileType: keyof FileState) => void;
-  handleRunPipeline: () => void;
-  handleReset: () => void;
+  files: FileState
+  isRunning: boolean
+  loading: boolean
+  handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void
+  handleFileRemove: (fileType: keyof FileState) => void
+  handleRunPipeline: () => void
+  handleReset: () => void
 }
 
 export default function UploadTab({
@@ -29,9 +29,10 @@ export default function UploadTab({
   handleFileDrop,
   handleFileRemove,
   handleRunPipeline,
-  handleReset
+  handleReset,
 }: UploadTabProps) {
-  const hasFiles = files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts;
+  const hasFiles =
+    files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts
 
   return (
     <div className="space-y-8">
@@ -50,22 +51,24 @@ export default function UploadTab({
         {/* Claims Section */}
         <div className="bg-white rounded-2xl border-2 border-gray-200 p-6">
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Claims Files</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Claims Files
+            </h3>
             <p className="text-sm text-gray-600">Upload one or both sources</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <FileUpload
               file={files.claimsME}
-              onDrop={(files) => handleFileDrop(files, 'claimsME')}
-              onRemove={() => handleFileRemove('claimsME')}
+              onDrop={(files) => handleFileDrop(files, "claimsME")}
+              onRemove={() => handleFileRemove("claimsME")}
               title="Matter Entertainment"
               description="MCN claims CSV"
               disabled={isRunning}
             />
             <FileUpload
               file={files.claimsM2}
-              onDrop={(files) => handleFileDrop(files, 'claimsM2')}
-              onRemove={() => handleFileRemove('claimsM2')}
+              onDrop={(files) => handleFileDrop(files, "claimsM2")}
+              onRemove={() => handleFileRemove("claimsM2")}
               title="Matter 2"
               description="MCN claims CSV"
               disabled={isRunning}
@@ -77,21 +80,23 @@ export default function UploadTab({
         <div className="bg-blue-50 rounded-2xl border-2 border-blue-200 p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Verdicts</h3>
-            <p className="text-sm text-gray-600">Optional - Apply to all uploaded claims</p>
+            <p className="text-sm text-gray-600">
+              Optional - Apply to all uploaded claims
+            </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <FileUpload
               file={files.mcnVerdicts}
-              onDrop={(files) => handleFileDrop(files, 'mcnVerdicts')}
-              onRemove={() => handleFileRemove('mcnVerdicts')}
+              onDrop={(files) => handleFileDrop(files, "mcnVerdicts")}
+              onRemove={() => handleFileRemove("mcnVerdicts")}
               title="MCN Verdicts"
               description="Verdict decisions for MCN claims"
               disabled={isRunning}
             />
             <FileUpload
               file={files.jfmVerdicts}
-              onDrop={(files) => handleFileDrop(files, 'jfmVerdicts')}
-              onRemove={() => handleFileRemove('jfmVerdicts')}
+              onDrop={(files) => handleFileDrop(files, "jfmVerdicts")}
+              onRemove={() => handleFileRemove("jfmVerdicts")}
               title="JFM Verdicts"
               description="Verdict decisions for owned videos"
               disabled={isRunning}
@@ -139,10 +144,12 @@ export default function UploadTab({
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
           <h3 className="font-semibold text-blue-900 mb-2">Ready to Process</h3>
           <div className="text-sm text-blue-700 space-y-1">
-            {formatRunFiles(files, true).map(file => <p key={file}>• {file}</p>)}
+            {formatRunFiles(files, true).map((file) => (
+              <p key={file}>• {file}</p>
+            ))}
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
