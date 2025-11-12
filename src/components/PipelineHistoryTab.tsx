@@ -5,8 +5,8 @@ import {
   Calendar,
   TrendingUp,
 } from 'lucide-react';
-import RunCard from './RunCard';
-import RunDetailsModal from './RunDetailsModal';
+import RunCard from "@/components/RunCard"
+import RunDetailsModal from "@/components/RunDetailsModal"
 import type { PipelineRun } from '@/types/PipelineRun';
 
 interface PipelineHistoryProps {

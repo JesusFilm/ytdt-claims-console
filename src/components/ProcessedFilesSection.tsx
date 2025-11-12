@@ -1,6 +1,7 @@
 import { authFetch } from "@/utils/auth";
 import { Database, Download } from "lucide-react";
 import { useState, useEffect } from "react";
+import { env } from "@/env";
 
 
 export default function ExportedFilesSection({ runId }: { runId: string }) {
@@ -61,7 +62,7 @@ export default function ExportedFilesSection({ runId }: { runId: string }) {
             <button
               onClick={() => {
                 const link = document.createElement('a');
-                link.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/exports/run/${runId}/${file.name}`;
+                link.href = `${env.NEXT_PUBLIC_API_URL}/api/exports/run/${runId}/${file.name}`;
                 link.download = file.name;
                 document.body.appendChild(link);
                 link.click();

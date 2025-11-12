@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import LoginPage from './LoginPage';
+import LoginPage from "@/components/LoginPage"
 
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {

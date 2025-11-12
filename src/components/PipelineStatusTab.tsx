@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
-import RefreshButton from './RefreshButton';
-import PipelineSteps, { PipelineStep } from './PipelineSteps';
+import RefreshButton from "@/components/RefreshButton"
+import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
 import { PipelineRun } from '@/types/PipelineRun';
 import { formatDuration } from '@/utils/formatTime';
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import PipelineSteps, { PipelineStep } from './PipelineSteps';
-import type { PipelineRun } from '@/types/PipelineRun';
-import ProcessedFilesSection from './ProcessedFilesSection';
-import UploadedFilesSection from './UploadedFilesSection';
-import GoogleDriveLinkSection from './GoogleDriveLinkSection';
+import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
+import type { PipelineRun } from "@/types/PipelineRun"
+import ProcessedFilesSection from "@/components/ProcessedFilesSection"
+import UploadedFilesSection from "@/components/UploadedFilesSection"
+import GoogleDriveLinkSection from "@/components/GoogleDriveLinkSection"
 import { formatDuration, formatTimestamp } from '@/utils/formatTime';
 
 

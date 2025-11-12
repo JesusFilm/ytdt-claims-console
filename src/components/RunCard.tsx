@@ -8,7 +8,7 @@ import {
   Eye
 } from 'lucide-react';
 
-import ResultsSummary from './ResultsSummary';
+import ResultsSummary from "@/components/ResultsSummary"
 import type { PipelineRun } from '@/types/PipelineRun';
 import { formatTimestamp } from '@/utils/formatTime';
 

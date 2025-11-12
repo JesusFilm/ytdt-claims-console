@@ -6,7 +6,7 @@ import {
   Database,
   Download
 } from 'lucide-react';
-import type { PipelineRun } from '../types/PipelineRun';
+import type { PipelineRun } from "@/types/PipelineRun"
 
 interface ResultsSummaryProps {
   results: PipelineRun['results'];
