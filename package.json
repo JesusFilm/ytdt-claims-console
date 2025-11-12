@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3002",
-    "build": "vercel build",
+    "build": "next build",
     "start": "next start -p 3002",
     "lint": "eslint --cache --cache-location .next/cache/eslint/ .",
     "lint:fix": "eslint --fix --cache --cache-location .next/cache/eslint/ .",
