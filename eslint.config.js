@@ -52,6 +52,12 @@ const config = [
       "react/jsx-uses-react": "off",
     },
   },
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/test/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]
 
