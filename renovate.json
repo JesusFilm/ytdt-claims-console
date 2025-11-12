@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^@types/"],
+      "groupName": "TypeScript types"
+    },
+    {
+      "matchPackagePatterns": ["^eslint", "^@eslint", "^@typescript-eslint"],
+      "groupName": "ESLint packages"
+    },
+    {
+      "matchPackagePatterns": ["^@tailwindcss"],
+      "groupName": "Tailwind CSS packages"
+    },
+    {
+      "matchPackagePatterns": [
+        "^@testing-library",
+        "^@vitest",
+        "^vitest",
+        "^jsdom"
+      ],
+      "groupName": "Testing packages"
+    },
+    {
+      "matchPackagePatterns": ["^next", "^react", "^react-dom"],
+      "groupName": "Next.js and React"
+    }
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "timezone": "UTC",
+  "schedule": ["before 10am on monday"]
+}
