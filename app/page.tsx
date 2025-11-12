@@ -20,12 +20,14 @@ interface FileState {
 }
 
 interface PipelineStatusState {
+  runId?: string
   running: boolean
   status: string
   error: string | null
-  result?: any
-  steps: PipelineStep[]
   progress?: number
+  steps: PipelineStep[]
+  currentStep?: string
+  startTime?: Date
   lastRun?: PipelineRun
 }
 
