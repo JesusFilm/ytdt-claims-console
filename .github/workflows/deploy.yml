@@ -56,9 +56,32 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
+      - name: Set Vercel alias
+        if: steps.deploy.outputs.url != '' && github.event_name == 'pull_request'
+        id: alias
+        run: |
+          ALIAS="ytdt-claims-console-${{ github.event.pull_request.number }}-jesusfilm.vercel.app"
+          pnpm vercel alias set ${{ steps.deploy.outputs.url }} $ALIAS --token=${{ secrets.VERCEL_TOKEN }}
+          echo "alias_url=https://$ALIAS" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Determine final URL
+        if: steps.deploy.outputs.url != ''
+        id: final_url
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "url=https://ytdt-claims-console-${{ github.event.pull_request.number }}-jesusfilm.vercel.app" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "url=https://ytdt-claims-console.jesusfilm.org" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ steps.deploy.outputs.url }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Comment deployment URL
         if: steps.deploy.outputs.url != ''
         uses: peter-evans/commit-comment@v4
         with:
           body: |
-            🚀 Deployment ready: ${{ steps.deploy.outputs.url }}
+            🚀 Deployment ready: ${{ steps.final_url.outputs.url }}
