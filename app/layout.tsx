@@ -2,6 +2,7 @@ import { ReactNode } from "react"
 
 import { Inter } from "next/font/google"
 
+import { DatadogRUM } from "@/components/DatadogRUM"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { AuthProvider } from "@/contexts/AuthContext"
 
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         className={`${inter.className} antialiased bg-gray-50 text-gray-900`}
       >
+        <DatadogRUM />
         <AuthProvider>
           <ProtectedRoute>
             <div id="root" className="min-h-screen">
