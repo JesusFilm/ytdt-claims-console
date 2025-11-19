@@ -1,0 +1,1 @@
+export { DatadogRUM } from "./DatadogRUM"
