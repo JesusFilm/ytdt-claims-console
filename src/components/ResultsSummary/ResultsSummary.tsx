@@ -12,8 +12,8 @@ interface ResultsSummaryProps {
   results: PipelineRun["results"]
   runId: string
   className?: string
-  onDownloadInvalidMCIDs?: (runId: string, type: "mcn" | "jfm") => void
-  onDownloadInvalidLanguageIDs?: (runId: string, type: "mcn" | "jfm") => void
+  onDownloadInvalidMCIDs?: (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => void
+  onDownloadInvalidLanguageIDs?: (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => void
 }
 
 export default function ResultsSummary({
@@ -28,13 +28,17 @@ export default function ResultsSummary({
   const getTotalInvalidMCIDs = () => {
     const mcnCount = results.mcnVerdicts?.invalidMCIDs?.length || 0
     const jfmCount = results.jfmVerdicts?.invalidMCIDs?.length || 0
-    return mcnCount + jfmCount
+    const meCount = results.claimsProcessed?.matter_entertainment?.invalidMCIDs?.length || 0
+    const m2Count = results.claimsProcessed?.matter_2?.invalidMCIDs?.length || 0
+    return mcnCount + jfmCount + meCount + m2Count
   }
 
   const getTotalInvalidLanguageIDs = () => {
     const mcnCount = results.mcnVerdicts?.invalidLanguageIDs?.length || 0
     const jfmCount = results.jfmVerdicts?.invalidLanguageIDs?.length || 0
-    return mcnCount + jfmCount
+    const meCount = results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs?.length || 0
+    const m2Count = results.claimsProcessed?.matter_2?.invalidLanguageIDs?.length || 0
+    return mcnCount + jfmCount + meCount + m2Count
   }
 
   const getTotalIssues = () => {
@@ -44,22 +48,28 @@ export default function ResultsSummary({
   const handleDownloadMCIDs = () => {
     if (!onDownloadInvalidMCIDs) return
 
-    // Download MCN if available, otherwise JFM
     if (results.mcnVerdicts?.invalidMCIDs?.length) {
       onDownloadInvalidMCIDs(runId, "mcn")
     } else if (results.jfmVerdicts?.invalidMCIDs?.length) {
       onDownloadInvalidMCIDs(runId, "jfm")
+    } else if (results.claimsProcessed?.matter_entertainment?.invalidMCIDs?.length) {
+      onDownloadInvalidMCIDs(runId, "matter_entertainment")
+    } else if (results.claimsProcessed?.matter_2?.invalidMCIDs?.length) {
+      onDownloadInvalidMCIDs(runId, "matter_2")
     }
   }
 
   const handleDownloadLanguageIDs = () => {
     if (!onDownloadInvalidLanguageIDs) return
 
-    // Download MCN if available, otherwise JFM
     if (results.mcnVerdicts?.invalidLanguageIDs?.length) {
       onDownloadInvalidLanguageIDs(runId, "mcn")
     } else if (results.jfmVerdicts?.invalidLanguageIDs?.length) {
       onDownloadInvalidLanguageIDs(runId, "jfm")
+    } else if (results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs?.length) {
+      onDownloadInvalidLanguageIDs(runId, "matter_entertainment")
+    } else if (results.claimsProcessed?.matter_2?.invalidLanguageIDs?.length) {
+      onDownloadInvalidLanguageIDs(runId, "matter_2")
     }
   }
 
