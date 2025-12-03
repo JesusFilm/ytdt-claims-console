@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { logout } from "@/utils/auth"
@@ -17,10 +18,12 @@ export default function UserMenu() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
       >
-        <img
+        <Image
           src={user.picture}
           alt={user.name}
-          className="w-8 h-8 rounded-full"
+          width={32}
+          height={32}
+          className="rounded-full"
         />
         <span className="text-sm font-medium">{user.name}</span>
       </div>

@@ -12,8 +12,18 @@ export interface PipelineRun {
   }
   results?: {
     claimsProcessed?: {
-      matter_entertainment?: { total: number; new: number }
-      matter_2?: { total: number; new: number }
+      matter_entertainment?: { 
+        total: number
+        new: number
+        invalidMCIDs: string[]
+        invalidLanguageIDs: string[]
+      }
+      matter_2?: { 
+        total: number
+        new: number
+        invalidMCIDs: string[]
+        invalidLanguageIDs: string[]
+      }
     }
     mcnVerdicts?: {
       processed: number
