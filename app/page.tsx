@@ -96,18 +96,16 @@ export default function Home() {
     }
 
     fetchHistory()
-  }, [status.running]) // Refresh when pipeline completes
+  }, [status.status]) // Refresh when pipeline completes
 
-  // Poll for status when pipeline is running
+  // Fetch status on mount and poll when running
   useEffect(() => {
-    if (!status.running) return
-
-    const interval = setInterval(async () => {
+    const fetchStatus = async () => {
       try {
         const response = await authFetch(`/api/status`)
         const data = await response.json()
 
-        // If pipeline just finished, fetch last run and stop polling
+        // If pipeline just finished, fetch last run from history
         if (data.running === false && status.running === true) {
           const historyResponse = await authFetch(`/api/runs/history?limit=1`)
           const historyData = await historyResponse.json()
@@ -117,12 +115,12 @@ export default function Home() {
             ...data,
             lastRun: lastRun
               ? {
-                  startTime: new Date(lastRun.startTime),
-                  duration: lastRun.duration,
-                  status: lastRun.status,
-                  error: lastRun.error,
-                  results: lastRun.results,
-                }
+                startTime: new Date(lastRun.startTime),
+                duration: lastRun.duration,
+                status: lastRun.status,
+                error: lastRun.error,
+                results: lastRun.results,
+              }
               : undefined,
           })
 
@@ -138,20 +136,29 @@ export default function Home() {
             }
             fetchHistory()
           }, 1000)
-        } else {
-          // setStatus(data);
-          setStatus((prevStatus) => ({
-            ...data,
-            lastRun: prevStatus.lastRun,
-          }))
-        }
-      } catch (error) {
-        console.error("Status poll error:", error)
-      }
-    }, 2000)
 
+        } else {
+          setStatus({
+            ...data,
+            lastRun: data.lastRun,
+          })
+        }
+        
+      } catch (error) {
+        console.error("Status fetch error:", error)
+      }
+    }
+
+    // Fetch immediately on mount or when running state changes
+    fetchStatus()
+
+    // Only set up polling if running
+    const shouldPoll = status.running || (status.lastRun && status.lastRun.status !== 'completed')
+    if (!shouldPoll) return
+
+    const interval = setInterval(fetchStatus, 2000)
     return () => clearInterval(interval)
-  }, [status.running])
+  }, [status.running, status.status])
 
   const handleFileDrop = useCallback(
     (acceptedFiles: File[], fileType: keyof FileState) => {
@@ -330,7 +337,7 @@ export default function Home() {
     try {
       const response = await authFetch(`/api/status`)
       const data = await response.json()
-      setStatus({ ...data, lastRun: undefined })
+      setStatus({ ...data, lastRun: data.lastRun })
     } catch (error) {
       console.error("Manual refresh error:", error)
     }
@@ -390,21 +397,19 @@ export default function Home() {
             <nav className="flex space-x-8">
               <button
                 onClick={() => setActiveTab("upload")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "upload"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "upload"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 Upload & Run
               </button>
               <button
                 onClick={() => setActiveTab("status")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "status"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "status"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
@@ -419,11 +424,10 @@ export default function Home() {
                   setActiveTab("history")
                   setHasNewRun(false)
                 }}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "history"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "history"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   History ({pipelineRuns.length})
