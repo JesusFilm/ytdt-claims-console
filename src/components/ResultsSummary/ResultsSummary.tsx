@@ -45,34 +45,6 @@ export default function ResultsSummary({
     return getTotalInvalidMCIDs() + getTotalInvalidLanguageIDs()
   }
 
-  const handleDownloadMCIDs = () => {
-    if (!onDownloadInvalidMCIDs) return
-
-    if (results.mcnVerdicts?.invalidMCIDs?.length) {
-      onDownloadInvalidMCIDs(runId, "mcn")
-    } else if (results.jfmVerdicts?.invalidMCIDs?.length) {
-      onDownloadInvalidMCIDs(runId, "jfm")
-    } else if (results.claimsProcessed?.matter_entertainment?.invalidMCIDs?.length) {
-      onDownloadInvalidMCIDs(runId, "matter_entertainment")
-    } else if (results.claimsProcessed?.matter_2?.invalidMCIDs?.length) {
-      onDownloadInvalidMCIDs(runId, "matter_2")
-    }
-  }
-
-  const handleDownloadLanguageIDs = () => {
-    if (!onDownloadInvalidLanguageIDs) return
-
-    if (results.mcnVerdicts?.invalidLanguageIDs?.length) {
-      onDownloadInvalidLanguageIDs(runId, "mcn")
-    } else if (results.jfmVerdicts?.invalidLanguageIDs?.length) {
-      onDownloadInvalidLanguageIDs(runId, "jfm")
-    } else if (results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs?.length) {
-      onDownloadInvalidLanguageIDs(runId, "matter_entertainment")
-    } else if (results.claimsProcessed?.matter_2?.invalidLanguageIDs?.length) {
-      onDownloadInvalidLanguageIDs(runId, "matter_2")
-    }
-  }
-
   return (
     <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 ${className}`}>
       {results.claimsProcessed && (
@@ -131,61 +103,155 @@ export default function ResultsSummary({
         </div>
       )}
 
-      {results.exports && (
-        <div className="bg-white rounded-lg p-3 border border-gray-200">
-          <div className="flex items-center gap-2 mb-2">
-            <Database className="w-4 h-4 text-gray-500" />
-            <span className="text-xs font-medium text-gray-600">Exports</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-900">
-              {Object.keys(results.exports).length}
-            </span>
-            <span className="text-xs text-gray-500">files</span>
-          </div>
+      {/* Exports */}
+      <div className="bg-white rounded-lg p-3 border border-gray-200">
+        <div className="flex items-center gap-2 mb-2">
+          <Database className="w-4 h-4 text-gray-500" />
+          <span className="text-xs font-medium text-gray-600">Exports</span>
         </div>
-      )}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-600">Local CSVs</span>
+            <span className="font-medium text-gray-900">
+              {(() => {
+                let count = 0
+                if (results.claimsProcessed) count++
+                if (results.mcnVerdicts || results.jfmVerdicts) count++
+                if (results.mlEnrichment?.status === 'completed') count++
+                return count
+              })()} files
+            </span>
+          </div>
+
+          {results.driveFolderUrl && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Google Drive</span>
+              <span className="font-medium text-green-600">Synced</span>
+            </div>
+          )}
+        </div>
+      </div>
 
       {getTotalIssues() > 0 && (
-        <div className="bg-white rounded-lg p-3 border border-orange-200">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+          <div className="flex items-center gap-2 mb-3">
             <AlertCircle className="w-4 h-4 text-orange-500" />
-            <span className="text-xs font-medium text-orange-600">Issues</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-orange-600">
-              {getTotalIssues()}
+            <span className="text-sm font-medium text-orange-600">
+              Issues ({getTotalIssues()})
             </span>
-            <div className="flex flex-col gap-1">
-              {onDownloadInvalidMCIDs && getTotalInvalidMCIDs() > 0 && (
-                <button
-                  onClick={handleDownloadMCIDs}
-                  className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
-                >
-                  <Download className="w-3 h-3" />
-                  invalid MCIDs
-                </button>
-              )}
-              {onDownloadInvalidLanguageIDs &&
-                getTotalInvalidLanguageIDs() > 0 && (
-                  <button
-                    onClick={handleDownloadLanguageIDs}
-                    className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 hover:underline transition-colors"
-                  >
-                    <Download className="w-3 h-3" />
-                    invalid Lang IDs
-                  </button>
-                )}
-              <span className="text-xs text-orange-500">
-                {getTotalInvalidMCIDs() > 0 &&
-                  `${getTotalInvalidMCIDs()} MCIDs`}
-                {getTotalInvalidMCIDs() > 0 &&
-                  getTotalInvalidLanguageIDs() > 0 &&
-                  ", "}
-                {getTotalInvalidLanguageIDs() > 0 &&
-                  `${getTotalInvalidLanguageIDs()} Lang IDs`}
-              </span>
-            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {/* MCN Verdicts - invalid MCIDs */}
+            {onDownloadInvalidMCIDs && results.mcnVerdicts?.invalidMCIDs && results.mcnVerdicts.invalidMCIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidMCIDs(runId, "mcn")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">MCN Verdicts</div>
+                  <div className="text-orange-600">{results.mcnVerdicts.invalidMCIDs.length} invalid MCIDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* JFM Verdicts - invalid MCIDs */}
+            {onDownloadInvalidMCIDs && results.jfmVerdicts?.invalidMCIDs && results.jfmVerdicts.invalidMCIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidMCIDs(runId, "jfm")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">JFM Verdicts</div>
+                  <div className="text-orange-600">{results.jfmVerdicts.invalidMCIDs.length} invalid MCIDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* Matter Entertainment Claims - invalid MCIDs */}
+            {onDownloadInvalidMCIDs && results.claimsProcessed?.matter_entertainment?.invalidMCIDs && results.claimsProcessed.matter_entertainment.invalidMCIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidMCIDs(runId, "matter_entertainment")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">ME Claims</div>
+                  <div className="text-orange-600">{results.claimsProcessed.matter_entertainment.invalidMCIDs.length} invalid MCIDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* Matter 2 Claims - invalid MCIDs */}
+            {onDownloadInvalidMCIDs && results.claimsProcessed?.matter_2?.invalidMCIDs && results.claimsProcessed.matter_2.invalidMCIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidMCIDs(runId, "matter_2")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">M2 Claims</div>
+                  <div className="text-orange-600">{results.claimsProcessed.matter_2.invalidMCIDs.length} invalid MCIDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* MCN Verdicts - invalid Language IDs */}
+            {onDownloadInvalidLanguageIDs && results.mcnVerdicts?.invalidLanguageIDs && results.mcnVerdicts.invalidLanguageIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidLanguageIDs(runId, "mcn")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">MCN Verdicts</div>
+                  <div className="text-orange-600">{results.mcnVerdicts.invalidLanguageIDs.length} invalid Lang IDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* JFM Verdicts - invalid Language IDs */}
+            {onDownloadInvalidLanguageIDs && results.jfmVerdicts?.invalidLanguageIDs && results.jfmVerdicts.invalidLanguageIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidLanguageIDs(runId, "jfm")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">JFM Verdicts</div>
+                  <div className="text-orange-600">{results.jfmVerdicts.invalidLanguageIDs.length} invalid Lang IDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* Matter Entertainment Claims - invalid Language IDs */}
+            {onDownloadInvalidLanguageIDs && results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs && results.claimsProcessed.matter_entertainment.invalidLanguageIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidLanguageIDs(runId, "matter_entertainment")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">ME Claims</div>
+                  <div className="text-orange-600">{results.claimsProcessed.matter_entertainment.invalidLanguageIDs.length} invalid Lang IDs</div>
+                </span>
+              </button>
+            )}
+
+            {/* Matter 2 Claims - invalid Language IDs */}
+            {onDownloadInvalidLanguageIDs && results.claimsProcessed?.matter_2?.invalidLanguageIDs && results.claimsProcessed.matter_2.invalidLanguageIDs.length > 0 && (
+              <button
+                onClick={() => onDownloadInvalidLanguageIDs(runId, "matter_2")}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-orange-700 bg-white hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+              >
+                <Download className="w-3 h-3 flex-shrink-0" />
+                <span className="text-left">
+                  <div className="font-medium">M2 Claims</div>
+                  <div className="text-orange-600">{results.claimsProcessed.matter_2.invalidLanguageIDs.length} invalid Lang IDs</div>
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}
