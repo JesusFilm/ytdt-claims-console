@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { CheckCircle, AlertCircle, Calendar, TrendingUp } from "lucide-react"
+import { formatDuration, intervalToDuration } from "date-fns"
 
 import RunCard from "@/components/RunCard"
 import RunDetailsModal from "@/components/RunDetailsModal"
@@ -26,15 +27,31 @@ export default function PipelineHistoryTab({
     const successful = runs.filter((r) => r.status === "completed").length
     const failed = runs.filter((r) => r.status === "failed").length
     const successRate = total > 0 ? Math.round((successful / total) * 100) : 0
-
     return { total, successful, failed, successRate }
+  }
+
+  const getMedianDuration = () => {
+    const completedRuns = runs.filter(r => r.status === "completed" && r.duration)
+    if (completedRuns.length === 0) return "0:00"
+
+    const durations = completedRuns.map(r => r.duration!).sort((a, b) => a - b)
+    const mid = Math.floor(durations.length / 2)
+    const medianMs = durations.length % 2 === 0
+      ? (durations[mid - 1] + durations[mid]) / 2
+      : durations[mid]
+
+    const duration = intervalToDuration({ start: 0, end: medianMs })
+    const hours = duration.hours || 0
+    const minutes = duration.minutes || 0
+
+    return `${hours}:${minutes.toString().padStart(2, '0')}`
   }
 
   const downloadInvalidMCIDs = (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => {
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
-    let invalidMCIDs: string[] | undefined
+    let invalidMCIDs: Array<Record<string, any>> | undefined
     if (type === "mcn") {
       invalidMCIDs = run.results.mcnVerdicts?.invalidMCIDs
     } else if (type === "jfm") {
@@ -66,7 +83,7 @@ export default function PipelineHistoryTab({
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
-    let invalidLanguageIDs: string[] | undefined
+    let invalidLanguageIDs: Array<Record<string, any>> | undefined
     if (type === "mcn") {
       invalidLanguageIDs = run.results.mcnVerdicts?.invalidLanguageIDs
     } else if (type === "jfm") {
@@ -152,17 +169,9 @@ export default function PipelineHistoryTab({
             </div>
             <div>
               <p className="font-semibold text-gray-900">
-                {runs.length > 0
-                  ? Math.round(
-                      runs.reduce((sum, run) => sum + (run.duration || 0), 0) /
-                        runs.length /
-                        1000 /
-                        60
-                    )
-                  : 0}
-                m
+                {getMedianDuration()}
               </p>
-              <p className="text-sm text-gray-500">Avg duration</p>
+              <p className="text-sm text-gray-500">Median duration</p>
             </div>
           </div>
         </div>

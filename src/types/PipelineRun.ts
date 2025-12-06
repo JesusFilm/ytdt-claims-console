@@ -15,25 +15,25 @@ export interface PipelineRun {
       matter_entertainment?: { 
         total: number
         new: number
-        invalidMCIDs: string[]
-        invalidLanguageIDs: string[]
+        invalidMCIDs: Array<Record<string, any>>
+        invalidLanguageIDs: Array<Record<string, any>>
       }
       matter_2?: { 
         total: number
         new: number
-        invalidMCIDs: string[]
-        invalidLanguageIDs: string[]
+        invalidMCIDs: Array<Record<string, any>>
+        invalidLanguageIDs: Array<Record<string, any>>
       }
     }
     mcnVerdicts?: {
       processed: number
-      invalidMCIDs: string[]
-      invalidLanguageIDs: string[]
+      invalidMCIDs: Array<Record<string, any>>
+      invalidLanguageIDs: Array<Record<string, any>>
     }
     jfmVerdicts?: {
       processed: number
-      invalidMCIDs: string[]
-      invalidLanguageIDs: string[]
+      invalidMCIDs: Array<Record<string, any>>
+      invalidLanguageIDs: Array<Record<string, any>>
     }
     exports?: Record<string, { rows: number; path: string }>
     driveUploads?: Array<{ name: string; size: number; rows: number }>
