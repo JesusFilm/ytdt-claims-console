@@ -2,6 +2,8 @@ import { FileText, Download } from "lucide-react"
 
 import { env } from "@/env"
 import type { PipelineRun } from "@/types/PipelineRun"
+import { authFetch } from "@/utils/auth"
+
 
 interface UploadedFilesSectionProps {
   files: PipelineRun["files"]
@@ -28,12 +30,22 @@ function FileItem({ label, filePath, source }: FileItemProps) {
         </div>
       </div>
       <button
-        onClick={() =>
-          window.open(
-            `${env.NEXT_PUBLIC_API_URL}/api/uploads/${filename}`,
-            "_blank"
-          )
-        }
+        onClick={async () => {
+          try {
+            const response = await authFetch(`/api/uploads/${filename}`)
+            const blob = await response.blob()
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement("a")
+            link.href = url
+            link.download = filename || label
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+          } catch (error) {
+            console.error("Download failed:", error)
+          }
+        }}
         className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
         title={`Download ${label.toLowerCase()} file`}
       >

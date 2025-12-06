@@ -11,6 +11,7 @@ import UploadTab from "@/components/UploadTab"
 import UserMenu from "@/components/UserMenu"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { authFetch } from "@/utils/auth"
+import { env } from "@/env"
 
 interface FileState {
   claimsME: File | null
@@ -143,7 +144,7 @@ export default function Home() {
             lastRun: data.lastRun,
           })
         }
-        
+
       } catch (error) {
         console.error("Status fetch error:", error)
       }
@@ -310,25 +311,26 @@ export default function Home() {
 
   const handleDownload = async (runId: string) => {
     try {
-      // Fetch exports list
       const response = await authFetch(`/api/exports/run/${runId}`)
       const data = await response.json()
 
-      // Download each file
       for (const file of data.files) {
+        const fileResponse = await authFetch(`/api/exports/run/${runId}/${file.name}`)
+        const blob = await fileResponse.blob()
+        const url = URL.createObjectURL(blob)
         const link = document.createElement("a")
-        link.href = `/api/exports/run/${runId}/${file.name}`
+        link.href = url
         link.download = file.name
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        URL.revokeObjectURL(url)
 
-        // Small delay between downloads
         await new Promise((resolve) => setTimeout(resolve, 500))
       }
     } catch (error) {
       console.error("Download error:", error)
-      alert("Download failed - unable to determine export folder")
+      alert("Download failed")
     }
   }
 
