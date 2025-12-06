@@ -1,4 +1,4 @@
-import { FC } from "react"
+import { FC, useState } from "react"
 
 import { CheckCircle, AlertCircle, Clock, XCircle } from "lucide-react"
 
@@ -6,6 +6,7 @@ import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
 import RefreshButton from "@/components/RefreshButton"
 import { PipelineRun } from "@/types/PipelineRun"
 import { formatDuration } from "@/utils/formatTime"
+import { authFetch } from "@/utils/auth"
 
 export interface PipelineStatusProps {
   status: {
@@ -85,7 +86,40 @@ export default function PipelineStatusTab({
   onRefresh,
   onStop,
 }: PipelineStatusProps) {
+  
+  const [restartingStepId, setRestartingStepId] = useState<string | null>(null)
   const showIdleState = !status.running
+
+  const handleRestartStep = async (stepId: string) => {
+    // Use status.runId instead of status.lastRun?.id
+    if (!status.runId) return
+
+    try {
+      setRestartingStepId(stepId)
+
+      const response = await authFetch(
+        `/api/runs/${status.runId}/steps/${stepId}/restart`,  // Changed here
+        { method: 'POST' }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}`)
+      }
+
+      console.log('Step restart initiated:', await response.json())
+
+      // Refresh status
+      if (onRefresh) {
+        await onRefresh()
+      }
+    } catch (error: any) {
+      console.error('Restart step error:', error)
+      alert(`Failed to restart step: ${error.message}`)
+    } finally {
+      setRestartingStepId(null)
+    }
+  }
 
   const getProgress = () => {
     if (status.progress !== undefined) return status.progress
@@ -120,41 +154,30 @@ export default function PipelineStatusTab({
           <h2 className="text-2xl font-bold text-gray-900">Pipeline Status</h2>
           <p className="text-gray-600 mt-1">
             {status.running
-              ? `Processing: ${currentStep?.current || "Running..."}`
-              : "Multi-Channel Network claims processing"}
-            {status.runId && (
-              <span className="text-gray-400 ml-2">
-                • Run ID: {status.runId}
-              </span>
-            )}
+              ? "Monitor the current pipeline execution"
+              : "View pipeline status and recent activity"}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={status.status} running={status.running} />
-
+          {onRefresh && <RefreshButton {...{ onRefresh }} />}
           {status.running && status.runId && onStop && (
             <button
               onClick={() => onStop(status.runId!)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors font-medium"
-              title="Stop pipeline"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
             >
-              <XCircle className="w-4 h-4" />
               Stop Pipeline
             </button>
-          )}
-
-          {onRefresh && (
-            <RefreshButton onRefresh={onRefresh} disabled={status.running} />
           )}
         </div>
       </div>
 
-      {/* Live Progress (only when running) */}
+      {/* Progress Bar - Only show when running */}
       {status.running && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-semibold text-blue-900">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-blue-900">
                 {currentStep
                   ? `Step ${currentStep.step} of ${currentStep.total}`
                   : "Processing"}
@@ -230,14 +253,14 @@ export default function PipelineStatusTab({
                           ?.matter_entertainment?.new ||
                           status.lastRun.results.claimsProcessed?.matter_2
                             ?.new) && (
-                          <span>
-                            {(status.lastRun.results.claimsProcessed
-                              ?.matter_entertainment?.new ?? 0) +
-                              (status.lastRun.results.claimsProcessed?.matter_2
-                                ?.new ?? 0)}{" "}
-                            new claims processed
-                          </span>
-                        )}
+                            <span>
+                              {(status.lastRun.results.claimsProcessed
+                                ?.matter_entertainment?.new ?? 0) +
+                                (status.lastRun.results.claimsProcessed?.matter_2
+                                  ?.new ?? 0)}{" "}
+                              new claims processed
+                            </span>
+                          )}
                         {status.lastRun.results.exports &&
                           status.lastRun.results.claimsProcessed && (
                             <span> • </span>
@@ -252,71 +275,39 @@ export default function PipelineStatusTab({
                           status.lastRun.results.mcnVerdicts.invalidMCIDs
                             .length > 0 && (
                             <span className="text-orange-600">
-                              {status.lastRun.results.exports ? " • " : ""}
+                              {" "}
+                              •{" "}
                               {
                                 status.lastRun.results.mcnVerdicts.invalidMCIDs
+                                  .length
                               }{" "}
                               invalid MCIDs
                             </span>
                           )}
                       </div>
                     )}
-
-                    <p className="text-green-700 text-sm mt-3 font-medium">
-                      ✓ Ready to process next batch
-                    </p>
-
-                    {/* Show Google Drive Link */}
-                    {status.lastRun.results?.driveFolderUrl && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-sm text-blue-800 font-medium mb-2">
-                          📁 Files uploaded to Google Drive:
-                        </p>
-                        <a
-                          href={status.lastRun.results.driveFolderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
-                        >
-                          View Shared Drive Folder
-                          <svg
-                            className="w-3 h-3 ml-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                        </a>
-                      </div>
-                    )}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
+                  <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Last Run Failed
+                      Pipeline Available
                     </h3>
                     <p className="text-gray-600 mt-1">
-                      Failed{" "}
+                      Last run {status.lastRun.status} at{" "}
                       {new Date(status.lastRun.startTime).toLocaleString()}
                     </p>
 
                     {status.lastRun.error && (
-                      <p className="text-red-700 text-sm mt-2">
+                      <p className="text-orange-700 text-sm mt-2">
                         {status.lastRun.error}
                       </p>
                     )}
 
-                    <p className="text-red-700 text-sm mt-3 font-medium">
-                      System ready but previous run had issues
+                    <p className="text-gray-600 text-sm mt-3">
+                      Ready to start new run or restart failed steps
                     </p>
                   </div>
                 </div>
@@ -342,7 +333,9 @@ export default function PipelineStatusTab({
       {(status.running || showIdleState) && (
         <PipelineSteps
           steps={status.steps}
-          showDescriptions={status.running} // Hide descriptions during active run for cleaner view
+          showDescriptions={status.running}
+          onRestartStep={handleRestartStep}
+          restartingStepId={restartingStepId}
         />
       )}
     </div>

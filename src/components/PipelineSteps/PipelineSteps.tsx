@@ -11,6 +11,7 @@ import {
   Circle,
   MinusCircle,
   XCircle,
+  RotateCw,
 } from "lucide-react"
 
 import { formatDuration } from "@/utils/formatTime"
@@ -39,6 +40,8 @@ interface PipelineStepsProps {
   showDescriptions?: boolean
   compact?: boolean
   className?: string
+  onRestartStep?: (stepId: string) => void
+  restartingStepId?: string | null
 }
 
 const getStepIcon = (stepId: string) => {
@@ -87,7 +90,16 @@ export default function PipelineSteps({
   showDescriptions = false,
   compact = false,
   className = "",
+  onRestartStep,
+  restartingStepId,
 }: PipelineStepsProps) {
+  const RESTARTABLE_STEPS = ['export_views', 'enrich_ml', 'upload_drive']
+
+  const canRestartStep = (step: PipelineStep) => {
+    return RESTARTABLE_STEPS.includes(step.id) && 
+           ['completed', 'error', 'timeout'].includes(step.status)
+  }
+
   // Safety check for undefined steps
   if (!steps || steps.length === 0) {
     return (
@@ -148,6 +160,17 @@ export default function PipelineSteps({
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-500">Step {index + 1}</div>
                 <StepStatusIcon step={step} />
+                
+                {onRestartStep && canRestartStep(step) && (
+                  <button
+                    onClick={() => onRestartStep(step.id)}
+                    disabled={restartingStepId === step.id}
+                    className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+                    title={`Restart ${step.name}`}
+                  >
+                    <RotateCw className={`w-4 h-4 ${restartingStepId === step.id ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
