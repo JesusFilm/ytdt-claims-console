@@ -30,14 +30,20 @@ export default function PipelineHistoryTab({
     return { total, successful, failed, successRate }
   }
 
-  const downloadInvalidMCIDs = (runId: string, type: "mcn" | "jfm") => {
+  const downloadInvalidMCIDs = (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => {
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
-    const invalidMCIDs =
-      type === "mcn"
-        ? run.results.mcnVerdicts?.invalidMCIDs
-        : run.results.jfmVerdicts?.invalidMCIDs
+    let invalidMCIDs: string[] | undefined
+    if (type === "mcn") {
+      invalidMCIDs = run.results.mcnVerdicts?.invalidMCIDs
+    } else if (type === "jfm") {
+      invalidMCIDs = run.results.jfmVerdicts?.invalidMCIDs
+    } else if (type === "matter_entertainment") {
+      invalidMCIDs = run.results.claimsProcessed?.matter_entertainment?.invalidMCIDs
+    } else if (type === "matter_2") {
+      invalidMCIDs = run.results.claimsProcessed?.matter_2?.invalidMCIDs
+    }
 
     if (!invalidMCIDs?.length) return
 
@@ -56,14 +62,20 @@ export default function PipelineHistoryTab({
     URL.revokeObjectURL(url)
   }
 
-  const downloadInvalidLanguageIDs = (runId: string, type: "mcn" | "jfm") => {
+  const downloadInvalidLanguageIDs = (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => {
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
-    const invalidLanguageIDs =
-      type === "mcn"
-        ? run.results.mcnVerdicts?.invalidLanguageIDs
-        : run.results.jfmVerdicts?.invalidLanguageIDs
+    let invalidLanguageIDs: string[] | undefined
+    if (type === "mcn") {
+      invalidLanguageIDs = run.results.mcnVerdicts?.invalidLanguageIDs
+    } else if (type === "jfm") {
+      invalidLanguageIDs = run.results.jfmVerdicts?.invalidLanguageIDs
+    } else if (type === "matter_entertainment") {
+      invalidLanguageIDs = run.results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs
+    } else if (type === "matter_2") {
+      invalidLanguageIDs = run.results.claimsProcessed?.matter_2?.invalidLanguageIDs
+    }
 
     if (!invalidLanguageIDs?.length) return
 

@@ -70,13 +70,21 @@ export default function ExportedFilesSection({ runId }: { runId: string }) {
               </div>
             </div>
             <button
-              onClick={() => {
-                const link = document.createElement("a")
-                link.href = `${env.NEXT_PUBLIC_API_URL}/api/exports/run/${runId}/${file.name}`
-                link.download = file.name
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
+              onClick={async () => {
+                try {
+                  const response = await authFetch(`/api/exports/run/${runId}/${file.name}`)
+                  const blob = await response.blob()
+                  const url = URL.createObjectURL(blob)
+                  const link = document.createElement("a")
+                  link.href = url
+                  link.download = file.name
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                  URL.revokeObjectURL(url)
+                } catch (error) {
+                  console.error("Download failed:", error)
+                }
               }}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               title={`Download ${file.name}`}
