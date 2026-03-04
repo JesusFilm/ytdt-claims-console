@@ -97,7 +97,10 @@ export default function PipelineHistoryTab({
     if (!invalidLanguageIDs?.length) return
 
     // Generate CSV content
-    const csvContent = ["language_id", ...invalidLanguageIDs].join("\n")
+    const csvContent = [
+      "video_id,language_id,channel_id",
+      ...invalidLanguageIDs.map(r => `${r.video_id},${r.language_id},${r.channel_id}`)
+    ].join("\n")
 
     // Create download
     const blob = new Blob([csvContent], { type: "text/csv" })
