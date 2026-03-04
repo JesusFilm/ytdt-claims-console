@@ -65,8 +65,11 @@ export default function PipelineHistoryTab({
     if (!invalidMCIDs?.length) return
 
     // Generate CSV content
-    const csvContent = ["media_component_id", ...invalidMCIDs].join("\n")
-
+    const csvContent = [
+      "video_id,media_component_id,channel_id,wave,views",
+      ...invalidMCIDs.map(r => `${r.video_id},${r.media_component_id},${r.channel_id},${r.wave},${r.views}`)
+    ].join("\n")
+    
     // Create download
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
