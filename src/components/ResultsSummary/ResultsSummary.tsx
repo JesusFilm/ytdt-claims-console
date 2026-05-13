@@ -47,9 +47,9 @@ export default function ResultsSummary({
   }
 
   return (
-    <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 ${className}`}>
+    <div className={`flex flex-wrap gap-3 ${className}`}>
       {results.claimsProcessed && (
-        <div className="bg-white rounded-lg p-3 border border-gray-200">
+        <div className="bg-white rounded-lg p-3 border border-gray-200 flex-1 min-w-[140px]">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-4 h-4 text-gray-500" />
             <span className="text-xs font-medium text-gray-600">Claims</span>
@@ -88,7 +88,7 @@ export default function ResultsSummary({
 
       {/* Verdicts */}
       {(results.mcnVerdicts || results.jfmVerdicts) && (
-        <div className="bg-white rounded-lg p-3 border border-gray-200">
+        <div className="bg-white rounded-lg p-3 border border-gray-200 flex-1 min-w-[140px]">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-4 h-4 text-gray-500" />
             <span className="text-xs font-medium text-gray-600">Verdicts</span>
@@ -107,7 +107,7 @@ export default function ResultsSummary({
 
       {/* Shorts */}
       {results.enrichShorts && (
-        <div className="bg-white rounded-lg p-3 border border-gray-200">
+        <div className="bg-white rounded-lg p-3 border border-gray-200 flex-1 min-w-[140px]">
           <div className="flex items-center gap-2 mb-2">
             <Scissors className="w-4 h-4 text-gray-500" />
             <span className="text-xs font-medium text-gray-600">Shorts</span>
@@ -128,7 +128,7 @@ export default function ResultsSummary({
       )}
 
       {/* Exports */}
-      <div className="bg-white rounded-lg p-3 border border-gray-200">
+      <div className="bg-white rounded-lg p-3 border border-gray-200 flex-1 min-w-[140px]">
         <div className="flex items-center gap-2 mb-2">
           <Database className="w-4 h-4 text-gray-500" />
           <span className="text-xs font-medium text-gray-600">Exports</span>
@@ -157,7 +157,7 @@ export default function ResultsSummary({
       </div>
 
       {getTotalIssues() > 0 && (
-        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200 w-full">
           <div className="flex items-center gap-2 mb-3">
             <AlertCircle className="w-4 h-4 text-orange-500" />
             <span className="text-sm font-medium text-orange-600">
