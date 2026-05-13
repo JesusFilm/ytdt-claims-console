@@ -5,8 +5,8 @@ import { CheckCircle, AlertCircle, Clock, XCircle } from "lucide-react"
 import PipelineSteps, { PipelineStep } from "@/components/PipelineSteps"
 import RefreshButton from "@/components/RefreshButton"
 import { PipelineRun } from "@/types/PipelineRun"
-import { formatDuration } from "@/utils/formatTime"
 import { authFetch } from "@/utils/auth"
+import { formatDuration } from "@/utils/formatTime"
 
 export interface PipelineStatusProps {
   status: {
@@ -113,9 +113,10 @@ export default function PipelineStatusTab({
       if (onRefresh) {
         await onRefresh()
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
       console.error('Restart step error:', error)
-      alert(`Failed to restart step: ${error.message}`)
+      alert(`Failed to restart step: ${message}`)
     } finally {
       setRestartingStepId(null)
     }
