@@ -1,7 +1,7 @@
 import { useState } from "react"
 
+import { intervalToDuration } from "date-fns"
 import { CheckCircle, AlertCircle, Calendar, TrendingUp } from "lucide-react"
-import { formatDuration, intervalToDuration } from "date-fns"
 
 import RunCard from "@/components/RunCard"
 import RunDetailsModal from "@/components/RunDetailsModal"
@@ -51,7 +51,7 @@ export default function PipelineHistoryTab({
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
-    let invalidMCIDs: Array<Record<string, any>> | undefined
+    let invalidMCIDs: Array<Record<string, string | number>> | undefined
     if (type === "mcn") {
       invalidMCIDs = run.results.mcnVerdicts?.invalidMCIDs
     } else if (type === "jfm") {
@@ -86,7 +86,7 @@ export default function PipelineHistoryTab({
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
-    let invalidLanguageIDs: Array<Record<string, any>> | undefined
+    let invalidLanguageIDs: Array<Record<string, string | number>> | undefined
     if (type === "mcn") {
       invalidLanguageIDs = run.results.mcnVerdicts?.invalidLanguageIDs
     } else if (type === "jfm") {
