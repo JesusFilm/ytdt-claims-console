@@ -4,6 +4,7 @@ import {
   FileText,
   Database,
   Download,
+  Scissors
 } from "lucide-react"
 
 import type { PipelineRun } from "@/types/PipelineRun"
@@ -85,6 +86,7 @@ export default function ResultsSummary({
         </div>
       )}
 
+      {/* Verdicts */}
       {(results.mcnVerdicts || results.jfmVerdicts) && (
         <div className="bg-white rounded-lg p-3 border border-gray-200">
           <div className="flex items-center gap-2 mb-2">
@@ -99,6 +101,28 @@ export default function ResultsSummary({
               ).toLocaleString()}
             </span>
             <span className="text-xs text-gray-500">processed</span>
+          </div>
+        </div>
+      )}
+
+      {/* Shorts */}
+      {results.enrichShorts && (
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Scissors className="w-4 h-4 text-gray-500" />
+            <span className="text-xs font-medium text-gray-600">Shorts</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-900">
+              {results.enrichShorts.marked.toLocaleString()}
+            </span>
+            <span className="text-xs text-gray-500">flagged</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-900">
+              {results.enrichShorts.checked.toLocaleString()}
+            </span>
+            <span className="text-xs text-gray-500">checked</span>
           </div>
         </div>
       )}

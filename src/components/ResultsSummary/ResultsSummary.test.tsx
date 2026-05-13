@@ -42,6 +42,24 @@ describe("ResultsSummary", () => {
     expect(screen.getByText("400")).toBeInTheDocument()
   })
 
+  it("should render shorts summary when enrichShorts is present", () => {
+    const results: PipelineRun["results"] = {
+      enrichShorts: { checked: 120, marked: 5 },
+    }
+    render(<ResultsSummary results={results} runId="test-1" />)
+    expect(screen.getByText("Shorts")).toBeInTheDocument()
+    expect(screen.getByText("5")).toBeInTheDocument()
+    expect(screen.getByText("120")).toBeInTheDocument()
+  })
+
+  it("should not render shorts card when enrichShorts is absent", () => {
+    const results: PipelineRun["results"] = {
+      claimsProcessed: { matter_entertainment: { total: 10, new: 5 } },
+    }
+    render(<ResultsSummary results={results} runId="test-1" />)
+    expect(screen.queryByText("Shorts")).not.toBeInTheDocument()
+  })
+
   it("should render exports summary", () => {
     const results: PipelineRun["results"] = {
       exports: {

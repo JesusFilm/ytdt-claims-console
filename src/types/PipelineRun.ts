@@ -35,6 +35,10 @@ export interface PipelineRun {
       invalidMCIDs: Array<Record<string, any>>
       invalidLanguageIDs: Array<Record<string, any>>
     }
+    enrichShorts?: {
+      checked: number
+      marked: number
+    }
     exports?: Record<string, { rows: number; path: string }>
     driveUploads?: Array<{ name: string; size: number; rows: number }>
     driveFolderUrl?: string
