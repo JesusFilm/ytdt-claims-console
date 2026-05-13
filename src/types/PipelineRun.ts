@@ -15,25 +15,25 @@ export interface PipelineRun {
       matter_entertainment?: { 
         total: number
         new: number
-        invalidMCIDs: Array<Record<string, any>>
-        invalidLanguageIDs: Array<Record<string, any>>
+        invalidMCIDs: Array<Record<string, string | number>>
+        invalidLanguageIDs: Array<Record<string, string | number>>
       }
       matter_2?: { 
         total: number
         new: number
-        invalidMCIDs: Array<Record<string, any>>
-        invalidLanguageIDs: Array<Record<string, any>>
+        invalidMCIDs: Array<Record<string, string | number>>
+        invalidLanguageIDs: Array<Record<string, string | number>>
       }
     }
     mcnVerdicts?: {
       processed: number
-      invalidMCIDs: Array<Record<string, any>>
-      invalidLanguageIDs: Array<Record<string, any>>
+      invalidMCIDs: Array<Record<string, string | number>>
+      invalidLanguageIDs: Array<Record<string, string | number>>
     }
     jfmVerdicts?: {
       processed: number
-      invalidMCIDs: Array<Record<string, any>>
-      invalidLanguageIDs: Array<Record<string, any>>
+      invalidMCIDs: Array<Record<string, string | number>>
+      invalidLanguageIDs: Array<Record<string, string | number>>
     }
     enrichShorts?: {
       checked: number
