@@ -37,6 +37,12 @@ interface SystemHealth {
   uptime: number
   memory: { used: number; total: number }
   enrich_ml_status?: "healthy" | "unhealthy"
+  version?: string
+  branch?: string
+  commit?: string
+  enrich_ml_version?: string
+  enrich_ml_branch?: string
+  enrich_ml_commit?: string
 }
 
 export default function Home() {
@@ -348,7 +354,7 @@ export default function Home() {
   const isRunning = status.running || loading
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -444,7 +450,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
         {/* Upload Tab */}
         {activeTab === "upload" && (
           <UploadTab
@@ -476,6 +482,18 @@ export default function Home() {
           />
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="sticky bottom-0 bg-white border-t border-gray-100 py-2 text-center text-xs text-gray-400">
+        v{process.env.NEXT_PUBLIC_APP_VERSION || '2.0.0'} (console)
+        {systemHealth?.branch && systemHealth?.commit && (
+          <> · backend: {systemHealth.branch}@{systemHealth.commit}</>
+        )}
+        {systemHealth?.enrich_ml_branch && systemHealth?.enrich_ml_commit && (
+          <> · yt-validator: {systemHealth.enrich_ml_branch}@{systemHealth.enrich_ml_commit}</>
+        )}
+      </footer>
+
     </div>
   )
 }
