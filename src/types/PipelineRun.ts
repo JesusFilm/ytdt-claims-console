@@ -4,6 +4,7 @@ export interface PipelineRun {
   startTime: Date
   status: "running" | "completed" | "failed" | "cancelled" | "timeout"
   duration?: number
+  triggeredBy?: { source: 'ui' | 'slack'; user: string }
   files: {
     claims_matter_entertainment?: string
     claims_matter_2?: string
