@@ -67,6 +67,14 @@ export default function Home() {
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([])
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [hasNewRun, setHasNewRun] = useState(false)
+  const [pendingRun, setPendingRun] = useState<{ uploadedAt: string } | null>(null)
+
+  useEffect(() => {
+    authFetch('/api/pending-run')
+      .then(r => r.json())
+      .then(data => setPendingRun(data.pendingRun))
+      .catch(() => { })
+  }, [])
 
   // Fetch system health
   useEffect(() => {
@@ -246,6 +254,33 @@ export default function Home() {
     })
     setStatus({ running: false, status: "idle", error: null, steps: [] })
     setActiveTab("upload")
+  }
+
+  const handleSaveClaims = async () => {
+    if (!files.claimsME && !files.claimsM2) {
+      alert('Please upload at least one claims file')
+      return
+    }
+    setLoading(true)
+    const formData = new FormData()
+    if (files.claimsME) formData.append('claims_matter_entertainment', files.claimsME)
+    if (files.claimsM2) formData.append('claims_matter_2', files.claimsM2)
+    try {
+      const response = await authFetch('/api/pending-run', { method: 'POST', body: formData })
+      if (!response.ok) throw new Error((await response.json()).error)
+      setPendingRun({ uploadedAt: new Date().toISOString() })
+      handleReset()
+    } catch (err) {
+      alert(`Failed to save claims: ${err instanceof Error ? err.message : err}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClearPendingRun = async () => {
+    if (!confirm('Clear staged claims?')) return
+    await authFetch('/api/pending-run', { method: 'DELETE' })
+    setPendingRun(null)
   }
 
   const handleRetry = async (runId: string) => {
@@ -457,9 +492,12 @@ export default function Home() {
             files={files}
             isRunning={isRunning}
             loading={loading}
+            pendingRun={pendingRun}
             handleFileDrop={handleFileDrop}
             handleFileRemove={handleFileRemove}
             handleRunPipeline={handleRunPipeline}
+            handleSaveClaims={handleSaveClaims}
+            handleClearPendingRun={handleClearPendingRun}
             handleReset={handleReset}
           />
         )}
