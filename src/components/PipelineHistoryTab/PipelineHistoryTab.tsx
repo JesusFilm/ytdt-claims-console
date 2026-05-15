@@ -69,7 +69,7 @@ export default function PipelineHistoryTab({
       "video_id,media_component_id,channel_id,wave,views",
       ...invalidMCIDs.map(r => `${r.video_id},${r.media_component_id},${r.channel_id},${r.wave},${r.views}`)
     ].join("\n")
-    
+
     // Create download
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
@@ -118,6 +118,10 @@ export default function PipelineHistoryTab({
   }
 
   const stats = getStats()
+
+  const highlightedRunId = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('run')
+    : null
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -200,6 +204,7 @@ export default function PipelineHistoryTab({
             <RunCard
               key={run.id}
               run={run}
+              highlighted={run.id === highlightedRunId}
               onRetry={onRetry}
               onDownload={onDownload}
               onViewDetails={setSelectedRun}

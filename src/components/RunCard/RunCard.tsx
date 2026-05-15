@@ -54,6 +54,7 @@ const StatusBadge: FC<{ status: PipelineRun["status"] }> = ({ status }) => {
 
 interface RunCardProps {
   run: PipelineRun
+  highlighted?: boolean
   onRetry?: (runId: string) => void
   onDownload?: (runId: string) => void
   onViewDetails?: (run: PipelineRun) => void
@@ -63,6 +64,7 @@ interface RunCardProps {
 
 export default function RunCard({
   run,
+  highlighted = false,
   onRetry,
   onDownload,
   onViewDetails,
@@ -85,7 +87,7 @@ export default function RunCard({
   return (
     <div
       id={`run-${run.id}`}
-      className={`border rounded-2xl p-6 transition-all hover:shadow-md ${cardBg}`}
+      className={`border rounded-2xl p-6 transition-all hover:shadow-md ${cardBg} ${highlighted ? 'ring-2 ring-blue-400' : ''}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-4">
