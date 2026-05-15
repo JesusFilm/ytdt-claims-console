@@ -84,6 +84,7 @@ export default function RunCard({
 
   return (
     <div
+      id={`run-${run.id}`}
       className={`border rounded-2xl p-6 transition-all hover:shadow-md ${cardBg}`}
     >
       <div className="flex items-start justify-between mb-4">
@@ -104,6 +105,11 @@ export default function RunCard({
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {formatDuration(run.duration)}
+                </span>
+              )}
+              {run.triggeredBy && (
+                <span className="flex items-center gap-1">
+                  via {run.triggeredBy.source} · {run.triggeredBy.user}
                 </span>
               )}
 

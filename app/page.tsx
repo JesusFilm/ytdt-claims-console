@@ -69,6 +69,7 @@ export default function Home() {
   const [hasNewRun, setHasNewRun] = useState(false)
   const [pendingRun, setPendingRun] = useState<{ uploadedAt: string } | null>(null)
 
+  // Fetch pending run on mount
   useEffect(() => {
     authFetch('/api/pending-run')
       .then(r => r.json())
@@ -174,6 +175,18 @@ export default function Home() {
     const interval = setInterval(fetchStatus, 2000)
     return () => clearInterval(interval)
   }, [status.running, status.status])
+
+  // Scroll to run details if "run" query param is present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const runId = params.get('run')
+    if (runId && pipelineRuns.length > 0) {
+      setActiveTab('history')
+      setTimeout(() => {
+        document.getElementById(`run-${runId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 100)
+    }
+  }, [pipelineRuns])
 
   const handleFileDrop = useCallback(
     (acceptedFiles: File[], fileType: keyof FileState) => {
