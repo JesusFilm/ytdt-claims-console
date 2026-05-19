@@ -168,13 +168,14 @@ export default function Home() {
     // Fetch immediately on mount or when running state changes
     fetchStatus()
 
-    // Only set up polling if running
-    const shouldPoll = status.running || (status.lastRun && status.lastRun.status !== 'completed')
+    // Only set up polling if running, has a running step (e.g. restarted step), or last run isn't completed
+    const hasRunningStep = status.steps?.some(s => s.status === 'running')
+    const shouldPoll = status.running || hasRunningStep || (status.lastRun && status.lastRun.status !== 'completed')
     if (!shouldPoll) return
 
     const interval = setInterval(fetchStatus, 2000)
     return () => clearInterval(interval)
-  }, [status.running, status.status])
+  }, [status.running, status.status, status.steps])
 
   // Scroll to run details if "run" query param is present
   useEffect(() => {
