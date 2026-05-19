@@ -93,7 +93,8 @@ export default function PipelineSteps({
   onRestartStep,
   restartingStepId,
 }: PipelineStepsProps) {
-  const RESTARTABLE_STEPS = ['export_views', 'enrich_ml', 'upload_drive']
+  const RESTARTABLE_STEPS = ['enrich_shorts', 'export_views', 'enrich_ml', 'upload_drive']
+
 
   const canRestartStep = (step: PipelineStep) => {
     return RESTARTABLE_STEPS.includes(step.id) && 
