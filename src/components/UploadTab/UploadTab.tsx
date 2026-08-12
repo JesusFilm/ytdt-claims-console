@@ -1,6 +1,13 @@
 "use client"
 
-import { PlayCircle, Pause, Save, AlertTriangle, Trash2 } from "lucide-react"
+import {
+  PlayCircle,
+  Pause,
+  Save,
+  AlertTriangle,
+  Trash2,
+  Sparkles,
+} from "lucide-react"
 
 import FileUpload from "@/components/FileUpload"
 import { formatRunFiles } from "@/utils/formatFiles"
@@ -20,6 +27,7 @@ interface UploadTabProps {
   handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void
   handleFileRemove: (fileType: keyof FileState) => void
   handleRunPipeline: () => void
+  handleScorePending?: () => void
   handleSaveClaims: () => void
   handleClearPendingRun: () => void
   handleReset: () => void
@@ -33,6 +41,7 @@ export default function UploadTab({
   handleFileDrop,
   handleFileRemove,
   handleRunPipeline,
+  handleScorePending,
   handleSaveClaims,
   handleClearPendingRun,
   handleReset,
@@ -146,6 +155,16 @@ export default function UploadTab({
           >
             <Save className="w-5 h-5" />
             Save & Wait for Verdicts
+          </button>
+        )}
+        {!hasFiles && handleScorePending && (
+          <button
+            onClick={handleScorePending}
+            disabled={isRunning || loading}
+            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            <Sparkles className="w-5 h-5" />
+            Score Pending Claims
           </button>
         )}
         <button
