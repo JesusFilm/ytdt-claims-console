@@ -1,4 +1,6 @@
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+
+import { authFetch } from "@/utils/auth"
 
 import UploadedFilesSection from "."
 
@@ -8,9 +10,18 @@ vi.mock("@/env", () => ({
   },
 }))
 
+vi.mock("@/utils/auth", () => ({
+  authFetch: vi.fn(),
+}))
+
 describe("UploadedFilesSection", () => {
   beforeEach(() => {
-    global.window.open = vi.fn()
+    vi.clearAllMocks()
+    vi.mocked(authFetch).mockResolvedValue({
+      blob: async () => new Blob(["csv"], { type: "text/csv" }),
+    } as unknown as Response)
+    global.URL.createObjectURL = vi.fn(() => "blob:mock")
+    global.URL.revokeObjectURL = vi.fn()
   })
 
   it("should not render when no files", () => {
@@ -51,7 +62,9 @@ describe("UploadedFilesSection", () => {
     expect(screen.getByText("JFM Verdicts")).toBeInTheDocument()
   })
 
-  it("should open download link when download button is clicked", () => {
+  it("should fetch the file through authFetch when download is clicked", async () => {
+    // Downloads go through authFetch and a blob, not window.open, so the
+    // request carries the auth token.
     render(
       <UploadedFilesSection
         files={{
@@ -59,11 +72,10 @@ describe("UploadedFilesSection", () => {
         }}
       />
     )
-    const downloadButtons = screen.getAllByRole("button")
-    fireEvent.click(downloadButtons[0])
-    expect(window.open).toHaveBeenCalledWith(
-      "http://localhost:3000/api/uploads/claims-me.csv",
-      "_blank"
+    fireEvent.click(screen.getAllByRole("button")[0])
+    await waitFor(() =>
+      expect(authFetch).toHaveBeenCalledWith("/api/uploads/claims-me.csv")
     )
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled())
   })
 })

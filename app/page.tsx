@@ -9,9 +9,9 @@ import PipelineStatusTab from "@/components/PipelineStatusTab"
 import type { PipelineStep } from "@/components/PipelineSteps"
 import UploadTab from "@/components/UploadTab"
 import UserMenu from "@/components/UserMenu"
+import { env } from "@/env"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { authFetch } from "@/utils/auth"
-import { env } from "@/env"
 
 interface FileState {
   claimsME: File | null
@@ -67,14 +67,16 @@ export default function Home() {
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([])
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [hasNewRun, setHasNewRun] = useState(false)
-  const [pendingRun, setPendingRun] = useState<{ uploadedAt: string } | null>(null)
+  const [pendingRun, setPendingRun] = useState<{ uploadedAt: string } | null>(
+    null
+  )
 
   // Fetch pending run on mount
   useEffect(() => {
-    authFetch('/api/pending-run')
-      .then(r => r.json())
-      .then(data => setPendingRun(data.pendingRun))
-      .catch(() => { })
+    authFetch("/api/pending-run")
+      .then((r) => r.json())
+      .then((data) => setPendingRun(data.pendingRun))
+      .catch(() => {})
   }, [])
 
   // Fetch system health
@@ -131,12 +133,12 @@ export default function Home() {
             ...data,
             lastRun: lastRun
               ? {
-                startTime: new Date(lastRun.startTime),
-                duration: lastRun.duration,
-                status: lastRun.status,
-                error: lastRun.error,
-                results: lastRun.results,
-              }
+                  startTime: new Date(lastRun.startTime),
+                  duration: lastRun.duration,
+                  status: lastRun.status,
+                  error: lastRun.error,
+                  results: lastRun.results,
+                }
               : undefined,
           })
 
@@ -152,14 +154,12 @@ export default function Home() {
             }
             fetchHistory()
           }, 1000)
-
         } else {
           setStatus({
             ...data,
             lastRun: data.lastRun,
           })
         }
-
       } catch (error) {
         console.error("Status fetch error:", error)
       }
@@ -169,8 +169,11 @@ export default function Home() {
     fetchStatus()
 
     // Only set up polling if running, has a running step (e.g. restarted step), or last run isn't completed
-    const hasRunningStep = status.steps?.some(s => s.status === 'running')
-    const shouldPoll = status.running || hasRunningStep || (status.lastRun && status.lastRun.status !== 'completed')
+    const hasRunningStep = status.steps?.some((s) => s.status === "running")
+    const shouldPoll =
+      status.running ||
+      hasRunningStep ||
+      (status.lastRun && status.lastRun.status !== "completed")
     if (!shouldPoll) return
 
     const interval = setInterval(fetchStatus, 2000)
@@ -180,11 +183,13 @@ export default function Home() {
   // Scroll to run details if "run" query param is present
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const runId = params.get('run')
+    const runId = params.get("run")
     if (runId && pipelineRuns.length > 0) {
-      setActiveTab('history')
+      setActiveTab("history")
       setTimeout(() => {
-        document.getElementById(`run-${runId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        document
+          .getElementById(`run-${runId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" })
       }, 100)
     }
   }, [pipelineRuns])
@@ -268,10 +273,7 @@ export default function Home() {
   const handleScoreUnprocessed = async () => {
     setLoading(true)
     const formData = new FormData()
-    formData.append(
-      "steps",
-      "connect_vpn,export_views,enrich_ml,upload_drive"
-    )
+    formData.append("steps", "connect_vpn,export_views,enrich_ml,upload_drive")
 
     try {
       const response = await authFetch(`/api/run`, {
@@ -309,28 +311,34 @@ export default function Home() {
 
   const handleSaveClaims = async () => {
     if (!files.claimsME && !files.claimsM2) {
-      alert('Please upload at least one claims file')
+      alert("Please upload at least one claims file")
       return
     }
     setLoading(true)
     const formData = new FormData()
-    if (files.claimsME) formData.append('claims_matter_entertainment', files.claimsME)
-    if (files.claimsM2) formData.append('claims_matter_2', files.claimsM2)
+    if (files.claimsME)
+      formData.append("claims_matter_entertainment", files.claimsME)
+    if (files.claimsM2) formData.append("claims_matter_2", files.claimsM2)
     try {
-      const response = await authFetch('/api/pending-run', { method: 'POST', body: formData })
+      const response = await authFetch("/api/pending-run", {
+        method: "POST",
+        body: formData,
+      })
       if (!response.ok) throw new Error((await response.json()).error)
       setPendingRun({ uploadedAt: new Date().toISOString() })
       handleReset()
     } catch (err) {
-      alert(`Failed to save claims: ${err instanceof Error ? err.message : err}`)
+      alert(
+        `Failed to save claims: ${err instanceof Error ? err.message : err}`
+      )
     } finally {
       setLoading(false)
     }
   }
 
   const handleClearPendingRun = async () => {
-    if (!confirm('Clear staged claims?')) return
-    await authFetch('/api/pending-run', { method: 'DELETE' })
+    if (!confirm("Clear staged claims?")) return
+    await authFetch("/api/pending-run", { method: "DELETE" })
     setPendingRun(null)
   }
 
@@ -407,7 +415,9 @@ export default function Home() {
       const data = await response.json()
 
       for (const file of data.files) {
-        const fileResponse = await authFetch(`/api/exports/run/${runId}/${file.name}`)
+        const fileResponse = await authFetch(
+          `/api/exports/run/${runId}/${file.name}`
+        )
         const blob = await fileResponse.blob()
         const url = URL.createObjectURL(blob)
         const link = document.createElement("a")
@@ -494,19 +504,21 @@ export default function Home() {
             <nav className="flex space-x-8">
               <button
                 onClick={() => setActiveTab("upload")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "upload"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "upload"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 Upload & Run
               </button>
               <button
                 onClick={() => setActiveTab("status")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "status"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "status"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
@@ -521,10 +533,11 @@ export default function Home() {
                   setActiveTab("history")
                   setHasNewRun(false)
                 }}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "history"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "history"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <div className="flex items-center gap-2">
                   History ({pipelineRuns.length})
@@ -578,15 +591,21 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="sticky bottom-0 bg-white border-t border-gray-100 py-2 text-center text-xs text-gray-400">
-        v{process.env.NEXT_PUBLIC_APP_VERSION || '2.0.0'} (console)
+        v{process.env.NEXT_PUBLIC_APP_VERSION || "2.0.0"} (console)
         {systemHealth?.branch && systemHealth?.commit && (
-          <> · backend: {systemHealth.branch}@{systemHealth.commit}</>
+          <>
+            {" "}
+            · backend: {systemHealth.branch}@{systemHealth.commit}
+          </>
         )}
         {systemHealth?.enrich_ml_branch && systemHealth?.enrich_ml_commit && (
-          <> · yt-validator: {systemHealth.enrich_ml_branch}@{systemHealth.enrich_ml_commit}</>
+          <>
+            {" "}
+            · yt-validator: {systemHealth.enrich_ml_branch}@
+            {systemHealth.enrich_ml_commit}
+          </>
         )}
       </footer>
-
     </div>
   )
 }

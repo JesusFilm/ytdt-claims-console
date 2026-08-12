@@ -56,8 +56,12 @@ export default function UploadTab({
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-amber-900">Claims staged — awaiting verdicts</p>
-              <p className="text-xs text-amber-700">Uploaded {new Date(pendingRun.uploadedAt).toLocaleString()}</p>
+              <p className="text-sm font-medium text-amber-900">
+                Claims staged — awaiting verdicts
+              </p>
+              <p className="text-xs text-amber-700">
+                Uploaded {new Date(pendingRun.uploadedAt).toLocaleString()}
+              </p>
             </div>
           </div>
           <button
@@ -147,16 +151,18 @@ export default function UploadTab({
         >
           Reset Files
         </button>
-        {(files.claimsME || files.claimsM2) && !files.mcnVerdicts && !files.jfmVerdicts && (
-          <button
-            onClick={handleSaveClaims}
-            disabled={isRunning || loading}
-            className="px-8 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-          >
-            <Save className="w-5 h-5" />
-            Save & Wait for Verdicts
-          </button>
-        )}
+        {(files.claimsME || files.claimsM2) &&
+          !files.mcnVerdicts &&
+          !files.jfmVerdicts && (
+            <button
+              onClick={handleSaveClaims}
+              disabled={isRunning || loading}
+              className="px-8 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              <Save className="w-5 h-5" />
+              Save & Wait for Verdicts
+            </button>
+          )}
         {!hasFiles && handleScoreUnprocessed && (
           <button
             onClick={handleScoreUnprocessed}

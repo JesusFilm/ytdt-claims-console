@@ -70,7 +70,7 @@ describe("PipelineHistoryTab", () => {
     )
     expect(screen.getByText("Successful runs")).toBeInTheDocument()
     expect(screen.getByText("Failed runs")).toBeInTheDocument()
-    expect(screen.getByText("Avg duration")).toBeInTheDocument()
+    expect(screen.getByText("Median duration")).toBeInTheDocument()
   })
 
   it("should show empty state when no runs", () => {

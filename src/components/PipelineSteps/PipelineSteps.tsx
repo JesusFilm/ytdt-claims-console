@@ -93,12 +93,18 @@ export default function PipelineSteps({
   onRestartStep,
   restartingStepId,
 }: PipelineStepsProps) {
-  const RESTARTABLE_STEPS = ['enrich_shorts', 'export_views', 'enrich_ml', 'upload_drive']
-
+  const RESTARTABLE_STEPS = [
+    "enrich_shorts",
+    "export_views",
+    "enrich_ml",
+    "upload_drive",
+  ]
 
   const canRestartStep = (step: PipelineStep) => {
-    return RESTARTABLE_STEPS.includes(step.id) && 
-           ['completed', 'error', 'timeout'].includes(step.status)
+    return (
+      RESTARTABLE_STEPS.includes(step.id) &&
+      ["completed", "error", "timeout"].includes(step.status)
+    )
   }
 
   // Safety check for undefined steps
@@ -161,7 +167,7 @@ export default function PipelineSteps({
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-500">Step {index + 1}</div>
                 <StepStatusIcon step={step} />
-                
+
                 {onRestartStep && canRestartStep(step) && (
                   <button
                     onClick={() => onRestartStep(step.id)}
@@ -169,7 +175,9 @@ export default function PipelineSteps({
                     className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-2"
                     title={`Restart ${step.name}`}
                   >
-                    <RotateCw className={`w-4 h-4 ${restartingStepId === step.id ? 'animate-spin' : ''}`} />
+                    <RotateCw
+                      className={`w-4 h-4 ${restartingStepId === step.id ? "animate-spin" : ""}`}
+                    />
                   </button>
                 )}
               </div>

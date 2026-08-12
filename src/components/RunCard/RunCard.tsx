@@ -58,8 +58,16 @@ interface RunCardProps {
   onRetry?: (runId: string) => void
   onDownload?: (runId: string) => void
   onViewDetails?: (run: PipelineRun) => void
-  onDownloadInvalidMCIDs?: (runId: string, type: "mcn" | "jfm") => void
-  onDownloadInvalidLanguageIDs?: (runId: string, type: "mcn" | "jfm") => void
+  // Must accept every source ResultsSummary can report on, not just verdicts:
+  // invalid MCIDs/language IDs are also surfaced per claims file.
+  onDownloadInvalidMCIDs?: (
+    runId: string,
+    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
+  ) => void
+  onDownloadInvalidLanguageIDs?: (
+    runId: string,
+    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
+  ) => void
 }
 
 export default function RunCard({
@@ -87,7 +95,7 @@ export default function RunCard({
   return (
     <div
       id={`run-${run.id}`}
-      className={`border rounded-2xl p-6 transition-all hover:shadow-md ${cardBg} ${highlighted ? 'ring-2 ring-blue-400' : ''}`}
+      className={`border rounded-2xl p-6 transition-all hover:shadow-md ${cardBg} ${highlighted ? "ring-2 ring-blue-400" : ""}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-4">

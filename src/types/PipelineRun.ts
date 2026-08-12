@@ -4,7 +4,7 @@ export interface PipelineRun {
   startTime: Date
   status: "running" | "completed" | "failed" | "cancelled" | "timeout"
   duration?: number
-  triggeredBy?: { source: 'ui' | 'slack'; user: string }
+  triggeredBy?: { source: "ui" | "slack"; user: string }
   files: {
     claims_matter_entertainment?: string
     claims_matter_2?: string
@@ -13,13 +13,13 @@ export interface PipelineRun {
   }
   results?: {
     claimsProcessed?: {
-      matter_entertainment?: { 
+      matter_entertainment?: {
         total: number
         new: number
         invalidMCIDs: Array<Record<string, string | number>>
         invalidLanguageIDs: Array<Record<string, string | number>>
       }
-      matter_2?: { 
+      matter_2?: {
         total: number
         new: number
         invalidMCIDs: Array<Record<string, string | number>>
@@ -41,6 +41,15 @@ export interface PipelineRun {
       marked: number
     }
     exports?: Record<string, { rows: number; path: string }>
+    // Written by the enrich_ml step; task_id lands as soon as the ML service
+    // accepts the job, the rest when its webhook reports completion.
+    mlEnrichment?: {
+      task_id?: string
+      started_at?: string
+      status?: string
+      num_results?: number
+      error?: string
+    }
     driveUploads?: Array<{ name: string; size: number; rows: number }>
     driveFolderUrl?: string
   }

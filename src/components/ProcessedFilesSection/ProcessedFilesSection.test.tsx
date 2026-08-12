@@ -104,9 +104,11 @@ describe("ProcessedFilesSection", () => {
         modified: "2024-01-01T10:00:00Z",
       },
     ]
+    // The same mock serves the listing (json) and the download (blob).
     vi.mocked(authFetch).mockResolvedValue({
       json: async () => ({ files: mockFiles }),
-    } as Response)
+      blob: async () => new Blob(["csv"], { type: "text/csv" }),
+    } as unknown as Response)
 
     const createElementSpy = vi.spyOn(document, "createElement")
     const appendChildSpy = vi.spyOn(document.body, "appendChild")
@@ -121,7 +123,8 @@ describe("ProcessedFilesSection", () => {
     const downloadButton = screen.getAllByRole("button")[0]
     fireEvent.click(downloadButton)
 
-    expect(createElementSpy).toHaveBeenCalledWith("a")
+    // The handler awaits the fetch and the blob before building the link.
+    await waitFor(() => expect(createElementSpy).toHaveBeenCalledWith("a"))
     expect(appendChildSpy).toHaveBeenCalled()
     expect(removeChildSpy).toHaveBeenCalled()
 

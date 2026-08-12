@@ -31,23 +31,31 @@ export default function PipelineHistoryTab({
   }
 
   const getMedianDuration = () => {
-    const completedRuns = runs.filter(r => r.status === "completed" && r.duration)
+    const completedRuns = runs.filter(
+      (r) => r.status === "completed" && r.duration
+    )
     if (completedRuns.length === 0) return "0:00"
 
-    const durations = completedRuns.map(r => r.duration!).sort((a, b) => a - b)
+    const durations = completedRuns
+      .map((r) => r.duration!)
+      .sort((a, b) => a - b)
     const mid = Math.floor(durations.length / 2)
-    const medianMs = durations.length % 2 === 0
-      ? (durations[mid - 1] + durations[mid]) / 2
-      : durations[mid]
+    const medianMs =
+      durations.length % 2 === 0
+        ? (durations[mid - 1] + durations[mid]) / 2
+        : durations[mid]
 
     const duration = intervalToDuration({ start: 0, end: medianMs })
     const hours = duration.hours || 0
     const minutes = duration.minutes || 0
 
-    return `${hours}:${minutes.toString().padStart(2, '0')}`
+    return `${hours}:${minutes.toString().padStart(2, "0")}`
   }
 
-  const downloadInvalidMCIDs = (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => {
+  const downloadInvalidMCIDs = (
+    runId: string,
+    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
+  ) => {
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
@@ -57,7 +65,8 @@ export default function PipelineHistoryTab({
     } else if (type === "jfm") {
       invalidMCIDs = run.results.jfmVerdicts?.invalidMCIDs
     } else if (type === "matter_entertainment") {
-      invalidMCIDs = run.results.claimsProcessed?.matter_entertainment?.invalidMCIDs
+      invalidMCIDs =
+        run.results.claimsProcessed?.matter_entertainment?.invalidMCIDs
     } else if (type === "matter_2") {
       invalidMCIDs = run.results.claimsProcessed?.matter_2?.invalidMCIDs
     }
@@ -67,7 +76,10 @@ export default function PipelineHistoryTab({
     // Generate CSV content
     const csvContent = [
       "video_id,media_component_id,channel_id,wave,views",
-      ...invalidMCIDs.map(r => `${r.video_id},${r.media_component_id},${r.channel_id},${r.wave},${r.views}`)
+      ...invalidMCIDs.map(
+        (r) =>
+          `${r.video_id},${r.media_component_id},${r.channel_id},${r.wave},${r.views}`
+      ),
     ].join("\n")
 
     // Create download
@@ -82,7 +94,10 @@ export default function PipelineHistoryTab({
     URL.revokeObjectURL(url)
   }
 
-  const downloadInvalidLanguageIDs = (runId: string, type: "mcn" | "jfm" | "matter_entertainment" | "matter_2") => {
+  const downloadInvalidLanguageIDs = (
+    runId: string,
+    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
+  ) => {
     const run = runs.find((r) => r.id === runId)
     if (!run?.results) return
 
@@ -92,9 +107,11 @@ export default function PipelineHistoryTab({
     } else if (type === "jfm") {
       invalidLanguageIDs = run.results.jfmVerdicts?.invalidLanguageIDs
     } else if (type === "matter_entertainment") {
-      invalidLanguageIDs = run.results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs
+      invalidLanguageIDs =
+        run.results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs
     } else if (type === "matter_2") {
-      invalidLanguageIDs = run.results.claimsProcessed?.matter_2?.invalidLanguageIDs
+      invalidLanguageIDs =
+        run.results.claimsProcessed?.matter_2?.invalidLanguageIDs
     }
 
     if (!invalidLanguageIDs?.length) return
@@ -102,7 +119,9 @@ export default function PipelineHistoryTab({
     // Generate CSV content
     const csvContent = [
       "video_id,language_id,channel_id",
-      ...invalidLanguageIDs.map(r => `${r.video_id},${r.language_id},${r.channel_id}`)
+      ...invalidLanguageIDs.map(
+        (r) => `${r.video_id},${r.language_id},${r.channel_id}`
+      ),
     ].join("\n")
 
     // Create download
@@ -119,9 +138,10 @@ export default function PipelineHistoryTab({
 
   const stats = getStats()
 
-  const highlightedRunId = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('run')
-    : null
+  const highlightedRunId =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("run")
+      : null
 
   return (
     <div className={`space-y-6 ${className}`}>

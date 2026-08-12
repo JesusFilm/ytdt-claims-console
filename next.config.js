@@ -6,14 +6,14 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**.googleusercontent.com',
+        protocol: "https",
+        hostname: "**.googleusercontent.com",
       },
     ],
   },
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version,
-  }
+  },
 }
 
 export default nextConfig
