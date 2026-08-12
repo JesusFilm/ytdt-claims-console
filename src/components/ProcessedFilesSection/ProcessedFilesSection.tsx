@@ -72,7 +72,9 @@ export default function ExportedFilesSection({ runId }: { runId: string }) {
             <button
               onClick={async () => {
                 try {
-                  const response = await authFetch(`/api/exports/run/${runId}/${file.name}`)
+                  const response = await authFetch(
+                    `/api/exports/run/${runId}/${file.name}`
+                  )
                   const blob = await response.blob()
                   const url = URL.createObjectURL(blob)
                   const link = document.createElement("a")

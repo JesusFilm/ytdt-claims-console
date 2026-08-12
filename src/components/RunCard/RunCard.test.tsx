@@ -93,7 +93,12 @@ describe("RunCard", () => {
       status: "completed",
       results: {
         claimsProcessed: {
-          matter_entertainment: { total: 100, new: 50 },
+          matter_entertainment: {
+            total: 100,
+            new: 50,
+            invalidMCIDs: [],
+            invalidLanguageIDs: [],
+          },
         },
       },
     })
@@ -107,7 +112,7 @@ describe("RunCard", () => {
       results: {
         mcnVerdicts: {
           processed: 100,
-          invalidMCIDs: ["mcid1"],
+          invalidMCIDs: [{ mcid: "mcid1" }],
           invalidLanguageIDs: [],
         },
       },
@@ -119,8 +124,7 @@ describe("RunCard", () => {
         onDownloadInvalidLanguageIDs={mockOnDownloadInvalidLanguageIDs}
       />
     )
-    const downloadButton = screen.getByText("invalid MCIDs")
-    fireEvent.click(downloadButton)
+    fireEvent.click(screen.getByText("1 invalid MCIDs"))
     expect(mockOnDownloadInvalidMCIDs).toHaveBeenCalledWith("run-1", "mcn")
   })
 

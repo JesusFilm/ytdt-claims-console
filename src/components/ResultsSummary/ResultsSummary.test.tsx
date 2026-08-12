@@ -22,8 +22,18 @@ describe("ResultsSummary", () => {
   it("should render claims processed summary", () => {
     const results: PipelineRun["results"] = {
       claimsProcessed: {
-        matter_entertainment: { total: 100, new: 50 },
-        matter_2: { total: 200, new: 75 },
+        matter_entertainment: {
+          total: 100,
+          new: 50,
+          invalidMCIDs: [],
+          invalidLanguageIDs: [],
+        },
+        matter_2: {
+          total: 200,
+          new: 75,
+          invalidMCIDs: [],
+          invalidLanguageIDs: [],
+        },
       },
     }
     render(<ResultsSummary results={results} runId="test-1" />)
@@ -54,36 +64,56 @@ describe("ResultsSummary", () => {
 
   it("should not render shorts card when enrichShorts is absent", () => {
     const results: PipelineRun["results"] = {
-      claimsProcessed: { matter_entertainment: { total: 10, new: 5 } },
+      claimsProcessed: {
+        matter_entertainment: {
+          total: 10,
+          new: 5,
+          invalidMCIDs: [],
+          invalidLanguageIDs: [],
+        },
+      },
     }
     render(<ResultsSummary results={results} runId="test-1" />)
     expect(screen.queryByText("Shorts")).not.toBeInTheDocument()
   })
 
   it("should render exports summary", () => {
+    // The local-CSV count is derived from which stages produced output, not
+    // from results.exports: one for claims, one for verdicts, one for ML.
     const results: PipelineRun["results"] = {
-      exports: {
-        file1: { rows: 100, path: "/path1" },
-        file2: { rows: 200, path: "/path2" },
+      claimsProcessed: {
+        matter_entertainment: {
+          total: 100,
+          new: 50,
+          invalidMCIDs: [],
+          invalidLanguageIDs: [],
+        },
       },
+      mcnVerdicts: { processed: 10, invalidMCIDs: [], invalidLanguageIDs: [] },
     }
     render(<ResultsSummary results={results} runId="test-1" />)
     expect(screen.getByText("Exports")).toBeInTheDocument()
-    expect(screen.getByText("2")).toBeInTheDocument()
+    expect(screen.getByText("2 files")).toBeInTheDocument()
   })
 
   it("should render issues section when there are invalid MCIDs", () => {
     const results: PipelineRun["results"] = {
       mcnVerdicts: {
         processed: 100,
-        invalidMCIDs: ["mcid1", "mcid2"],
+        invalidMCIDs: [{ mcid: "mcid1" }, { mcid: "mcid2" }],
         invalidLanguageIDs: [],
       },
     }
-    render(<ResultsSummary results={results} runId="test-1" />)
-    expect(screen.getByText("Issues")).toBeInTheDocument()
-    expect(screen.getByText("2")).toBeInTheDocument()
-    expect(screen.getByText("2 MCIDs")).toBeInTheDocument()
+    // The per-source breakdown only renders when a download handler is given.
+    render(
+      <ResultsSummary
+        results={results}
+        runId="test-1"
+        onDownloadInvalidMCIDs={mockOnDownloadMCIDs}
+      />
+    )
+    expect(screen.getByText("Issues (2)")).toBeInTheDocument()
+    expect(screen.getByText("2 invalid MCIDs")).toBeInTheDocument()
   })
 
   it("should render issues section when there are invalid language IDs", () => {
@@ -91,20 +121,29 @@ describe("ResultsSummary", () => {
       jfmVerdicts: {
         processed: 100,
         invalidMCIDs: [],
-        invalidLanguageIDs: ["lang1", "lang2", "lang3"],
+        invalidLanguageIDs: [
+          { langId: "lang1" },
+          { langId: "lang2" },
+          { langId: "lang3" },
+        ],
       },
     }
-    render(<ResultsSummary results={results} runId="test-1" />)
-    expect(screen.getByText("Issues")).toBeInTheDocument()
-    expect(screen.getByText("3")).toBeInTheDocument()
-    expect(screen.getByText("3 Lang IDs")).toBeInTheDocument()
+    render(
+      <ResultsSummary
+        results={results}
+        runId="test-1"
+        onDownloadInvalidLanguageIDs={mockOnDownloadLanguageIDs}
+      />
+    )
+    expect(screen.getByText("Issues (3)")).toBeInTheDocument()
+    expect(screen.getByText("3 invalid Lang IDs")).toBeInTheDocument()
   })
 
   it("should call onDownloadInvalidMCIDs when download button is clicked", () => {
     const results: PipelineRun["results"] = {
       mcnVerdicts: {
         processed: 100,
-        invalidMCIDs: ["mcid1"],
+        invalidMCIDs: [{ mcid: "mcid1" }],
         invalidLanguageIDs: [],
       },
     }
@@ -115,8 +154,7 @@ describe("ResultsSummary", () => {
         onDownloadInvalidMCIDs={mockOnDownloadMCIDs}
       />
     )
-    const button = screen.getByText("invalid MCIDs")
-    fireEvent.click(button)
+    fireEvent.click(screen.getByText("1 invalid MCIDs"))
     expect(mockOnDownloadMCIDs).toHaveBeenCalledWith("test-1", "mcn")
   })
 
@@ -125,7 +163,7 @@ describe("ResultsSummary", () => {
       mcnVerdicts: {
         processed: 100,
         invalidMCIDs: [],
-        invalidLanguageIDs: ["lang1"],
+        invalidLanguageIDs: [{ langId: "lang1" }],
       },
     }
     render(
@@ -135,8 +173,7 @@ describe("ResultsSummary", () => {
         onDownloadInvalidLanguageIDs={mockOnDownloadLanguageIDs}
       />
     )
-    const button = screen.getByText("invalid Lang IDs")
-    fireEvent.click(button)
+    fireEvent.click(screen.getByText("1 invalid Lang IDs"))
     expect(mockOnDownloadLanguageIDs).toHaveBeenCalledWith("test-1", "mcn")
   })
 
@@ -155,7 +192,12 @@ describe("ResultsSummary", () => {
   it("should handle partial claims data", () => {
     const results: PipelineRun["results"] = {
       claimsProcessed: {
-        matter_entertainment: { total: 100, new: 50 },
+        matter_entertainment: {
+          total: 100,
+          new: 50,
+          invalidMCIDs: [],
+          invalidLanguageIDs: [],
+        },
       },
     }
     render(<ResultsSummary results={results} runId="test-1" />)

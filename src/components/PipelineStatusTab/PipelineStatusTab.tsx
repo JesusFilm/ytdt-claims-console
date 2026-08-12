@@ -86,7 +86,6 @@ export default function PipelineStatusTab({
   onRefresh,
   onStop,
 }: PipelineStatusProps) {
-  
   const [restartingStepId, setRestartingStepId] = useState<string | null>(null)
   const showIdleState = !status.running
 
@@ -98,8 +97,8 @@ export default function PipelineStatusTab({
       setRestartingStepId(stepId)
 
       const response = await authFetch(
-        `/api/runs/${status.runId}/steps/${stepId}/restart`,  // Changed here
-        { method: 'POST' }
+        `/api/runs/${status.runId}/steps/${stepId}/restart`, // Changed here
+        { method: "POST" }
       )
 
       if (!response.ok) {
@@ -107,7 +106,7 @@ export default function PipelineStatusTab({
         throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      console.log('Step restart initiated:', await response.json())
+      console.log("Step restart initiated:", await response.json())
 
       // Refresh status
       if (onRefresh) {
@@ -115,7 +114,7 @@ export default function PipelineStatusTab({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      console.error('Restart step error:', error)
+      console.error("Restart step error:", error)
       alert(`Failed to restart step: ${message}`)
     } finally {
       setRestartingStepId(null)
@@ -254,14 +253,14 @@ export default function PipelineStatusTab({
                           ?.matter_entertainment?.new ||
                           status.lastRun.results.claimsProcessed?.matter_2
                             ?.new) && (
-                            <span>
-                              {(status.lastRun.results.claimsProcessed
-                                ?.matter_entertainment?.new ?? 0) +
-                                (status.lastRun.results.claimsProcessed?.matter_2
-                                  ?.new ?? 0)}{" "}
-                              new claims processed
-                            </span>
-                          )}
+                          <span>
+                            {(status.lastRun.results.claimsProcessed
+                              ?.matter_entertainment?.new ?? 0) +
+                              (status.lastRun.results.claimsProcessed?.matter_2
+                                ?.new ?? 0)}{" "}
+                            new claims processed
+                          </span>
+                        )}
                         {status.lastRun.results.exports &&
                           status.lastRun.results.claimsProcessed && (
                             <span> • </span>

@@ -93,7 +93,9 @@ describe("UploadTab", () => {
         files={{ ...defaultProps.files, claimsME: file }}
       />
     )
-    expect(screen.queryByText("Score Unprocessed Claims")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Score Unprocessed Claims")
+    ).not.toBeInTheDocument()
   })
 
   it("should disable score button while a pipeline is running", () => {

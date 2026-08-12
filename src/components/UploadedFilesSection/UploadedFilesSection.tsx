@@ -4,7 +4,6 @@ import { env } from "@/env"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { authFetch } from "@/utils/auth"
 
-
 interface UploadedFilesSectionProps {
   files: PipelineRun["files"]
 }
