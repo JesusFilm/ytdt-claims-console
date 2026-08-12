@@ -6,6 +6,9 @@ describe("UploadTab", () => {
   const mockHandleFileDrop = vi.fn()
   const mockHandleFileRemove = vi.fn()
   const mockHandleRunPipeline = vi.fn()
+  const mockHandleScorePending = vi.fn()
+  const mockHandleSaveClaims = vi.fn()
+  const mockHandleClearPendingRun = vi.fn()
   const mockHandleReset = vi.fn()
 
   const defaultProps = {
@@ -17,9 +20,13 @@ describe("UploadTab", () => {
     },
     isRunning: false,
     loading: false,
+    pendingRun: null,
     handleFileDrop: mockHandleFileDrop,
     handleFileRemove: mockHandleFileRemove,
     handleRunPipeline: mockHandleRunPipeline,
+    handleScorePending: mockHandleScorePending,
+    handleSaveClaims: mockHandleSaveClaims,
+    handleClearPendingRun: mockHandleClearPendingRun,
     handleReset: mockHandleReset,
   }
 
@@ -63,6 +70,35 @@ describe("UploadTab", () => {
     render(<UploadTab {...defaultProps} />)
     const runButton = screen.getByText("Run Pipeline")
     expect(runButton).toBeDisabled()
+  })
+
+  it("should offer scoring pending claims when no files are uploaded", () => {
+    render(<UploadTab {...defaultProps} />)
+    const scoreButton = screen.getByText("Score Pending Claims")
+    expect(scoreButton).toBeInTheDocument()
+    expect(scoreButton).not.toBeDisabled()
+  })
+
+  it("should call handleScorePending when score button is clicked", () => {
+    render(<UploadTab {...defaultProps} />)
+    fireEvent.click(screen.getByText("Score Pending Claims"))
+    expect(mockHandleScorePending).toHaveBeenCalledTimes(1)
+  })
+
+  it("should hide score button once files are uploaded", () => {
+    const file = new File(["content"], "test.csv", { type: "text/csv" })
+    render(
+      <UploadTab
+        {...defaultProps}
+        files={{ ...defaultProps.files, claimsME: file }}
+      />
+    )
+    expect(screen.queryByText("Score Pending Claims")).not.toBeInTheDocument()
+  })
+
+  it("should disable score button while a pipeline is running", () => {
+    render(<UploadTab {...defaultProps} isRunning={true} />)
+    expect(screen.getByText("Score Pending Claims")).toBeDisabled()
   })
 
   it("should enable run button when files are uploaded", () => {

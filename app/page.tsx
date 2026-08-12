@@ -259,6 +259,40 @@ export default function Home() {
     }
   }
 
+  // Score claims already awaiting a decision, without uploading anything.
+  // Exports whatever is currently unprocessed and runs the model over it,
+  // skipping the import and verdict steps.
+  const handleScorePending = async () => {
+    setLoading(true)
+    const formData = new FormData()
+    formData.append(
+      "steps",
+      "connect_vpn,export_views,enrich_ml,upload_drive"
+    )
+
+    try {
+      const response = await authFetch(`/api/run`, {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}`)
+      }
+
+      setActiveTab("status")
+      setStatus({ running: true, status: "starting", error: null, steps: [] })
+    } catch (error) {
+      console.error("Score pending error:", error)
+      if (error instanceof Error) {
+        alert(`Failed to start scoring: ${error.message}`)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleReset = () => {
     setFiles({
       claimsME: null,
@@ -513,6 +547,7 @@ export default function Home() {
             handleFileDrop={handleFileDrop}
             handleFileRemove={handleFileRemove}
             handleRunPipeline={handleRunPipeline}
+            handleScorePending={handleScorePending}
             handleSaveClaims={handleSaveClaims}
             handleClearPendingRun={handleClearPendingRun}
             handleReset={handleReset}
