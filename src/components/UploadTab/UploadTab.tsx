@@ -27,7 +27,7 @@ interface UploadTabProps {
   handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void
   handleFileRemove: (fileType: keyof FileState) => void
   handleRunPipeline: () => void
-  handleScorePending?: () => void
+  handleScoreUnprocessed?: () => void
   handleSaveClaims: () => void
   handleClearPendingRun: () => void
   handleReset: () => void
@@ -41,7 +41,7 @@ export default function UploadTab({
   handleFileDrop,
   handleFileRemove,
   handleRunPipeline,
-  handleScorePending,
+  handleScoreUnprocessed,
   handleSaveClaims,
   handleClearPendingRun,
   handleReset,
@@ -157,14 +157,14 @@ export default function UploadTab({
             Save & Wait for Verdicts
           </button>
         )}
-        {!hasFiles && handleScorePending && (
+        {!hasFiles && handleScoreUnprocessed && (
           <button
-            onClick={handleScorePending}
+            onClick={handleScoreUnprocessed}
             disabled={isRunning || loading}
             className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             <Sparkles className="w-5 h-5" />
-            Score Pending Claims
+            Score Unprocessed Claims
           </button>
         )}
         <button

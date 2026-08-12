@@ -6,7 +6,7 @@ describe("UploadTab", () => {
   const mockHandleFileDrop = vi.fn()
   const mockHandleFileRemove = vi.fn()
   const mockHandleRunPipeline = vi.fn()
-  const mockHandleScorePending = vi.fn()
+  const mockHandleScoreUnprocessed = vi.fn()
   const mockHandleSaveClaims = vi.fn()
   const mockHandleClearPendingRun = vi.fn()
   const mockHandleReset = vi.fn()
@@ -24,7 +24,7 @@ describe("UploadTab", () => {
     handleFileDrop: mockHandleFileDrop,
     handleFileRemove: mockHandleFileRemove,
     handleRunPipeline: mockHandleRunPipeline,
-    handleScorePending: mockHandleScorePending,
+    handleScoreUnprocessed: mockHandleScoreUnprocessed,
     handleSaveClaims: mockHandleSaveClaims,
     handleClearPendingRun: mockHandleClearPendingRun,
     handleReset: mockHandleReset,
@@ -72,17 +72,17 @@ describe("UploadTab", () => {
     expect(runButton).toBeDisabled()
   })
 
-  it("should offer scoring pending claims when no files are uploaded", () => {
+  it("should offer scoring unprocessed claims when no files are uploaded", () => {
     render(<UploadTab {...defaultProps} />)
-    const scoreButton = screen.getByText("Score Pending Claims")
+    const scoreButton = screen.getByText("Score Unprocessed Claims")
     expect(scoreButton).toBeInTheDocument()
     expect(scoreButton).not.toBeDisabled()
   })
 
-  it("should call handleScorePending when score button is clicked", () => {
+  it("should call handleScoreUnprocessed when score button is clicked", () => {
     render(<UploadTab {...defaultProps} />)
-    fireEvent.click(screen.getByText("Score Pending Claims"))
-    expect(mockHandleScorePending).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByText("Score Unprocessed Claims"))
+    expect(mockHandleScoreUnprocessed).toHaveBeenCalledTimes(1)
   })
 
   it("should hide score button once files are uploaded", () => {
@@ -93,12 +93,12 @@ describe("UploadTab", () => {
         files={{ ...defaultProps.files, claimsME: file }}
       />
     )
-    expect(screen.queryByText("Score Pending Claims")).not.toBeInTheDocument()
+    expect(screen.queryByText("Score Unprocessed Claims")).not.toBeInTheDocument()
   })
 
   it("should disable score button while a pipeline is running", () => {
     render(<UploadTab {...defaultProps} isRunning={true} />)
-    expect(screen.getByText("Score Pending Claims")).toBeDisabled()
+    expect(screen.getByText("Score Unprocessed Claims")).toBeDisabled()
   })
 
   it("should enable run button when files are uploaded", () => {
