@@ -259,10 +259,13 @@ export default function Home() {
     }
   }
 
-  // Score claims already awaiting a decision, without uploading anything.
-  // Exports whatever is currently unprocessed and runs the model over it,
-  // skipping the import and verdict steps.
-  const handleScorePending = async () => {
+  // Score claims still marked unprocessed (verdict='U'), without uploading
+  // anything. Exports the current unprocessed_claims view and runs the model
+  // over it, skipping the import and verdict steps.
+  //
+  // Distinct from a "pending run" (see handleSaveClaims), which is uploaded
+  // claims staged while waiting for verdicts.
+  const handleScoreUnprocessed = async () => {
     setLoading(true)
     const formData = new FormData()
     formData.append(
@@ -547,7 +550,7 @@ export default function Home() {
             handleFileDrop={handleFileDrop}
             handleFileRemove={handleFileRemove}
             handleRunPipeline={handleRunPipeline}
-            handleScorePending={handleScorePending}
+            handleScoreUnprocessed={handleScoreUnprocessed}
             handleSaveClaims={handleSaveClaims}
             handleClearPendingRun={handleClearPendingRun}
             handleReset={handleReset}
