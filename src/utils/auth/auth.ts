@@ -1,7 +1,16 @@
 import { env } from "@/env"
 
 export async function getAuthUrl(): Promise<string> {
-  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/google`)
+  // Ask to be returned to whichever origin started the login, so the console
+  // can run locally or as a preview deploy. The API only honours origins on
+  // its allowlist and otherwise falls back to the production console.
+  const redirect =
+    typeof window === "undefined"
+      ? ""
+      : `?redirect_uri=${encodeURIComponent(window.location.origin)}`
+  const res = await fetch(
+    `${env.NEXT_PUBLIC_API_URL}/api/auth/google${redirect}`
+  )
   const data = await res.json()
   return data.authUrl
 }

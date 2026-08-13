@@ -116,6 +116,11 @@ export default function Home() {
     fetchHistory()
   }, [status.status]) // Refresh when pipeline completes
 
+  // Derived here rather than inside the effect so the effect can depend on a
+  // boolean instead of the status.steps array. See the dependency array below.
+  const hasRunningStep =
+    status.steps?.some((s) => s.status === "running") ?? false
+
   // Fetch status on mount and poll when running
   useEffect(() => {
     const fetchStatus = async () => {
@@ -169,7 +174,6 @@ export default function Home() {
     fetchStatus()
 
     // Only set up polling if running, has a running step (e.g. restarted step), or last run isn't completed
-    const hasRunningStep = status.steps?.some((s) => s.status === "running")
     const shouldPoll =
       status.running ||
       hasRunningStep ||
@@ -178,7 +182,13 @@ export default function Home() {
 
     const interval = setInterval(fetchStatus, 2000)
     return () => clearInterval(interval)
-  }, [status.running, status.status, status.steps])
+    // Depends on hasRunningStep (a boolean), never on status.steps itself:
+    // that array is deserialised fresh from every response, so its identity
+    // changes on each poll even when the content is identical. Depending on it
+    // tore the effect down and rebuilt it every 2s, starting a new interval and
+    // firing an extra immediate fetch each time, so requests piled up
+    // indefinitely instead of polling once per interval.
+  }, [status.running, status.status, hasRunningStep])
 
   // Scroll to run details if "run" query param is present
   useEffect(() => {
