@@ -161,7 +161,16 @@ export default function ResultsSummary({
           {results.driveFolderUrl && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-600">Google Drive</span>
-              <span className="font-medium text-green-600">Synced</span>
+              {results.mlEnrichment?.driveUploadError ? (
+                <span
+                  className="font-medium text-orange-600"
+                  title={results.mlEnrichment.driveUploadError}
+                >
+                  ML file not synced
+                </span>
+              ) : (
+                <span className="font-medium text-green-600">Synced</span>
+              )}
             </div>
           )}
         </div>
