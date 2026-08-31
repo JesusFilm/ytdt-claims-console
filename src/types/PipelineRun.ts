@@ -49,6 +49,9 @@ export interface PipelineRun {
       status?: string
       num_results?: number
       error?: string
+      // Set when the enriched CSV was produced but could not be copied to
+      // Drive; the run still completes, so surface it rather than hide it.
+      driveUploadError?: string
     }
     driveUploads?: Array<{ name: string; size: number; rows: number }>
     driveFolderUrl?: string
