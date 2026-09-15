@@ -4,6 +4,10 @@ import { AuthProvider } from "@/contexts/AuthContext"
 
 import ProtectedRoute from "."
 
+const { mockPathname } = vi.hoisted(() => ({ mockPathname: vi.fn() }))
+
+vi.mock("next/navigation", () => ({ usePathname: mockPathname }))
+
 vi.mock("@/utils/auth", async () => {
   const actual = await vi.importActual("@/utils/auth")
   return {
@@ -16,8 +20,28 @@ vi.mock("@/utils/auth", async () => {
 describe("ProtectedRoute", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPathname.mockReturnValue("/")
     delete (window as any).location
     window.location = { ...window.location, search: "" } as any
+  })
+
+  it("should render public pages without signing in", async () => {
+    mockPathname.mockReturnValue("/about")
+    const { getCurrentUser } = await import("@/utils/auth")
+    vi.mocked(getCurrentUser).mockResolvedValue(null)
+
+    render(
+      <AuthProvider>
+        <ProtectedRoute>
+          <div>About Content</div>
+        </ProtectedRoute>
+      </AuthProvider>
+    )
+
+    expect(screen.getByText("About Content")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText("Sign in")).not.toBeInTheDocument()
+    })
   })
 
   it("should show loading state when auth is loading", async () => {
