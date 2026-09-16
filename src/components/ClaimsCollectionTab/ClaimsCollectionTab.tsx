@@ -145,11 +145,12 @@ const Metric: FC<{ label: string; value: string; hint?: string }> = ({
   </div>
 )
 
-const Step: FC<{ label: string; detail: string; done: boolean }> = ({
-  label,
-  detail,
-  done,
-}) => (
+const Step: FC<{
+  label: string
+  detail: string
+  done: boolean
+  extra?: string
+}> = ({ label, detail, done, extra }) => (
   <div
     className={`pl-3 border-l-2 ${done ? "border-green-500" : "border-gray-300"}`}
   >
@@ -159,6 +160,7 @@ const Step: FC<{ label: string; detail: string; done: boolean }> = ({
       {label}
     </p>
     <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
+    {extra && <p className="text-xs text-gray-400 mt-0.5">{extra}</p>}
   </div>
 )
 
@@ -317,6 +319,11 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                     : "not started"
                 }
                 done={audio?.remaining === 0}
+                extra={
+                  breakdown
+                    ? `${breakdown.withTrack.toLocaleString()} with a language · ${breakdown.noTrack.toLocaleString()} with none usable`
+                    : undefined
+                }
               />
             </div>
 
@@ -329,13 +336,6 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                   " It stopped early on the daily quota, so more remain than the budget suggests."}
                 {audio.stoppedReason === "outage" &&
                   " It stopped early after repeated lookup failures, so more remain than the budget suggests."}
-              </p>
-            )}
-
-            {breakdown && (
-              <p className="text-xs text-gray-500 mt-1">
-                {breakdown.withTrack.toLocaleString()} with a language ·{" "}
-                {breakdown.noTrack.toLocaleString()} with none usable
               </p>
             )}
 
