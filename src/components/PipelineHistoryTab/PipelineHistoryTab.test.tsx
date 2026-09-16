@@ -127,8 +127,8 @@ describe("PipelineHistoryTab", () => {
       kind: "ingest",
       status: "completed",
       trigger: "schedule",
-      startedAt: "2024-01-03T06:00:00Z",
-      endedAt: "2024-01-03T06:09:41Z",
+      startTime: "2024-01-03T06:00:00Z",
+      endTime: "2024-01-03T06:09:41Z",
       reports: {
         matter_2: {
           contentOwnerId: "M2",
@@ -147,7 +147,7 @@ describe("PipelineHistoryTab", () => {
       id: "ingest-2",
       kind: "ingest",
       status: "nothing_new",
-      startedAt: "2024-01-02T06:00:00Z",
+      startTime: "2024-01-02T06:00:00Z",
     },
   ]
 
@@ -160,6 +160,21 @@ describe("PipelineHistoryTab", () => {
     expect(screen.getByText("No new snapshot")).toBeInTheDocument()
     expect(screen.getByText(/Snapshot 2024-01-01/)).toBeInTheDocument()
     expect(screen.getByText("521")).toBeInTheDocument()
+  })
+
+  it("should order ingests and runs together, newest first", () => {
+    // run-1 Jan 1, run-2 Jan 2 10:00, ingest-2 Jan 2 06:00, ingest-1 Jan 3
+    render(<PipelineHistoryTab runs={mockRuns} ingests={mockIngests} />)
+
+    const order = Array.from(document.querySelectorAll("[data-entry]")).map(
+      (el) => el.getAttribute("data-entry")
+    )
+    expect(order).toEqual([
+      "ingest-ingest-1",
+      "pipeline-run-2",
+      "ingest-ingest-2",
+      "pipeline-run-1",
+    ])
   })
 
   it("should filter to one kind at a time", () => {
