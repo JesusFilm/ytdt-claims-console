@@ -38,6 +38,36 @@ export interface ClaimsIngestAttempt {
   }
 }
 
+// An ingest as history returns it: the same attempt, summarised for a list.
+export interface ClaimsIngestSummary extends ClaimsIngestAttempt {
+  id: string
+  kind: "ingest"
+  endTime?: string | null
+  duration?: number
+  reason?: string | null
+}
+
+// Pipeline runs carry a mode so a steps-filtered run isn't mistaken for a full
+// one that skipped its work.
+export type RunMode = "full" | "scoring" | "partial"
+
+export interface HistoryStats {
+  total: number
+  successful: number
+  failed: number
+  ingests: {
+    total: number
+    completed: number
+    nothingNew: number
+    failed: number
+  }
+  medianDuration: {
+    full: number | null
+    scoring: number | null
+    partial: number | null
+  }
+}
+
 // YT-Validator's /asr/status, proxied by the pipeline because the browser
 // cannot reach localhost:3001. Every block is an empty object until the
 // collector has run at least once, so treat empty as "not started".
