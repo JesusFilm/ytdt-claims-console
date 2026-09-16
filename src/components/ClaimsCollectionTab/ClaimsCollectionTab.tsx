@@ -15,6 +15,9 @@ import { authFetch } from "@/utils/auth"
 export interface ClaimsCollectionTabProps {
   // Manual upload is now the fallback, so the tab links to it rather than owning it
   onUploadManually?: () => void
+  // Opens an attempt on the history tab, where the full detail lives. Without
+  // it the rows stay plain text rather than pretending to be clickable.
+  onOpenIngest?: (ingestId: string) => void
 }
 
 const OWNER_LABELS: Record<string, string> = {
@@ -166,6 +169,7 @@ const Step: FC<{
 
 const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   onUploadManually,
+  onOpenIngest,
 }) => {
   const [status, setStatus] = useState<ClaimsIngestStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -378,29 +382,55 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
             Recent runs
           </h3>
           <div className="space-y-2">
-            {status.recent.slice(0, 5).map((attempt, index) => (
-              <div
-                key={attempt._id ?? `${attempt.startedAt}-${index}`}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="text-gray-600">
-                  {formatUtc(attempt.startedAt)}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  {attempt.status === "completed" && (
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                  )}
-                  {attempt.status === "failed" && (
-                    <AlertCircle className="w-4 h-4 text-red-600" />
-                  )}
-                  <span className="text-gray-700">
-                    {attempt.status === "nothing_new"
-                      ? "no new snapshot"
-                      : attempt.status}
+            {status.recent.slice(0, 5).map((attempt, index) => {
+              const key = attempt._id ?? `${attempt.startedAt}-${index}`
+              const ingestId = attempt._id
+              const row = (
+                <>
+                  <span className="text-gray-600">
+                    {formatUtc(attempt.startedAt)}
                   </span>
-                </span>
-              </div>
-            ))}
+                  <span className="inline-flex items-center gap-1.5">
+                    {attempt.status === "completed" && (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    )}
+                    {attempt.status === "failed" && (
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                    )}
+                    <span className="text-gray-700">
+                      {attempt.status === "nothing_new"
+                        ? "no new snapshot"
+                        : attempt.status}
+                    </span>
+                  </span>
+                </>
+              )
+
+              // Older attempts predate the id being stored, so fall back to
+              // plain text rather than a button that could not go anywhere.
+              if (!onOpenIngest || !ingestId) {
+                return (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    {row}
+                  </div>
+                )
+              }
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onOpenIngest(ingestId)}
+                  title="Open in history"
+                  className="w-full -mx-2 px-2 py-1 rounded-md flex items-center justify-between text-sm text-left hover:bg-gray-50 transition-colors"
+                >
+                  {row}
+                </button>
+              )
+            })}
           </div>
         </div>
       ) : null}
