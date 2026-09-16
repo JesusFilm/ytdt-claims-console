@@ -8,6 +8,7 @@ import RefreshButton from "@/components/RefreshButton"
 import type {
   ClaimsIngestAttempt,
   ClaimsIngestStatus,
+  ClaimsOwnerSnapshot,
   CollectorStatus,
 } from "@/types/ClaimsIngest"
 import { authFetch } from "@/utils/auth"
@@ -174,10 +175,46 @@ export function collectorLastRun(collector?: CollectorStatus | null) {
   }
 }
 
-function snapshotDate(attempt: ClaimsIngestAttempt | null): string | null {
-  const starts = Object.values(attempt?.reports ?? {}).map((r) => r.startTime)
-  if (!starts.length) return null
-  return starts.sort().slice(-1)[0].slice(0, 10)
+// Each content owner's latest ingested snapshot. An ingest only fetches owners
+// whose report is new, so the latest run alone can leave an owner out: on a day
+// only Matter 2 published, Matter Entertainment vanished from this tab.
+// `current` is whether that snapshot came in with the latest run. Against a
+// pipeline API that predates `owners`, falls back to the latest run's view.
+export function ownerSnapshots(
+  status: ClaimsIngestStatus | null
+): Array<ClaimsOwnerSnapshot & { current: boolean }> {
+  const last = status?.lastCompleted ?? null
+  if (status?.owners?.length) {
+    return status.owners.map((owner) => ({
+      ...owner,
+      // without the run's id we cannot tell, so do not claim staleness
+      current: !last?._id || owner.ingestId === last._id,
+    }))
+  }
+  return Object.entries(last?.reports ?? {}).map(([source, report]) => {
+    const counts = last?.results?.claimsProcessed?.[source]
+    return {
+      source,
+      snapshot: report.startTime.slice(0, 10),
+      publishedAt: report.createTime,
+      ingestedAt: last?.endedAt ?? null,
+      new: counts?.new ?? null,
+      total: counts?.total ?? null,
+      ingestId: last?._id ?? null,
+      current: true,
+    }
+  })
+}
+
+// Oldest and newest data date across owners. "Claims as of" has to hold for
+// every owner, so a single newest date would overstate how fresh the rest are.
+export function snapshotRange(owners: Array<{ snapshot: string | null }>) {
+  const dates = owners
+    .map((owner) => owner.snapshot)
+    .filter((date): date is string => !!date)
+    .sort()
+  if (!dates.length) return null
+  return { oldest: dates[0], newest: dates[dates.length - 1] }
 }
 
 function publishedAt(attempt: ClaimsIngestAttempt | null): string | null {
@@ -281,8 +318,15 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const breakdown = audioLanguageBreakdown(status?.collector)
   const collectorRun = collectorLastRun(status?.collector)
   const topLanguages = topAudioLanguages(status?.collector)
-  const snapshot = snapshotDate(last)
-  const age = daysOld(snapshot)
+  const owners = ownerSnapshots(status)
+  const range = snapshotRange(owners)
+  const age = daysOld(range?.oldest)
+  const ageLabel =
+    age == null
+      ? undefined
+      : age === 0
+        ? "today"
+        : `${age} day${age === 1 ? "" : "s"} old`
 
   return (
     <div className="space-y-4">
@@ -336,19 +380,25 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Metric
               label="Claims as of"
-              value={snapshot ?? "—"}
+              value={
+                !range
+                  ? "—"
+                  : range.oldest === range.newest
+                    ? range.oldest
+                    : `${range.oldest} – ${range.newest}`
+              }
               hint={
-                age == null
-                  ? undefined
-                  : age === 0
-                    ? "today"
-                    : `${age} day${age === 1 ? "" : "s"} old`
+                range && range.oldest !== range.newest && ageLabel
+                  ? `oldest ${ageLabel}`
+                  : ageLabel
               }
             />
+            {/* The latest run's own figures: adding each owner's latest would
+                mix counts from different runs into one number. */}
             <Metric
               label="New claims"
               value={newClaims(last).toLocaleString()}
-              hint={`of ${scannedClaims(last).toLocaleString()} scanned`}
+              hint={`of ${scannedClaims(last).toLocaleString()} scanned · ${formatUtc(last.startedAt)} run`}
             />
             <Metric
               label="Queued for review"
@@ -464,26 +514,36 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
             )}
 
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
-              {Object.entries(last.results?.claimsProcessed ?? {}).map(
-                ([source, counts]) => (
-                  <div
-                    key={source}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-gray-600">
-                      {OWNER_LABELS[source] ?? source}
+              {owners.map((owner) => (
+                <div
+                  key={owner.source}
+                  data-owner={owner.source}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 text-sm"
+                >
+                  <span className="text-gray-600">
+                    {OWNER_LABELS[owner.source] ?? owner.source}
+                    <span className="text-xs text-gray-400">
+                      {" · "}
+                      {owner.snapshot
+                        ? `snapshot ${owner.snapshot}`
+                        : "not ingested yet"}
+                      {owner.snapshot &&
+                        !owner.current &&
+                        " · no newer report yet"}
                     </span>
+                  </span>
+                  {owner.new != null && owner.total != null && (
                     <span className="text-gray-900">
                       <span className="font-medium">
-                        {counts.new.toLocaleString()}
+                        {owner.new.toLocaleString()}
                       </span>{" "}
                       <span className="text-gray-500">
-                        new of {counts.total.toLocaleString()}
+                        new of {owner.total.toLocaleString()}
                       </span>
                     </span>
-                  </div>
-                )
-              )}
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </>

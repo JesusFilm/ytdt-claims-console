@@ -112,10 +112,24 @@ export interface CollectorStatus {
   version?: { branch?: string; commit?: string }
 }
 
+// One content owner's latest ingested snapshot. Not the latest run's view:
+// an ingest only fetches owners with a new report, so a run can omit an owner.
+export interface ClaimsOwnerSnapshot {
+  source: string
+  snapshot: string | null // data date, null when never ingested
+  publishedAt: string | null
+  ingestedAt: string | null
+  new: number | null
+  total: number | null
+  ingestId: string | null
+}
+
 export interface ClaimsIngestStatus {
   enabled: boolean
   authRequired: boolean
   lastCompleted: ClaimsIngestAttempt | null
+  // absent from a pipeline API that predates per-owner snapshots
+  owners?: ClaimsOwnerSnapshot[]
   recent: ClaimsIngestAttempt[]
   // absent when YT-Validator is unreachable or predates /asr/status
   collector?: CollectorStatus | null
