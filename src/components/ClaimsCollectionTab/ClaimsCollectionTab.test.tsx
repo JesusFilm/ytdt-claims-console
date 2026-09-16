@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import type { ClaimsIngestStatus } from "@/types/ClaimsIngest"
 
 import ClaimsCollectionTab, {
-  captionsProgress,
+  audioLanguageProgress,
   daysOld,
   formatUtc,
   nextRunUtc,
@@ -144,12 +144,12 @@ describe("ClaimsCollectionTab", () => {
     })
   })
 
-  it("should show captions as not started when the collector is unreachable", async () => {
+  it("should show audio language as not started when the collector is unreachable", async () => {
     await mockStatus(completedRun) // no collector block at all (404 upstream)
     render(<ClaimsCollectionTab />)
 
     await waitFor(() => {
-      expect(screen.getByText("Captions")).toBeInTheDocument()
+      expect(screen.getByText("Audio language")).toBeInTheDocument()
     })
     expect(screen.getByText("not started")).toBeInTheDocument()
     expect(screen.queryByText("Scoring")).not.toBeInTheDocument()
@@ -168,7 +168,7 @@ describe("ClaimsCollectionTab", () => {
     })
   })
 
-  it("should show caption progress and flag a run stopped on quota", async () => {
+  it("should show audio-language progress and flag a run stopped on quota", async () => {
     await mockStatus({
       ...completedRun,
       collector: {
@@ -185,7 +185,7 @@ describe("ClaimsCollectionTab", () => {
     render(<ClaimsCollectionTab />)
 
     await waitFor(() => {
-      expect(screen.getByText("176 of 4,405 cached")).toBeInTheDocument()
+      expect(screen.getByText("176 of 4,405 videos")).toBeInTheDocument()
     })
     expect(
       screen.getByText(/stopped early on the daily quota/)
@@ -193,18 +193,21 @@ describe("ClaimsCollectionTab", () => {
     expect(screen.getByText(/not live/)).toBeInTheDocument()
   })
 
-  it("should derive caption progress, ignoring an absent collector", () => {
-    expect(captionsProgress(null)).toBeNull()
-    expect(captionsProgress({ collector: {} })).toBeNull()
+  it("should derive audio-language progress, ignoring an absent collector", () => {
+    expect(audioLanguageProgress(null)).toBeNull()
+    expect(audioLanguageProgress({ collector: {} })).toBeNull()
     expect(
-      captionsProgress({
+      audioLanguageProgress({
         queue: { rows: 100 },
         collector: { remaining: 40, queue_videos_needing_asr: 90 },
       })
     ).toMatchObject({ total: 90, done: 50, remaining: 40 })
     // falls back to queue.rows when the collector doesn't report a total
     expect(
-      captionsProgress({ queue: { rows: 100 }, collector: { remaining: 40 } })
+      audioLanguageProgress({
+        queue: { rows: 100 },
+        collector: { remaining: 40 },
+      })
     ).toMatchObject({ total: 100, done: 60 })
   })
 

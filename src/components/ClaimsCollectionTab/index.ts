@@ -4,6 +4,6 @@ export {
   timeUntil,
   formatUtc,
   daysOld,
-  captionsProgress,
+  audioLanguageProgress,
 } from "./ClaimsCollectionTab"
 export type { ClaimsCollectionTabProps } from "./ClaimsCollectionTab"
