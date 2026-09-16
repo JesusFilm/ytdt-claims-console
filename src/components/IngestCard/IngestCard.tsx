@@ -63,9 +63,10 @@ const StatusPill: FC<{ ingest: ClaimsIngestSummary }> = ({ ingest }) => {
 
 export interface IngestCardProps {
   ingest: ClaimsIngestSummary
+  highlighted?: boolean
 }
 
-const IngestCard: FC<IngestCardProps> = ({ ingest }) => {
+const IngestCard: FC<IngestCardProps> = ({ ingest, highlighted = false }) => {
   const snapshots = Object.values(ingest.reports ?? {}).map((r) =>
     r.startTime.slice(0, 10)
   )
@@ -73,7 +74,11 @@ const IngestCard: FC<IngestCardProps> = ({ ingest }) => {
   const queued = ingest.results?.asrQueue?.rows
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+    <div
+      className={`bg-white rounded-2xl border border-gray-200 p-6 ${
+        highlighted ? "ring-2 ring-blue-400" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">

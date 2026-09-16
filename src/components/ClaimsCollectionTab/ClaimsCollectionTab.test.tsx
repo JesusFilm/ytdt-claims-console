@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 
 import type { ClaimsIngestStatus } from "@/types/ClaimsIngest"
 
@@ -84,6 +84,32 @@ describe("ClaimsCollectionTab", () => {
     expect(screen.getByText("4,429")).toBeInTheDocument()
     expect(screen.getByText("Matter Entertainment")).toBeInTheDocument()
     expect(screen.getByText("Matter 2")).toBeInTheDocument()
+  })
+
+  it("should open a recent run in history", async () => {
+    const onOpenIngest = vi.fn()
+    await mockStatus({
+      ...completedRun,
+      recent: [{ ...completedRun.recent[0], _id: "ingest-9" }],
+    })
+    render(<ClaimsCollectionTab onOpenIngest={onOpenIngest} />)
+
+    await waitFor(() => {
+      expect(screen.getByTitle("Open in history")).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTitle("Open in history"))
+    expect(onOpenIngest).toHaveBeenCalledWith("ingest-9")
+  })
+
+  it("should leave attempts stored without an id as plain rows", async () => {
+    // Attempts predating the id in this payload have nowhere to link to
+    await mockStatus(completedRun)
+    render(<ClaimsCollectionTab onOpenIngest={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Recent runs")).toBeInTheDocument()
+    })
+    expect(screen.queryByTitle("Open in history")).not.toBeInTheDocument()
   })
 
   it("should show a re-authorization warning when sign-in expired", async () => {

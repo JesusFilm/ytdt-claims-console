@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 
 import { CheckCircle, AlertCircle, Calendar, TrendingUp } from "lucide-react"
 
@@ -18,38 +18,13 @@ interface PipelineHistoryProps {
   stats?: HistoryStats
   hasMore?: boolean
   loadingMore?: boolean
+  // Entry to single out on arrival — a run or an ingest, ids do not collide.
+  // Set when another tab sends the user here, or by a shared ?run= link.
+  highlightId?: string | null
   onLoadMore?: () => void
   onRetry?: (runId: string) => void
   onDownload?: (runId: string) => void
   className?: string
-}
-
-const ISSUE_KEYS = ["invalidMCIDs", "invalidLanguageIDs"] as const
-
-// Every invalid id a run reported, across claims and verdicts. Per-run these
-// live in separate buckets; the count is what shows whether they are growing.
-export function issueCount(run: PipelineRun): number {
-  const results = run.results
-  if (!results) return 0
-
-  const buckets = [
-    results.claimsProcessed?.matter_entertainment,
-    results.claimsProcessed?.matter_2,
-    results.mcnVerdicts,
-    results.jfmVerdicts,
-  ]
-  return buckets.reduce((sum, bucket) => {
-    if (!bucket) return sum
-    return (
-      sum +
-      ISSUE_KEYS.reduce((inner, key) => {
-        const entries = (bucket as Record<string, unknown>)[key] as
-          | unknown[]
-          | undefined
-        return inner + (entries?.length ?? 0)
-      }, 0)
-    )
-  }, 0)
 }
 
 export default function PipelineHistoryTab({
@@ -58,6 +33,7 @@ export default function PipelineHistoryTab({
   stats,
   hasMore = false,
   loadingMore = false,
+  highlightId = null,
   onLoadMore,
   onRetry,
   onDownload,
@@ -96,13 +72,49 @@ export default function PipelineHistoryTab({
       return durations[Math.floor(durations.length / 2)]
     })()
 
+  const highlighted = highlightId
+
+  const highlightKind: Filter | null = useMemo(() => {
+    if (!highlighted) return null
+    if (runs.some((r) => r.id === highlighted)) return "pipeline"
+    if (ingests.some((i) => i.id === highlighted)) return "ingest"
+    return null // older than the loaded page
+  }, [highlighted, runs, ingests])
+
+  // Widen a filter that would hide the entry we were sent to: arriving at a
+  // list that looks unchanged reads as a broken link. Derived rather than
+  // stored, so picking a filter by hand afterwards still wins.
+  const [filterChosenFor, setFilterChosenFor] = useState<string | null>(null)
+  const effectiveFilter: Filter =
+    highlightKind &&
+    filter !== "all" &&
+    filter !== highlightKind &&
+    filterChosenFor !== highlighted
+      ? "all"
+      : filter
+
+  const chooseFilter = (next: Filter) => {
+    setFilter(next)
+    setFilterChosenFor(highlighted)
+  }
+
+  // Scroll from the ref callback rather than an effect: the card may only
+  // appear on the render *after* the filter is widened, by which time an
+  // effect keyed on the id has already run and would never fire again.
+  const scrolledFor = useRef<string | null>(null)
+  const scrollHere = (node: HTMLDivElement | null) => {
+    if (!node || scrolledFor.current === highlighted) return
+    scrolledFor.current = highlighted
+    node.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+
   // Newest first across both kinds
   const items = useMemo(() => {
     const merged: Array<
       | { kind: "pipeline"; at: number; run: PipelineRun }
       | { kind: "ingest"; at: number; ingest: ClaimsIngestSummary }
     > = []
-    if (filter !== "ingest") {
+    if (effectiveFilter !== "ingest") {
       runs.forEach((run) =>
         merged.push({
           kind: "pipeline",
@@ -111,7 +123,7 @@ export default function PipelineHistoryTab({
         })
       )
     }
-    if (filter !== "pipeline") {
+    if (effectiveFilter !== "pipeline") {
       ingests.forEach((ingest) =>
         merged.push({
           kind: "ingest",
@@ -121,18 +133,7 @@ export default function PipelineHistoryTab({
       )
     }
     return merged.sort((a, b) => b.at - a.at)
-  }, [runs, ingests, filter])
-
-  // Only worth showing as a trend: a single number says nothing about whether
-  // invalid ids are growing.
-  const issueTrend = useMemo(() => {
-    const recent = runs
-      .filter((r) => r.results)
-      .slice(0, 5)
-      .map((r) => issueCount(r))
-      .reverse()
-    return recent.some((count) => count > 0) ? recent : null
-  }, [runs])
+  }, [runs, ingests, effectiveFilter])
 
   const downloadInvalidMCIDs = (
     runId: string,
@@ -214,11 +215,6 @@ export default function PipelineHistoryTab({
     URL.revokeObjectURL(url)
   }
 
-  const highlightedRunId =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("run")
-      : null
-
   const filters: Array<{ id: Filter; label: string }> = [
     { id: "all", label: "All" },
     { id: "pipeline", label: `Pipeline runs (${runs.length})` },
@@ -293,22 +289,13 @@ export default function PipelineHistoryTab({
         </div>
       </div>
 
-      {issueTrend && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">
-            Invalid ids reported, oldest to newest:{" "}
-            <span className="text-gray-900">{issueTrend.join(" → ")}</span>
-          </p>
-        </div>
-      )}
-
       <div className="flex items-center gap-2">
         {filters.map((option) => (
           <button
             key={option.id}
-            onClick={() => setFilter(option.id)}
+            onClick={() => chooseFilter(option.id)}
             className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-              filter === option.id
+              effectiveFilter === option.id
                 ? "border-blue-500 text-blue-600 bg-blue-50"
                 : "border-gray-200 text-gray-600 hover:bg-gray-50"
             }`}
@@ -330,25 +317,33 @@ export default function PipelineHistoryTab({
             </p>
           </div>
         ) : (
-          items.map((item) =>
-            item.kind === "pipeline" ? (
-              <RunCard
-                key={`run-${item.run.id}`}
-                run={item.run}
-                highlighted={item.run.id === highlightedRunId}
-                onRetry={onRetry}
-                onDownload={onDownload}
-                onViewDetails={setSelectedRun}
-                onDownloadInvalidMCIDs={downloadInvalidMCIDs}
-                onDownloadInvalidLanguageIDs={downloadInvalidLanguageIDs}
-              />
-            ) : (
-              <IngestCard
-                key={`ingest-${item.ingest.id}`}
-                ingest={item.ingest}
-              />
+          items.map((item) => {
+            const id = item.kind === "pipeline" ? item.run.id : item.ingest.id
+            const isHighlighted = id === highlighted
+            return (
+              <div
+                key={`${item.kind}-${id}`}
+                ref={isHighlighted ? scrollHere : undefined}
+              >
+                {item.kind === "pipeline" ? (
+                  <RunCard
+                    run={item.run}
+                    highlighted={isHighlighted}
+                    onRetry={onRetry}
+                    onDownload={onDownload}
+                    onViewDetails={setSelectedRun}
+                    onDownloadInvalidMCIDs={downloadInvalidMCIDs}
+                    onDownloadInvalidLanguageIDs={downloadInvalidLanguageIDs}
+                  />
+                ) : (
+                  <IngestCard
+                    ingest={item.ingest}
+                    highlighted={isHighlighted}
+                  />
+                )}
+              </div>
             )
-          )
+          })
         )}
 
         {hasMore && (
