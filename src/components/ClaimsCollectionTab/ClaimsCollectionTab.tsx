@@ -74,6 +74,20 @@ export function daysOld(
   return Math.max(0, Math.floor((now.getTime() - then.getTime()) / 86400000))
 }
 
+// Of the videos resolved so far, how many yielded a language. A video with no
+// usable auto-caption track is a resolved answer too, cached so it is never
+// looked up again — it covers no ASR track, captions forbidden, and video gone,
+// so it is "none usable", never "no captions".
+export function audioLanguageBreakdown(collector?: CollectorStatus | null) {
+  const cache = collector?.cache
+  if (!cache || cache.videos == null) return null
+  return {
+    videos: cache.videos,
+    withTrack: cache.with_track ?? 0,
+    noTrack: cache.no_track ?? 0,
+  }
+}
+
 // Per video the collector stores the language YouTube's own speech recognition
 // heard: caption track metadata only, never caption text, and nothing is
 // transcribed. Evidence gathering, 180/day. Null when YT-Validator is
@@ -196,6 +210,7 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const queued = last?.results?.asrQueue?.rows
   const next = nextRunUtc()
   const audio = audioLanguageProgress(status?.collector)
+  const breakdown = audioLanguageBreakdown(status?.collector)
   const snapshot = snapshotDate(last)
   const age = daysOld(snapshot)
 
@@ -314,6 +329,13 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                   " It stopped early on the daily quota, so more remain than the budget suggests."}
                 {audio.stoppedReason === "outage" &&
                   " It stopped early after repeated lookup failures, so more remain than the budget suggests."}
+              </p>
+            )}
+
+            {breakdown && (
+              <p className="text-xs text-gray-500 mt-1">
+                {breakdown.withTrack.toLocaleString()} with a language ·{" "}
+                {breakdown.noTrack.toLocaleString()} with none usable
               </p>
             )}
 

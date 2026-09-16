@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import type { ClaimsIngestStatus } from "@/types/ClaimsIngest"
 
 import ClaimsCollectionTab, {
+  audioLanguageBreakdown,
   audioLanguageProgress,
   daysOld,
   formatUtc,
@@ -209,6 +210,33 @@ describe("ClaimsCollectionTab", () => {
         collector: { remaining: 40 },
       })
     ).toMatchObject({ total: 100, done: 60 })
+  })
+
+  it("should split resolved videos into with and without a language", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        cache: { videos: 1240, with_track: 947, no_track: 293 },
+        collector: { remaining: 3165, queue_videos_needing_asr: 4405 },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/947 with a language/)).toBeInTheDocument()
+    })
+    // "none usable" covers no ASR track, 403 and 404 alike — never "no captions"
+    expect(screen.getByText(/293 with none usable/)).toBeInTheDocument()
+  })
+
+  it("should omit the split until the cache reports anything", () => {
+    expect(audioLanguageBreakdown(null)).toBeNull()
+    expect(audioLanguageBreakdown({ cache: {} })).toBeNull()
+    expect(
+      audioLanguageBreakdown({
+        cache: { videos: 2, with_track: 1, no_track: 1 },
+      })
+    ).toMatchObject({ videos: 2, withTrack: 1, noTrack: 1 })
   })
 
   it("should render report times in UTC, not the viewer's zone", () => {

@@ -5,5 +5,6 @@ export {
   formatUtc,
   daysOld,
   audioLanguageProgress,
+  audioLanguageBreakdown,
 } from "./ClaimsCollectionTab"
 export type { ClaimsCollectionTabProps } from "./ClaimsCollectionTab"
