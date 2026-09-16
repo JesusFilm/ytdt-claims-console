@@ -596,7 +596,7 @@ export default function Home() {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  History ({pipelineRuns.length})
+                  History ({pipelineRuns.length + ingests.length})
                   {hasNewRun && (
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   )}

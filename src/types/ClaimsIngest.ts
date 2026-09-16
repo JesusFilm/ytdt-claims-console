@@ -39,9 +39,15 @@ export interface ClaimsIngestAttempt {
 }
 
 // An ingest as history returns it: the same attempt, summarised for a list.
-export interface ClaimsIngestSummary extends ClaimsIngestAttempt {
+// History renames startedAt/endedAt to startTime/endTime so ingests share the
+// runs' field names — so they are omitted here, not inherited. Inheriting them
+// let the list sort on startedAt, which history never sends: every ingest got
+// a NaN sort key and sank below months-old runs.
+export interface ClaimsIngestSummary
+  extends Omit<ClaimsIngestAttempt, "startedAt" | "endedAt" | "reason"> {
   id: string
   kind: "ingest"
+  startTime: string
   endTime?: string | null
   duration?: number
   reason?: string | null

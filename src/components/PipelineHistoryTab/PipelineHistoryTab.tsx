@@ -127,7 +127,7 @@ export default function PipelineHistoryTab({
       ingests.forEach((ingest) =>
         merged.push({
           kind: "ingest",
-          at: new Date(ingest.startedAt).getTime(),
+          at: new Date(ingest.startTime).getTime(),
           ingest,
         })
       )
@@ -323,6 +323,7 @@ export default function PipelineHistoryTab({
             return (
               <div
                 key={`${item.kind}-${id}`}
+                data-entry={`${item.kind}-${id}`}
                 ref={isHighlighted ? scrollHere : undefined}
               >
                 {item.kind === "pipeline" ? (
