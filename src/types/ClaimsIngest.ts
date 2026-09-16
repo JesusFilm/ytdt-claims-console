@@ -84,7 +84,14 @@ export interface CollectorStatus {
     has_licensed?: boolean
     has_triage?: boolean
   }
-  cache?: { videos?: number; with_track?: number; no_track?: number }
+  cache?: {
+    videos?: number
+    with_track?: number
+    no_track?: number
+    // videos per BCP-47 code YouTube's speech recognition reported, excluding
+    // "none usable". Absent until YT-Validator sends it.
+    languages?: Record<string, number>
+  }
   collector?: {
     last_run?: string
     looked_up?: number
