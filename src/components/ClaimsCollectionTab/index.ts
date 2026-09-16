@@ -9,5 +9,7 @@ export {
   audioLanguageBreakdown,
   collectorLastRun,
   topAudioLanguages,
+  ownerSnapshots,
+  snapshotRange,
 } from "./ClaimsCollectionTab"
 export type { ClaimsCollectionTabProps } from "./ClaimsCollectionTab"

@@ -10,6 +10,8 @@ import ClaimsCollectionTab, {
   formatUtc,
   nextRunUtc,
   parseUtc,
+  ownerSnapshots,
+  snapshotRange,
   topAudioLanguages,
   timeUntil,
 } from "."
@@ -113,6 +115,130 @@ describe("ClaimsCollectionTab", () => {
       expect(screen.getByText("Recent runs")).toBeInTheDocument()
     })
     expect(screen.queryByTitle("Open in history")).not.toBeInTheDocument()
+  })
+
+  // 2026-09-16: the 06:00 run fetched only Matter 2; Matter Entertainment's
+  // newest report was already ingested by the 01:53 run.
+  const scheduledRun: ClaimsIngestStatus = {
+    ...completedRun,
+    lastCompleted: {
+      _id: "6aaa3060d219fb53d27974d7",
+      status: "completed",
+      trigger: "schedule",
+      startedAt: "2026-09-16T06:00:00.024Z",
+      endedAt: "2026-09-16T06:04:11.000Z",
+      reports: {
+        matter_2: {
+          contentOwnerId: "MjvkwLDytS3jM7M22BkMWg",
+          reportId: "17608817954",
+          startTime: "2026-09-14T07:00:00Z",
+          createTime: "2026-09-16T05:28:09.139Z",
+        },
+      },
+      results: {
+        claimsProcessed: { matter_2: { total: 212938, new: 120 } },
+        asrQueue: { rows: 4549 },
+      },
+    },
+    owners: [
+      {
+        source: "matter_entertainment",
+        snapshot: "2026-09-10",
+        publishedAt: "2026-09-12T21:11:45.152Z",
+        ingestedAt: "2026-09-16T02:03:17.718Z",
+        new: 1533,
+        total: 475234,
+        ingestId: "6aa9f6a0df9ae860c98e0204",
+      },
+      {
+        source: "matter_2",
+        snapshot: "2026-09-14",
+        publishedAt: "2026-09-16T05:28:09.139Z",
+        ingestedAt: "2026-09-16T06:04:11.000Z",
+        new: 120,
+        total: 212938,
+        ingestId: "6aaa3060d219fb53d27974d7",
+      },
+    ],
+  }
+
+  it("should keep an owner the latest run skipped, saying it has nothing newer", async () => {
+    await mockStatus(scheduledRun)
+    render(<ClaimsCollectionTab />)
+
+    const me = await waitFor(() => {
+      const row = document.querySelector('[data-owner="matter_entertainment"]')
+      expect(row).not.toBeNull()
+      return row
+    })
+    expect(me?.textContent).toBe(
+      "Matter Entertainment · snapshot 2026-09-10 · no newer report yet1,533 new of 475,234"
+    )
+    // the owner that did come in with the latest run is not flagged
+    expect(document.querySelector('[data-owner="matter_2"]')?.textContent).toBe(
+      "Matter 2 · snapshot 2026-09-14120 new of 212,938"
+    )
+  })
+
+  it("should give claims a date range across owners, and scope new claims to the run", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-09-16T12:00:00Z"),
+      toFake: ["Date"],
+    })
+    try {
+      await mockStatus(scheduledRun)
+      render(<ClaimsCollectionTab />)
+
+      await waitFor(() => {
+        expect(screen.getByText("2026-09-10 – 2026-09-14")).toBeInTheDocument()
+      })
+      // the age that matters is the oldest owner's
+      expect(screen.getByText("oldest 6 days old")).toBeInTheDocument()
+      expect(
+        screen.getByText("of 212,938 scanned · Sep 16, 06:00 UTC run")
+      ).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("should list an owner never ingested rather than drop it", () => {
+    const owners = ownerSnapshots({
+      ...scheduledRun,
+      owners: [
+        { ...scheduledRun.owners![1] },
+        {
+          source: "matter_entertainment",
+          snapshot: null,
+          publishedAt: null,
+          ingestedAt: null,
+          new: null,
+          total: null,
+          ingestId: null,
+        },
+      ],
+    })
+    expect(owners.map((o) => o.source)).toEqual([
+      "matter_2",
+      "matter_entertainment",
+    ])
+    // a missing owner does not narrow the range to look fresher
+    expect(snapshotRange(owners)).toEqual({
+      oldest: "2026-09-14",
+      newest: "2026-09-14",
+    })
+  })
+
+  it("should fall back to the latest run against an API without owners", () => {
+    const owners = ownerSnapshots({ ...scheduledRun, owners: undefined })
+    expect(owners).toHaveLength(1)
+    expect(owners[0]).toMatchObject({
+      source: "matter_2",
+      snapshot: "2026-09-14",
+      new: 120,
+      current: true,
+    })
+    expect(snapshotRange([])).toBeNull()
   })
 
   it("should show a re-authorization warning when sign-in expired", async () => {
