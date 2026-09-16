@@ -5,9 +5,12 @@ import type { ClaimsIngestStatus } from "@/types/ClaimsIngest"
 import ClaimsCollectionTab, {
   audioLanguageBreakdown,
   audioLanguageProgress,
+  collectorLastRun,
   daysOld,
   formatUtc,
   nextRunUtc,
+  parseUtc,
+  topAudioLanguages,
   timeUntil,
 } from "."
 
@@ -195,29 +198,151 @@ describe("ClaimsCollectionTab", () => {
     })
   })
 
-  it("should show audio-language progress and flag a run stopped on quota", async () => {
+  it("should show the collector's last run under the audio language step", async () => {
     await mockStatus({
       ...completedRun,
       collector: {
-        queue: { rows: 4429 },
+        queue: { rows: 4523 },
+        cache: { videos: 182, with_track: 166, no_track: 16 },
         collector: {
-          last_run: "2026-09-16T08:15:04Z",
+          // naive, as YT-Validator sends it today: this IS UTC
+          last_run: "2026-09-16T08:16:10",
           looked_up: 180,
-          remaining: 4229,
-          queue_videos_needing_asr: 4405,
-          stopped_reason: "quota",
+          added: 180,
+          failed: 0,
+          remaining: 4341,
+          queue_videos_needing_asr: 4523,
+          stopped_reason: null,
         },
       },
     })
     render(<ClaimsCollectionTab />)
 
     await waitFor(() => {
-      expect(screen.getByText("176 of 4,405 videos")).toBeInTheDocument()
+      expect(screen.getByText("182 of 4,523 videos")).toBeInTheDocument()
     })
-    expect(
-      screen.getByText(/stopped early on the daily quota/)
-    ).toBeInTheDocument()
+    const lastRun = screen.getByText("last run").nextElementSibling
+    expect(lastRun?.textContent).toBe(
+      "Sep 16, 08:16 UTC · looked up 180 · added 180 · failed 0 · not stopped"
+    )
+    expect(screen.getByText("cache").nextElementSibling?.textContent).toBe(
+      "182 videos: 166 with a language, 16 none usable"
+    )
+    expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
+      "4,341 of 4,523"
+    )
     expect(screen.getByText(/not live/)).toBeInTheDocument()
+    // the collector's log estimate ignores new arrivals, so it is not shown
+    expect(screen.queryByText(/more days/)).not.toBeInTheDocument()
+  })
+
+  it("should list the top audio languages found, by name", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        // today's cache as the collector would count it
+        cache: {
+          videos: 182,
+          with_track: 166,
+          no_track: 16,
+          languages: {
+            es: 57,
+            hi: 27,
+            en: 26,
+            id: 15,
+            ru: 9,
+            fr: 7,
+            pt: 5,
+            bn: 4,
+            hy: 3,
+          },
+        },
+        collector: { remaining: 4341, queue_videos_needing_asr: 4523 },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    const row = (await screen.findByText("top languages")).nextElementSibling
+    expect(row?.textContent).toBe(
+      "Spanish 57 · Hindi 27 · English 26 · Indonesian 15 · Russian 9 · +4 more"
+    )
+    // the code stays reachable for anyone matching against the data
+    expect(screen.getByTitle("es").textContent).toBe("Spanish 57")
+  })
+
+  it("should leave out top languages until YT-Validator reports them", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        cache: { videos: 182, with_track: 166, no_track: 16 },
+        collector: { remaining: 4341, queue_videos_needing_asr: 4523 },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    await screen.findByText("cache")
+    expect(screen.queryByText("top languages")).not.toBeInTheDocument()
+  })
+
+  it("should rank languages without counting none usable", () => {
+    expect(topAudioLanguages(null)).toBeNull()
+    expect(topAudioLanguages({ cache: { languages: {} } })).toBeNull()
+    // "" is none usable, already on the cache row
+    expect(topAudioLanguages({ cache: { languages: { "": 16 } } })).toBeNull()
+
+    const ranked = topAudioLanguages(
+      { cache: { languages: { en: 3, "": 99, es: 3, hi: 5 } } },
+      2
+    )
+    // ties break on code so the order doesn't shuffle between refreshes
+    expect(ranked?.top.map((l) => l.code)).toEqual(["hi", "en"])
+    expect(ranked?.more).toBe(1)
+    // an unknown code still shows, as itself
+    expect(
+      topAudioLanguages({ cache: { languages: { "x-bogus!": 1 } } })?.top[0]
+        .name
+    ).toBe("x-bogus!")
+  })
+
+  it("should make a stopped run stand out, with the detail on hover", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        collector: {
+          last_run: "2026-09-16T08:16:10+00:00",
+          looked_up: 97,
+          added: 90,
+          failed: 7,
+          remaining: 4251,
+          queue_videos_needing_asr: 4523,
+          stopped_reason: "quota",
+          stopped_detail: "quotaExceeded on captions.list",
+        },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    const label = await screen.findByText("stopped: quota exhausted")
+    expect(label.getAttribute("title")).toBe("quotaExceeded on captions.list")
+    expect(label.className).toMatch(/amber/)
+    expect(screen.queryByText("not stopped")).not.toBeInTheDocument()
+  })
+
+  it("should label each way a collector run can stop", () => {
+    const run = (stopped_reason: "quota" | "outage" | null) =>
+      collectorLastRun({
+        collector: { last_run: "2026-09-16T08:16:10", stopped_reason },
+      })
+
+    expect(run(null)).toMatchObject({
+      stopped: false,
+      stoppedLabel: "not stopped",
+    })
+    expect(run("quota")?.stoppedLabel).toBe("stopped: quota exhausted")
+    expect(run("outage")?.stoppedLabel).toBe("stopped: YouTube unreachable")
+    // nothing to say until the collector has run at least once
+    expect(collectorLastRun({ collector: {} })).toBeNull()
+    expect(collectorLastRun(null)).toBeNull()
   })
 
   it("should derive audio-language progress, ignoring an absent collector", () => {
@@ -238,31 +363,6 @@ describe("ClaimsCollectionTab", () => {
     ).toMatchObject({ total: 100, done: 60 })
   })
 
-  it("should split resolved videos into with and without a language", async () => {
-    await mockStatus({
-      ...completedRun,
-      collector: {
-        cache: { videos: 1240, with_track: 947, no_track: 293 },
-        collector: { remaining: 3165, queue_videos_needing_asr: 4405 },
-      },
-    })
-    render(<ClaimsCollectionTab />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/947 with a language/)).toBeInTheDocument()
-    })
-    // "none usable" covers no ASR track, 403 and 404 alike — never "no captions"
-    expect(screen.getByText(/293 with none usable/)).toBeInTheDocument()
-
-    // it belongs to the Audio language step, not loose under the grid where it
-    // read as if it described Published
-    const step = screen.getByText("Audio language").closest("div")
-    expect(step?.textContent).toMatch(/947 with a language/)
-    expect(
-      screen.getByText("Published").closest("div")?.textContent
-    ).not.toMatch(/with a language/)
-  })
-
   it("should omit the split until the cache reports anything", () => {
     expect(audioLanguageBreakdown(null)).toBeNull()
     expect(audioLanguageBreakdown({ cache: {} })).toBeNull()
@@ -271,6 +371,24 @@ describe("ClaimsCollectionTab", () => {
         cache: { videos: 2, with_track: 1, no_track: 1 },
       })
     ).toMatchObject({ videos: 2, withTrack: 1, noTrack: 1 })
+  })
+
+  it("should read a timestamp without an offset as UTC, whatever the viewer's zone", () => {
+    const zone = process.env.TZ
+    // six hours behind UTC: where 08:16 used to display as 14:16's mirror
+    process.env.TZ = "America/Chicago"
+    try {
+      expect(formatUtc("2026-09-16T08:16:10")).toBe("Sep 16, 08:16 UTC")
+      // the same instant once YT-Validator sends its offset, and in Z form
+      expect(formatUtc("2026-09-16T08:16:10+00:00")).toBe("Sep 16, 08:16 UTC")
+      expect(formatUtc("2026-09-16T08:16:10Z")).toBe("Sep 16, 08:16 UTC")
+      // a real offset is honoured, not overwritten
+      expect(parseUtc("2026-09-16T10:16:10+02:00")?.toISOString()).toBe(
+        "2026-09-16T08:16:10.000Z"
+      )
+    } finally {
+      process.env.TZ = zone
+    }
   })
 
   it("should render report times in UTC, not the viewer's zone", () => {

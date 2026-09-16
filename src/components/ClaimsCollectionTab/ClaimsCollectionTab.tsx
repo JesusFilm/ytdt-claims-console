@@ -50,13 +50,23 @@ export function timeUntil(target: Date, now: Date = new Date()): string {
   return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`
 }
 
+// YT-Validator's /asr/status has sent timestamps with no offset
+// ("2026-09-16T08:16:10") that are UTC. new Date() reads those as the viewer's
+// local time, which put an 08:16 UTC run at 14:16. A time without Z or an
+// offset is therefore taken as UTC; one that carries its zone passes through.
+export function parseUtc(value?: string | null): Date | null {
+  if (!value) return null
+  const naive = value.includes("T") && !/(Z|[+-]\d{2}:?\d{2})$/i.test(value)
+  const date = new Date(naive ? `${value}Z` : value)
+  return isNaN(date.getTime()) ? null : date
+}
+
 // Report dates are YouTube's and the schedule is UTC, so render them in UTC
 // rather than the viewer's zone — otherwise the same instant reads as two
 // different days between a card and the timeline below it.
 export function formatUtc(value?: string | null): string {
-  if (!value) return "—"
-  const date = new Date(value)
-  if (isNaN(date.getTime())) return "—"
+  const date = parseUtc(value)
+  if (!date) return "—"
   return `${date.toLocaleString("en-US", {
     timeZone: "UTC",
     month: "short",
@@ -105,8 +115,62 @@ export function audioLanguageProgress(collector?: CollectorStatus | null) {
     total,
     done,
     remaining: run.remaining,
+  }
+}
+
+// "es" reads as a guess to most people; "Spanish" does not. Falls back to the
+// code for anything the runtime cannot name.
+function languageName(code: string): string {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code
+  } catch {
+    return code
+  }
+}
+
+// The languages found so far, most videos first. Null until YT-Validator
+// reports per-language counts, so the row simply doesn't appear before then.
+export function topAudioLanguages(
+  collector?: CollectorStatus | null,
+  limit = 5
+) {
+  const counts = Object.entries(collector?.cache?.languages ?? {}).filter(
+    // "" is "none usable", already its own figure on the cache row
+    ([code, videos]) => code && videos > 0
+  )
+  if (!counts.length) return null
+  counts.sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
+  return {
+    top: counts.slice(0, limit).map(([code, videos]) => ({
+      code,
+      name: languageName(code),
+      videos,
+    })),
+    more: Math.max(0, counts.length - limit),
+  }
+}
+
+const STOPPED_LABELS: Record<string, string> = {
+  quota: "stopped: quota exhausted",
+  outage: "stopped: YouTube unreachable",
+}
+
+// What the collector's last run did. A run that stopped early leaves more to
+// do than its budget suggests, so `stopped` is what the tab makes stand out.
+export function collectorLastRun(collector?: CollectorStatus | null) {
+  const run = collector?.collector
+  if (!run?.last_run) return null
+  const reason = run.stopped_reason ?? null
+  return {
     lastRun: run.last_run,
-    stoppedReason: run.stopped_reason ?? null,
+    lookedUp: run.looked_up ?? 0,
+    added: run.added ?? 0,
+    failed: run.failed ?? 0,
+    stopped: reason !== null,
+    stoppedLabel: reason
+      ? (STOPPED_LABELS[reason] ?? `stopped: ${reason}`)
+      : "not stopped",
+    stoppedDetail: run.stopped_detail,
   }
 }
 
@@ -152,8 +216,7 @@ const Step: FC<{
   label: string
   detail: string
   done: boolean
-  extra?: string
-}> = ({ label, detail, done, extra }) => (
+}> = ({ label, detail, done }) => (
   <div
     className={`pl-3 border-l-2 ${done ? "border-green-500" : "border-gray-300"}`}
   >
@@ -163,7 +226,6 @@ const Step: FC<{
       {label}
     </p>
     <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
-    {extra && <p className="text-xs text-gray-400 mt-0.5">{extra}</p>}
   </div>
 )
 
@@ -217,6 +279,8 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const next = nextRunUtc()
   const audio = audioLanguageProgress(status?.collector)
   const breakdown = audioLanguageBreakdown(status?.collector)
+  const collectorRun = collectorLastRun(status?.collector)
+  const topLanguages = topAudioLanguages(status?.collector)
   const snapshot = snapshotDate(last)
   const age = daysOld(snapshot)
 
@@ -323,24 +387,80 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                     : "not started"
                 }
                 done={audio?.remaining === 0}
-                extra={
-                  breakdown
-                    ? `${breakdown.withTrack.toLocaleString()} with a language · ${breakdown.noTrack.toLocaleString()} with none usable`
-                    : undefined
-                }
               />
             </div>
 
-            {audio && (
-              <p className="text-xs text-gray-500 mt-3">
-                As of the collector&apos;s last run
-                {audio.lastRun ? ` (${formatUtc(audio.lastRun)})` : ""}, not
-                live.
-                {audio.stoppedReason === "quota" &&
-                  " It stopped early on the daily quota, so more remain than the budget suggests."}
-                {audio.stoppedReason === "outage" &&
-                  " It stopped early after repeated lookup failures, so more remain than the budget suggests."}
-              </p>
+            {/* The collector's own numbers, under the step they explain. No
+                "~N more days" estimate: it ignores claims that keep arriving. */}
+            {(collectorRun || breakdown || audio) && (
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <p className="text-xs font-medium text-gray-700 mb-1.5">
+                  Audio language collector
+                </p>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+                  {collectorRun && (
+                    <>
+                      <dt className="text-gray-500">last run</dt>
+                      <dd className="text-gray-700">
+                        {formatUtc(collectorRun.lastRun)} · looked up{" "}
+                        {collectorRun.lookedUp.toLocaleString()} · added{" "}
+                        {collectorRun.added.toLocaleString()} · failed{" "}
+                        {collectorRun.failed.toLocaleString()} ·{" "}
+                        <span
+                          title={collectorRun.stoppedDetail}
+                          className={
+                            collectorRun.stopped
+                              ? "inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium"
+                              : ""
+                          }
+                        >
+                          {collectorRun.stopped && (
+                            <AlertCircle className="w-3 h-3" />
+                          )}
+                          {collectorRun.stoppedLabel}
+                        </span>
+                      </dd>
+                    </>
+                  )}
+                  {breakdown && (
+                    <>
+                      <dt className="text-gray-500">cache</dt>
+                      <dd className="text-gray-700">
+                        {breakdown.videos.toLocaleString()} videos:{" "}
+                        {breakdown.withTrack.toLocaleString()} with a language,{" "}
+                        {breakdown.noTrack.toLocaleString()} none usable
+                      </dd>
+                    </>
+                  )}
+                  {topLanguages && (
+                    <>
+                      <dt className="text-gray-500">top languages</dt>
+                      <dd className="text-gray-700">
+                        {topLanguages.top.map((lang, index) => (
+                          <span key={lang.code} title={lang.code}>
+                            {index > 0 && " · "}
+                            {lang.name} {lang.videos.toLocaleString()}
+                          </span>
+                        ))}
+                        {topLanguages.more > 0 &&
+                          ` · +${topLanguages.more} more`}
+                      </dd>
+                    </>
+                  )}
+                  {audio && (
+                    <>
+                      <dt className="text-gray-500">remaining</dt>
+                      <dd className="text-gray-700">
+                        {audio.remaining.toLocaleString()} of{" "}
+                        {audio.total?.toLocaleString() ?? "—"}
+                      </dd>
+                    </>
+                  )}
+                </dl>
+                <p className="text-xs text-gray-400 mt-2">
+                  As of the collector&apos;s last run, not live.
+                </p>
+              </div>
             )}
 
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
