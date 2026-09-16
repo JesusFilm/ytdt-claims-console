@@ -74,9 +74,25 @@ export function daysOld(
   return Math.max(0, Math.floor((now.getTime() - then.getTime()) / 86400000))
 }
 
-// The collector caches captions for the queue: evidence gathering, 180/day.
-// Null when YT-Validator is unreachable, predates /asr/status, or has not run.
-export function captionsProgress(collector?: CollectorStatus | null) {
+// Of the videos resolved so far, how many yielded a language. A video with no
+// usable auto-caption track is a resolved answer too, cached so it is never
+// looked up again — it covers no ASR track, captions forbidden, and video gone,
+// so it is "none usable", never "no captions".
+export function audioLanguageBreakdown(collector?: CollectorStatus | null) {
+  const cache = collector?.cache
+  if (!cache || cache.videos == null) return null
+  return {
+    videos: cache.videos,
+    withTrack: cache.with_track ?? 0,
+    noTrack: cache.no_track ?? 0,
+  }
+}
+
+// Per video the collector stores the language YouTube's own speech recognition
+// heard: caption track metadata only, never caption text, and nothing is
+// transcribed. Evidence gathering, 180/day. Null when YT-Validator is
+// unreachable, predates /asr/status, or has not run since.
+export function audioLanguageProgress(collector?: CollectorStatus | null) {
   const run = collector?.collector
   if (!run || run.remaining == null) return null
 
@@ -193,7 +209,8 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const last = status?.lastCompleted ?? null
   const queued = last?.results?.asrQueue?.rows
   const next = nextRunUtc()
-  const captions = captionsProgress(status?.collector)
+  const audio = audioLanguageProgress(status?.collector)
+  const breakdown = audioLanguageBreakdown(status?.collector)
   const snapshot = snapshotDate(last)
   const age = daysOld(snapshot)
 
@@ -288,30 +305,37 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                 }
                 done={queued != null}
               />
-              {/* A report's lifecycle ends at captions. Verdicts and languages
-                  are a separate monthly run, so they don't belong here. */}
+              {/* A report's lifecycle ends here. Verdicts and languages are
+                  decided in a separate monthly run, so they don't belong. */}
               <Step
-                label="Captions"
+                label="Audio language"
                 detail={
-                  captions
-                    ? `${captions.done?.toLocaleString() ?? "—"} of ${
-                        captions.total?.toLocaleString() ?? "—"
-                      } cached`
+                  audio
+                    ? `${audio.done?.toLocaleString() ?? "—"} of ${
+                        audio.total?.toLocaleString() ?? "—"
+                      } videos`
                     : "not started"
                 }
-                done={captions?.remaining === 0}
+                done={audio?.remaining === 0}
               />
             </div>
 
-            {captions && (
+            {audio && (
               <p className="text-xs text-gray-500 mt-3">
                 As of the collector&apos;s last run
-                {captions.lastRun ? ` (${formatUtc(captions.lastRun)})` : ""},
-                not live.
-                {captions.stoppedReason === "quota" &&
+                {audio.lastRun ? ` (${formatUtc(audio.lastRun)})` : ""}, not
+                live.
+                {audio.stoppedReason === "quota" &&
                   " It stopped early on the daily quota, so more remain than the budget suggests."}
-                {captions.stoppedReason === "outage" &&
+                {audio.stoppedReason === "outage" &&
                   " It stopped early after repeated lookup failures, so more remain than the budget suggests."}
+              </p>
+            )}
+
+            {breakdown && (
+              <p className="text-xs text-gray-500 mt-1">
+                {breakdown.withTrack.toLocaleString()} with a language ·{" "}
+                {breakdown.noTrack.toLocaleString()} with none usable
               </p>
             )}
 
