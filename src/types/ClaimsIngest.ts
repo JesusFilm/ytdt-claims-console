@@ -38,9 +38,44 @@ export interface ClaimsIngestAttempt {
   }
 }
 
+// YT-Validator's /asr/status, proxied by the pipeline because the browser
+// cannot reach localhost:3001. Every block is an empty object until the
+// collector has run at least once, so treat empty as "not started".
+export interface CollectorStatus {
+  queue?: {
+    rows?: number
+    written_at?: string
+    has_licensed?: boolean
+    has_triage?: boolean
+  }
+  cache?: { videos?: number; with_track?: number; no_track?: number }
+  collector?: {
+    last_run?: string
+    looked_up?: number
+    added?: number
+    failed?: number
+    // as of the last run, not live: recomputing per request is too expensive
+    remaining?: number
+    queue_videos_needing_asr?: number
+    budget?: number
+    stopped_reason?: "quota" | "outage" | null
+    stopped_detail?: string
+  }
+  languages?: {
+    tiers_live?: string[]
+    trusted_asr_languages?: string[]
+    artifact_trained_at?: string
+  }
+  version?: { branch?: string; commit?: string }
+}
+
 export interface ClaimsIngestStatus {
   enabled: boolean
   authRequired: boolean
   lastCompleted: ClaimsIngestAttempt | null
   recent: ClaimsIngestAttempt[]
+  // absent when YT-Validator is unreachable or predates /asr/status
+  collector?: CollectorStatus | null
+  // when the pipeline fetched it, distinct from collector.collector.last_run
+  collectorFetchedAt?: string | null
 }

@@ -2,7 +2,13 @@ import { render, screen, waitFor } from "@testing-library/react"
 
 import type { ClaimsIngestStatus } from "@/types/ClaimsIngest"
 
-import ClaimsCollectionTab, { nextRunUtc, timeUntil } from "."
+import ClaimsCollectionTab, {
+  captionsProgress,
+  daysOld,
+  formatUtc,
+  nextRunUtc,
+  timeUntil,
+} from "."
 
 vi.mock("@/utils/auth", async () => {
   const actual = await vi.importActual("@/utils/auth")
@@ -136,6 +142,84 @@ describe("ClaimsCollectionTab", () => {
     await waitFor(() => {
       expect(screen.getByText("no new snapshot")).toBeInTheDocument()
     })
+  })
+
+  it("should show captions as not started when the collector is unreachable", async () => {
+    await mockStatus(completedRun) // no collector block at all (404 upstream)
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Captions")).toBeInTheDocument()
+    })
+    expect(screen.getByText("not started")).toBeInTheDocument()
+    expect(screen.queryByText("Scoring")).not.toBeInTheDocument()
+  })
+
+  it("should treat an empty collector block as not started", async () => {
+    // after /asr/status deploys but before the collector's first run
+    await mockStatus({
+      ...completedRun,
+      collector: { queue: {}, cache: {}, collector: {} },
+    })
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(screen.getByText("not started")).toBeInTheDocument()
+    })
+  })
+
+  it("should show caption progress and flag a run stopped on quota", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        queue: { rows: 4429 },
+        collector: {
+          last_run: "2026-09-16T08:15:04Z",
+          looked_up: 180,
+          remaining: 4229,
+          queue_videos_needing_asr: 4405,
+          stopped_reason: "quota",
+        },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(screen.getByText("176 of 4,405 cached")).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText(/stopped early on the daily quota/)
+    ).toBeInTheDocument()
+    expect(screen.getByText(/not live/)).toBeInTheDocument()
+  })
+
+  it("should derive caption progress, ignoring an absent collector", () => {
+    expect(captionsProgress(null)).toBeNull()
+    expect(captionsProgress({ collector: {} })).toBeNull()
+    expect(
+      captionsProgress({
+        queue: { rows: 100 },
+        collector: { remaining: 40, queue_videos_needing_asr: 90 },
+      })
+    ).toMatchObject({ total: 90, done: 50, remaining: 40 })
+    // falls back to queue.rows when the collector doesn't report a total
+    expect(
+      captionsProgress({ queue: { rows: 100 }, collector: { remaining: 40 } })
+    ).toMatchObject({ total: 100, done: 60 })
+  })
+
+  it("should render report times in UTC, not the viewer's zone", () => {
+    // 02:03 UTC is the previous evening in the Americas; it must not read as Sep 15
+    expect(formatUtc("2026-09-16T02:03:17.718Z")).toBe("Sep 16, 02:03 UTC")
+    expect(formatUtc(null)).toBe("—")
+    expect(formatUtc("not a date")).toBe("—")
+  })
+
+  it("should age the snapshot in whole days", () => {
+    const now = new Date("2026-09-16T02:00:00Z")
+    expect(daysOld("2026-09-10", now)).toBe(6)
+    expect(daysOld("2026-09-16", now)).toBe(0)
+    expect(daysOld(null, now)).toBeNull()
   })
 
   it("should schedule the next run at 06:00 UTC", () => {
