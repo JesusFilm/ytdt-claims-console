@@ -396,6 +396,47 @@ describe("ClaimsCollectionTab", () => {
     expect(screen.getByTitle("es").textContent).toBe("Spanish 57")
   })
 
+  it("should reveal the remaining languages on request, and fold them back", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        cache: {
+          videos: 182,
+          with_track: 166,
+          no_track: 16,
+          languages: {
+            es: 57,
+            hi: 27,
+            en: 26,
+            id: 15,
+            ru: 9,
+            fr: 7,
+            pt: 5,
+            bn: 4,
+            hy: 3,
+          },
+        },
+        collector: { remaining: 4341, queue_videos_needing_asr: 4523 },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    const more = await screen.findByRole("button", { name: "+4 more" })
+    expect(more.getAttribute("aria-expanded")).toBe("false")
+    expect(screen.queryByTitle("hy")).not.toBeInTheDocument()
+
+    fireEvent.click(more)
+    const row = screen.getByText("top languages").nextElementSibling
+    expect(row?.textContent).toBe(
+      "Spanish 57 · Hindi 27 · English 26 · Indonesian 15 · Russian 9 · " +
+        "French 7 · Portuguese 5 · Bangla 4 · Armenian 3 · show fewer"
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "show fewer" }))
+    expect(screen.queryByTitle("hy")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "+4 more" })).toBeInTheDocument()
+  })
+
   it("should leave out top languages until YT-Validator reports them", async () => {
     await mockStatus({
       ...completedRun,

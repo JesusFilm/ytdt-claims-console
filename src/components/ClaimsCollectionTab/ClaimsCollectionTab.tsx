@@ -141,13 +141,15 @@ export function topAudioLanguages(
   )
   if (!counts.length) return null
   counts.sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
+  const all = counts.map(([code, videos]) => ({
+    code,
+    name: languageName(code),
+    videos,
+  }))
   return {
-    top: counts.slice(0, limit).map(([code, videos]) => ({
-      code,
-      name: languageName(code),
-      videos,
-    })),
-    more: Math.max(0, counts.length - limit),
+    all,
+    top: all.slice(0, limit),
+    more: Math.max(0, all.length - limit),
   }
 }
 
@@ -273,6 +275,8 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const [status, setStatus] = useState<ClaimsIngestStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  // a handful of languages answers "what is it finding"; the rest on request
+  const [allLanguages, setAllLanguages] = useState(false)
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -486,14 +490,30 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                     <>
                       <dt className="text-gray-500">top languages</dt>
                       <dd className="text-gray-700">
-                        {topLanguages.top.map((lang, index) => (
+                        {(allLanguages
+                          ? topLanguages.all
+                          : topLanguages.top
+                        ).map((lang, index) => (
                           <span key={lang.code} title={lang.code}>
                             {index > 0 && " · "}
                             {lang.name} {lang.videos.toLocaleString()}
                           </span>
                         ))}
-                        {topLanguages.more > 0 &&
-                          ` · +${topLanguages.more} more`}
+                        {topLanguages.more > 0 && (
+                          <>
+                            {" · "}
+                            <button
+                              type="button"
+                              onClick={() => setAllLanguages((open) => !open)}
+                              aria-expanded={allLanguages}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {allLanguages
+                                ? "show fewer"
+                                : `+${topLanguages.more} more`}
+                            </button>
+                          </>
+                        )}
                       </dd>
                     </>
                   )}
