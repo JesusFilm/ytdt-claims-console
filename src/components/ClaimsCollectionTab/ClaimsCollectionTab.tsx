@@ -8,9 +8,9 @@ import RefreshButton from "@/components/RefreshButton"
 import type {
   ClaimsIngestAttempt,
   ClaimsIngestStatus,
+  CollectorStatus,
 } from "@/types/ClaimsIngest"
 import { authFetch } from "@/utils/auth"
-import { formatTimestamp } from "@/utils/formatTime"
 
 export interface ClaimsCollectionTabProps {
   // Manual upload is now the fallback, so the tab links to it rather than owning it
@@ -45,6 +45,50 @@ export function timeUntil(target: Date, now: Date = new Date()): string {
   )
   const hours = Math.floor(minutes / 60)
   return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`
+}
+
+// Report dates are YouTube's and the schedule is UTC, so render them in UTC
+// rather than the viewer's zone — otherwise the same instant reads as two
+// different days between a card and the timeline below it.
+export function formatUtc(value?: string | null): string {
+  if (!value) return "—"
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return "—"
+  return `${date.toLocaleString("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })} UTC`
+}
+
+export function daysOld(
+  isoDate?: string | null,
+  now: Date = new Date()
+): number | null {
+  if (!isoDate) return null
+  const then = new Date(`${isoDate}T00:00:00Z`)
+  if (isNaN(then.getTime())) return null
+  return Math.max(0, Math.floor((now.getTime() - then.getTime()) / 86400000))
+}
+
+// The collector caches captions for the queue: evidence gathering, 180/day.
+// Null when YT-Validator is unreachable, predates /asr/status, or has not run.
+export function captionsProgress(collector?: CollectorStatus | null) {
+  const run = collector?.collector
+  if (!run || run.remaining == null) return null
+
+  const total = run.queue_videos_needing_asr ?? collector?.queue?.rows
+  const done = total != null ? Math.max(0, total - run.remaining) : null
+  return {
+    total,
+    done,
+    remaining: run.remaining,
+    lastRun: run.last_run,
+    stoppedReason: run.stopped_reason ?? null,
+  }
 }
 
 function snapshotDate(attempt: ClaimsIngestAttempt | null): string | null {
@@ -149,6 +193,9 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const last = status?.lastCompleted ?? null
   const queued = last?.results?.asrQueue?.rows
   const next = nextRunUtc()
+  const captions = captionsProgress(status?.collector)
+  const snapshot = snapshotDate(last)
+  const age = daysOld(snapshot)
 
   return (
     <div className="space-y-4">
@@ -201,12 +248,14 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Metric
-              label="Latest snapshot"
-              value={snapshotDate(last) ?? "—"}
+              label="Claims as of"
+              value={snapshot ?? "—"}
               hint={
-                last.endedAt
-                  ? `ingested ${formatTimestamp(last.endedAt)}`
-                  : undefined
+                age == null
+                  ? undefined
+                  : age === 0
+                    ? "today"
+                    : `${age} day${age === 1 ? "" : "s"} old`
               }
             />
             <Metric
@@ -228,16 +277,10 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Step
                 label="Published"
-                detail={
-                  publishedAt(last) ? formatTimestamp(publishedAt(last)!) : "—"
-                }
+                detail={formatUtc(publishedAt(last))}
                 done
               />
-              <Step
-                label="Ingested"
-                detail={last.endedAt ? formatTimestamp(last.endedAt) : "—"}
-                done
-              />
+              <Step label="Ingested" detail={formatUtc(last.endedAt)} done />
               <Step
                 label="Queued"
                 detail={
@@ -245,8 +288,32 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                 }
                 done={queued != null}
               />
-              <Step label="Scoring" detail="waiting" done={false} />
+              {/* A report's lifecycle ends at captions. Verdicts and languages
+                  are a separate monthly run, so they don't belong here. */}
+              <Step
+                label="Captions"
+                detail={
+                  captions
+                    ? `${captions.done?.toLocaleString() ?? "—"} of ${
+                        captions.total?.toLocaleString() ?? "—"
+                      } cached`
+                    : "not started"
+                }
+                done={captions?.remaining === 0}
+              />
             </div>
+
+            {captions && (
+              <p className="text-xs text-gray-500 mt-3">
+                As of the collector&apos;s last run
+                {captions.lastRun ? ` (${formatUtc(captions.lastRun)})` : ""},
+                not live.
+                {captions.stoppedReason === "quota" &&
+                  " It stopped early on the daily quota, so more remain than the budget suggests."}
+                {captions.stoppedReason === "outage" &&
+                  " It stopped early after repeated lookup failures, so more remain than the budget suggests."}
+              </p>
+            )}
 
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
               {Object.entries(last.results?.claimsProcessed ?? {}).map(
@@ -293,7 +360,7 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                 className="flex items-center justify-between text-sm"
               >
                 <span className="text-gray-600">
-                  {formatTimestamp(attempt.startedAt)}
+                  {formatUtc(attempt.startedAt)}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   {attempt.status === "completed" && (
