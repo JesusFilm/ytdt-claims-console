@@ -1,1 +1,1 @@
-export { default, issueCount } from "./PipelineHistoryTab"
+export { default } from "./PipelineHistoryTab"

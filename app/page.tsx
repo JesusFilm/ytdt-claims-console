@@ -76,6 +76,8 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [hasNewRun, setHasNewRun] = useState(false)
+  // Entry history should single out on arrival: a run or an ingest
+  const [highlightId, setHighlightId] = useState<string | null>(null)
   const [pendingRun, setPendingRun] = useState<{ uploadedAt: string } | null>(
     null
   )
@@ -221,19 +223,22 @@ export default function Home() {
     // indefinitely instead of polling once per interval.
   }, [status.running, status.status, hasRunningStep])
 
-  // Scroll to run details if "run" query param is present
+  // A shared ?run= link opens history on that run. The history tab does the
+  // scrolling — it knows when the card is actually on screen, which a timer
+  // here could only guess at.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const runId = params.get("run")
+    const runId = new URLSearchParams(window.location.search).get("run")
     if (runId && pipelineRuns.length > 0) {
       setActiveTab("history")
-      setTimeout(() => {
-        document
-          .getElementById(`run-${runId}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "center" })
-      }, 100)
+      setHighlightId(runId)
     }
   }, [pipelineRuns])
+
+  // Send the user from a summary row to the full entry in history.
+  const openInHistory = useCallback((id: string) => {
+    setHighlightId(id)
+    setActiveTab("history")
+  }, [])
 
   const handleFileDrop = useCallback(
     (acceptedFiles: File[], fileType: keyof FileState) => {
@@ -608,6 +613,7 @@ export default function Home() {
         {activeTab === "collection" && (
           <ClaimsCollectionTab
             onUploadManually={() => setActiveTab("upload")}
+            onOpenIngest={openInHistory}
           />
         )}
 
@@ -645,6 +651,7 @@ export default function Home() {
             stats={historyStats}
             hasMore={!!nextBefore}
             loadingMore={loadingMore}
+            highlightId={highlightId}
             onLoadMore={handleLoadMoreHistory}
             onRetry={handleRetry}
             onDownload={handleDownload}

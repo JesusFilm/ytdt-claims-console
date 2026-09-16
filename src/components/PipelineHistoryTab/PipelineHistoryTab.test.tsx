@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import type { ClaimsIngestSummary } from "@/types/ClaimsIngest"
 import type { PipelineRun } from "@/types/PipelineRun"
 
-import PipelineHistoryTab, { issueCount } from "."
+import PipelineHistoryTab from "."
 
 describe("PipelineHistoryTab", () => {
   const mockOnRetry = vi.fn()
@@ -33,6 +33,8 @@ describe("PipelineHistoryTab", () => {
     vi.clearAllMocks()
     global.URL.createObjectURL = vi.fn(() => "blob:url")
     global.URL.revokeObjectURL = vi.fn()
+    // jsdom has no layout, so nothing implements this
+    Element.prototype.scrollIntoView = vi.fn()
   })
 
   it("should render header and stats", () => {
@@ -203,27 +205,65 @@ describe("PipelineHistoryTab", () => {
     expect(screen.queryByText("Load older")).not.toBeInTheDocument()
   })
 
-  it("should count invalid ids across claims and verdicts", () => {
-    const run = {
-      ...mockRuns[0],
-      results: {
-        claimsProcessed: {
-          matter_2: {
-            total: 1,
-            new: 1,
-            invalidMCIDs: [{ video_id: "a" }, { video_id: "b" }],
-            invalidLanguageIDs: [{ video_id: "c" }],
-          },
-        },
-        mcnVerdicts: {
-          processed: 1,
-          invalidMCIDs: [],
-          invalidLanguageIDs: [{ video_id: "d" }],
-        },
-      },
-    } as PipelineRun
+  it("should single out the entry it was sent to, run or ingest", () => {
+    const { rerender } = render(
+      <PipelineHistoryTab
+        runs={mockRuns}
+        ingests={mockIngests}
+        highlightId="ingest-1"
+      />
+    )
+    expect(
+      screen.getByText(/Snapshot 2024-01-01/).closest(".ring-2")
+    ).not.toBeNull()
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
 
-    expect(issueCount(run)).toBe(4)
-    expect(issueCount(mockRuns[0])).toBe(0)
+    rerender(
+      <PipelineHistoryTab
+        runs={mockRuns}
+        ingests={mockIngests}
+        highlightId="run-1"
+      />
+    )
+    expect(
+      screen.getByText(/Snapshot 2024-01-01/).closest(".ring-2")
+    ).toBeNull()
+    // RunCard's DOM id is what a shared ?run= link points at
+    expect(document.getElementById("run-run-1")?.className).toContain("ring-2")
+  })
+
+  it("should leave the list alone when the entry is not loaded", () => {
+    render(
+      <PipelineHistoryTab
+        runs={mockRuns}
+        ingests={mockIngests}
+        highlightId="run-older-than-this-page"
+      />
+    )
+    expect(document.querySelector(".ring-2")).toBeNull()
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it("should widen a filter that would hide the highlighted entry", () => {
+    const { rerender } = render(
+      <PipelineHistoryTab runs={mockRuns} ingests={mockIngests} />
+    )
+
+    fireEvent.click(screen.getByText(`Pipeline runs (${mockRuns.length})`))
+    expect(screen.queryByText("Claims ingest")).not.toBeInTheDocument()
+
+    // Sent to an ingest while the list shows runs only: without this the tab
+    // switches to a list that looks unchanged, which reads as a dead link.
+    rerender(
+      <PipelineHistoryTab
+        runs={mockRuns}
+        ingests={mockIngests}
+        highlightId="ingest-1"
+      />
+    )
+    expect(screen.getAllByText("Claims ingest")).toHaveLength(2)
+    expect(
+      screen.getByText(/Snapshot 2024-01-01/).closest(".ring-2")
+    ).not.toBeNull()
   })
 })
