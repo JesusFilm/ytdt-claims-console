@@ -11,6 +11,7 @@ import type { PipelineStep } from "@/components/PipelineSteps"
 import UploadTab from "@/components/UploadTab"
 import UserMenu from "@/components/UserMenu"
 import { env } from "@/env"
+import type { ClaimsIngestSummary, HistoryStats } from "@/types/ClaimsIngest"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { authFetch } from "@/utils/auth"
 
@@ -68,6 +69,11 @@ export default function Home() {
     "collection" | "upload" | "status" | "history"
   >("collection")
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([])
+  const [ingests, setIngests] = useState<ClaimsIngestSummary[]>([])
+  const [historyStats, setHistoryStats] = useState<HistoryStats | undefined>()
+  // cursor for paging back through runs and ingests together
+  const [nextBefore, setNextBefore] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [hasNewRun, setHasNewRun] = useState(false)
   const [pendingRun, setPendingRun] = useState<{ uploadedAt: string } | null>(
@@ -104,13 +110,16 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch pipeline history
+  // Fetch pipeline history, which now also carries the daily claims ingests
   useEffect(() => {
     const fetchHistory = async () => {
       try {
         const response = await authFetch(`/api/runs/history`)
         const data = await response.json()
         setPipelineRuns(data.runs || [])
+        setIngests(data.ingests || [])
+        setHistoryStats(data.stats)
+        setNextBefore(data.nextBefore ?? null)
       } catch (error) {
         console.error("Failed to fetch history:", error)
       }
@@ -118,6 +127,25 @@ export default function Home() {
 
     fetchHistory()
   }, [status.status]) // Refresh when pipeline completes
+
+  // Older entries, appended rather than replacing what's on screen
+  const handleLoadMoreHistory = useCallback(async () => {
+    if (!nextBefore || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const response = await authFetch(
+        `/api/runs/history?before=${encodeURIComponent(nextBefore)}`
+      )
+      const data = await response.json()
+      setPipelineRuns((prev) => [...prev, ...(data.runs || [])])
+      setIngests((prev) => [...prev, ...(data.ingests || [])])
+      setNextBefore(data.nextBefore ?? null)
+    } catch (error) {
+      console.error("Failed to load older history:", error)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [nextBefore, loadingMore])
 
   // Derived here rather than inside the effect so the effect can depend on a
   // boolean instead of the status.steps array. See the dependency array below.
@@ -613,6 +641,11 @@ export default function Home() {
         {activeTab === "history" && (
           <PipelineHistoryTab
             runs={pipelineRuns}
+            ingests={ingests}
+            stats={historyStats}
+            hasMore={!!nextBefore}
+            loadingMore={loadingMore}
+            onLoadMore={handleLoadMoreHistory}
             onRetry={handleRetry}
             onDownload={handleDownload}
           />
