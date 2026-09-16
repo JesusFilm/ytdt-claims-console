@@ -227,6 +227,14 @@ describe("ClaimsCollectionTab", () => {
     })
     // "none usable" covers no ASR track, 403 and 404 alike — never "no captions"
     expect(screen.getByText(/293 with none usable/)).toBeInTheDocument()
+
+    // it belongs to the Audio language step, not loose under the grid where it
+    // read as if it described Published
+    const step = screen.getByText("Audio language").closest("div")
+    expect(step?.textContent).toMatch(/947 with a language/)
+    expect(
+      screen.getByText("Published").closest("div")?.textContent
+    ).not.toMatch(/with a language/)
   })
 
   it("should omit the split until the cache reports anything", () => {
