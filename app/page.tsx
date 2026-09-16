@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 
 import { Activity, AlertTriangle } from "lucide-react"
 
+import ClaimsCollectionTab from "@/components/ClaimsCollectionTab"
 import PipelineHistoryTab from "@/components/PipelineHistoryTab"
 import PipelineStatusTab from "@/components/PipelineStatusTab"
 import type { PipelineStep } from "@/components/PipelineSteps"
@@ -61,9 +62,11 @@ export default function Home() {
   })
 
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<"upload" | "status" | "history">(
-    "upload"
-  )
+  // Claims arrive on a schedule now, so collection is what you land on;
+  // uploading is the fallback rather than the starting point.
+  const [activeTab, setActiveTab] = useState<
+    "collection" | "upload" | "status" | "history"
+  >("collection")
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([])
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [hasNewRun, setHasNewRun] = useState(false)
@@ -513,6 +516,16 @@ export default function Home() {
           <div className="mt-6 border-b border-gray-200">
             <nav className="flex space-x-8">
               <button
+                onClick={() => setActiveTab("collection")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "collection"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Collection
+              </button>
+              <button
                 onClick={() => setActiveTab("upload")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === "upload"
@@ -563,6 +576,13 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
+        {/* Collection Tab */}
+        {activeTab === "collection" && (
+          <ClaimsCollectionTab
+            onUploadManually={() => setActiveTab("upload")}
+          />
+        )}
+
         {/* Upload Tab */}
         {activeTab === "upload" && (
           <UploadTab
