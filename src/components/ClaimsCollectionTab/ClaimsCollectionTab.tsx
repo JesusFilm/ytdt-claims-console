@@ -28,6 +28,8 @@ const OWNER_LABELS: Record<string, string> = {
 
 // CLAIMS_INGEST_TIME_UTC on the API; the collector downstream runs at 08:15 UTC
 const INGEST_HOUR_UTC = 6
+// yt-validator-asr-collect.timer on the VM
+const COLLECTOR_TIME_UTC = "08:15"
 
 export function nextRunUtc(now: Date = new Date()): Date {
   const next = new Date(
@@ -527,8 +529,13 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                     </>
                   )}
                 </dl>
+                {/* Say when, not "not live": the tab refreshes every minute,
+                    but these figures only change when the collector runs. */}
                 <p className="text-xs text-gray-400 mt-2">
-                  As of the collector&apos;s last run, not live.
+                  Figures from the collector&apos;s run
+                  {collectorRun ? ` at ${formatUtc(collectorRun.lastRun)}` : ""}
+                  . They update after its next run, daily at{" "}
+                  {COLLECTOR_TIME_UTC} UTC.
                 </p>
               </div>
             )}
