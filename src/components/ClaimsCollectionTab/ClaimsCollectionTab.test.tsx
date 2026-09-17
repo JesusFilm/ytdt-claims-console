@@ -357,7 +357,12 @@ describe("ClaimsCollectionTab", () => {
     expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
       "4,341 of 4,523"
     )
-    expect(screen.getByText(/not live/)).toBeInTheDocument()
+    // says when the figures are from and when they change, not "not live"
+    expect(
+      screen.getByText(/^Figures from the collector's run/).textContent
+    ).toBe(
+      "Figures from the collector's run at Sep 16, 08:16 UTC. They update after its next run, daily at 08:15 UTC."
+    )
     // the collector's log estimate ignores new arrivals, so it is not shown
     expect(screen.queryByText(/more days/)).not.toBeInTheDocument()
   })
