@@ -9,6 +9,7 @@ export {
   audioLanguageBreakdown,
   collectorLastRun,
   topAudioLanguages,
+  authFailureDetail,
   ownerSnapshots,
   snapshotRange,
 } from "./ClaimsCollectionTab"

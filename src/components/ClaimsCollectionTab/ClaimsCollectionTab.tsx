@@ -221,6 +221,41 @@ export function snapshotRange(owners: Array<{ snapshot: string | null }>) {
   return { oldest: dates[0], newest: dates[dates.length - 1] }
 }
 
+// What the ingest recorded about the failure that set authRequired. The banner
+// used to assert "sign-in expired" whatever the cause, which on 2026-09-23 sent
+// the reader to a Workspace admin console for a grant that only needed
+// re-authorizing. The pipeline already words the remedy per cause; show that
+// rather than guess at it here.
+export function authFailureDetail(
+  status: ClaimsIngestStatus | null
+): string | null {
+  if (!status?.authRequired) return null
+  const attempt = status.recent?.find(
+    (a) => !["skipped", "running"].includes(a.status)
+  )
+  return attempt?.error || null
+}
+
+// The recorded error ends with a link to the steps; make it clickable rather
+// than something to copy out of a sentence.
+function withLinks(text: string) {
+  return text.split(/(https?:\/\/\S+)/).map((part, index) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={index}
+        href={part}
+        target="_blank"
+        rel="noreferrer"
+        className="underline"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  )
+}
+
 function publishedAt(attempt: ClaimsIngestAttempt | null): string | null {
   const created = Object.values(attempt?.reports ?? {}).map((r) => r.createTime)
   if (!created.length) return null
@@ -324,6 +359,7 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
   const breakdown = audioLanguageBreakdown(status?.collector)
   const collectorRun = collectorLastRun(status?.collector)
   const topLanguages = topAudioLanguages(status?.collector)
+  const authDetail = authFailureDetail(status)
   const owners = ownerSnapshots(status)
   const range = snapshotRange(owners)
   const age = daysOld(range?.oldest)
@@ -370,12 +406,12 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
           <KeyRound className="w-5 h-5 text-red-600 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-red-800">
-              Sign-in expired — claims are no longer being collected
+              Claims are no longer being collected
             </p>
             <p className="text-xs text-red-700 mt-0.5">
-              Someone needs to re-authorize the YouTube Reporting API on the
-              pipeline VM. Until then the daily run fails and no new claims
-              arrive.
+              {authDetail
+                ? withLinks(authDetail)
+                : "Google rejected the pipeline's sign-in. Until someone fixes it the daily run keeps failing and no new claims arrive."}
             </p>
           </div>
         </div>

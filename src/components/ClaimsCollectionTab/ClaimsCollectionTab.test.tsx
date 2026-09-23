@@ -13,6 +13,7 @@ import ClaimsCollectionTab, {
   ownerSnapshots,
   snapshotRange,
   topAudioLanguages,
+  authFailureDetail,
   timeUntil,
 } from "."
 
@@ -241,17 +242,71 @@ describe("ClaimsCollectionTab", () => {
     expect(snapshotRange([])).toBeNull()
   })
 
-  it("should show a re-authorization warning when sign-in expired", async () => {
-    await mockStatus({ ...completedRun, authRequired: true })
+  it("should show what the ingest recorded, not a guess at the cause", async () => {
+    // the banner asserted "Sign-in expired ... re-authorize" whatever happened;
+    // on 2026-09-23 the recorded reason was the thing worth reading
+    await mockStatus({
+      ...completedRun,
+      authRequired: true,
+      recent: [
+        {
+          status: "failed",
+          startedAt: "2026-09-23T06:00:00.000Z",
+          authRequired: true,
+          error:
+            "Google refused the stored sign-in for media@jesusfilm.org (access_not_configured: Account Restricted). " +
+            "Re-authorize from a laptop, not the VM. Steps: https://github.com/JesusFilm/ytdt-claims-pipeline/blob/main/docs/claims-reporting-api.md",
+        },
+        { status: "completed", startedAt: "2026-09-18T06:00:00.000Z" },
+      ],
+    })
     render(<ClaimsCollectionTab />)
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          /Sign-in expired — claims are no longer being collected/
-        )
+        screen.getByText("Claims are no longer being collected")
       ).toBeInTheDocument()
     })
+    expect(screen.getByText(/access_not_configured/)).toBeInTheDocument()
+    expect(screen.getByText(/Re-authorize from a laptop/)).toBeInTheDocument()
+    // the steps are one click away, not a URL to retype
+    expect(
+      screen.getByRole("link", { name: /claims-reporting-api\.md/ })
+    ).toHaveAttribute("href", expect.stringContaining("github.com"))
+  })
+
+  it("should fall back to plain wording when nothing was recorded", async () => {
+    await mockStatus({ ...completedRun, authRequired: true, recent: [] })
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Google rejected the pipeline's sign-in/)
+      ).toBeInTheDocument()
+    })
+  })
+
+  it("should read the reason off the newest attempt that ran", () => {
+    const status = {
+      ...completedRun,
+      authRequired: true,
+      recent: [
+        {
+          status: "skipped" as const,
+          startedAt: "2026-09-23T06:00:00.000Z",
+          reason: "pipeline active",
+        },
+        {
+          status: "failed" as const,
+          startedAt: "2026-09-22T06:00:00.000Z",
+          error: "invalid_grant",
+        },
+      ],
+    }
+    expect(authFailureDetail(status)).toBe("invalid_grant")
+    // nothing to say when the ingest is healthy
+    expect(authFailureDetail({ ...status, authRequired: false })).toBeNull()
+    expect(authFailureDetail(null)).toBeNull()
   })
 
   it("should show paused when the schedule is disabled", async () => {
