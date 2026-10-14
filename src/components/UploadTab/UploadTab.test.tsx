@@ -44,7 +44,7 @@ describe("UploadTab", () => {
 
   it("should render all file upload sections", () => {
     render(<UploadTab {...defaultProps} />)
-    expect(screen.getByText("Claims Files")).toBeInTheDocument()
+    expect(screen.getByText("Upload claims manually")).toBeInTheDocument()
     expect(screen.getByText("Verdicts")).toBeInTheDocument()
     expect(screen.getByText("Matter Entertainment")).toBeInTheDocument()
     expect(screen.getByText("Matter 2")).toBeInTheDocument()
@@ -154,5 +154,20 @@ describe("UploadTab", () => {
   it("should not show file summary when no files are uploaded", () => {
     render(<UploadTab {...defaultProps} />)
     expect(screen.queryByText("Ready to Process")).not.toBeInTheDocument()
+  })
+
+  it("should lead with verdicts and tuck claims away", () => {
+    // claims arrive on their own; the big first-in-reading-order claims boxes
+    // are what led to verdict files being dropped into them
+    const { container } = render(<UploadTab {...defaultProps} />)
+
+    const summary = screen.getByText("Upload claims manually")
+    expect(summary.closest("details")).not.toBeNull()
+    expect(summary.closest("details")!.hasAttribute("open")).toBe(false)
+
+    const html = container.innerHTML
+    expect(html.indexOf("Verdicts")).toBeLessThan(
+      html.indexOf("Upload claims manually")
+    )
   })
 })

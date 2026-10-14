@@ -333,6 +333,7 @@ export default function PipelineStatusTab({
       {(status.running || showIdleState) && (
         <PipelineSteps
           steps={status.steps}
+          driveFolderUrl={status.lastRun?.results?.driveFolderUrl}
           showDescriptions={status.running}
           onRestartStep={handleRestartStep}
           restartingStepId={restartingStepId}

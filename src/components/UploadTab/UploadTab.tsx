@@ -86,39 +86,6 @@ export default function UploadTab({
 
       {/* File Upload Grid */}
       <div className="space-y-8">
-        {/* Claims Section */}
-        <div className="bg-white rounded-2xl border-2 border-gray-200 p-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">
-              <a
-                href={helpHref("claimsUpload")}
-                className="hover:underline decoration-dotted underline-offset-2"
-              >
-                Claims Files
-              </a>
-            </h3>
-            <p className="text-sm text-gray-600">Upload one or both sources</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FileUpload
-              file={files.claimsME}
-              onDrop={(files) => handleFileDrop(files, "claimsME")}
-              onRemove={() => handleFileRemove("claimsME")}
-              title="Matter Entertainment"
-              description="MCN claims CSV"
-              disabled={isRunning}
-            />
-            <FileUpload
-              file={files.claimsM2}
-              onDrop={(files) => handleFileDrop(files, "claimsM2")}
-              onRemove={() => handleFileRemove("claimsM2")}
-              title="Matter 2"
-              description="MCN claims CSV"
-              disabled={isRunning}
-            />
-          </div>
-        </div>
-
         {/* Verdicts Section */}
         <div className="bg-blue-50 rounded-2xl border-2 border-blue-200 p-6">
           <div className="mb-6">
@@ -156,6 +123,42 @@ export default function UploadTab({
             />
           </div>
         </div>
+        {/* Claims arrive on their own every morning, so uploading them by hand
+            is the exception: collapsed, and below the verdicts people send. */}
+        <details className="bg-white rounded-2xl border-2 border-gray-200 p-6">
+          <summary className="cursor-pointer list-none">
+            <span className="text-lg font-semibold text-gray-900">
+              Upload claims manually
+            </span>
+            <p className="text-sm text-gray-600">
+              Rarely needed — claims are collected automatically every morning.{" "}
+              <a
+                href={helpHref("claimsUpload")}
+                className="underline decoration-dotted underline-offset-2"
+              >
+                When is this needed?
+              </a>
+            </p>
+          </summary>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <FileUpload
+              file={files.claimsME}
+              onDrop={(files) => handleFileDrop(files, "claimsME")}
+              onRemove={() => handleFileRemove("claimsME")}
+              title="Matter Entertainment"
+              description="MCN claims CSV"
+              disabled={isRunning}
+            />
+            <FileUpload
+              file={files.claimsM2}
+              onDrop={(files) => handleFileDrop(files, "claimsM2")}
+              onRemove={() => handleFileRemove("claimsM2")}
+              title="Matter 2"
+              description="MCN claims CSV"
+              disabled={isRunning}
+            />
+          </div>
+        </details>
       </div>
 
       {/* Action Buttons */}
