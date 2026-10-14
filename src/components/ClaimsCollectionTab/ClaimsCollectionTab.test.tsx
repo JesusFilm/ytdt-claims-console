@@ -410,7 +410,7 @@ describe("ClaimsCollectionTab", () => {
       "182 videos: 166 with a language, 16 none usable"
     )
     expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
-      "4,341 of 4,523"
+      "4,341 of 4,523 · 96% left"
     )
     // says when the figures are from and when they change, not "not live"
     expect(

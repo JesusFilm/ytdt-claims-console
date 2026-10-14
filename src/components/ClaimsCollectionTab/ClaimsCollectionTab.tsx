@@ -600,6 +600,9 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                       <dd className="text-gray-700">
                         {audio.remaining.toLocaleString()} of{" "}
                         {audio.total?.toLocaleString() ?? "—"}
+                        {audio.total
+                          ? ` · ${Math.round((audio.remaining / audio.total) * 100)}% left`
+                          : ""}
                       </dd>
                     </>
                   )}
