@@ -85,4 +85,33 @@ describe("PipelineSteps", () => {
     render(<PipelineSteps steps={undefined as unknown as PipelineStep[]} />)
     expect(screen.getByText("No steps available")).toBeInTheDocument()
   })
+
+  it("should link the run's Drive folder from the upload step itself", () => {
+    // that step finishing is when someone wants the folder; it was only linked
+    // further down the page, past the steps they were watching
+    render(
+      <PipelineSteps
+        steps={[
+          { id: "upload_drive", name: "Upload Drive", status: "completed" },
+        ]}
+        driveFolderUrl="https://drive.google.com/drive/folders/abc"
+      />
+    )
+    expect(screen.getByRole("link", { name: /Drive folder/i })).toHaveAttribute(
+      "href",
+      "https://drive.google.com/drive/folders/abc"
+    )
+  })
+
+  it("should not link a Drive folder before the upload finishes", () => {
+    render(
+      <PipelineSteps
+        steps={[
+          { id: "upload_drive", name: "Upload Drive", status: "running" },
+        ]}
+        driveFolderUrl="https://drive.google.com/drive/folders/abc"
+      />
+    )
+    expect(screen.queryByRole("link", { name: /Drive folder/i })).toBeNull()
+  })
 })

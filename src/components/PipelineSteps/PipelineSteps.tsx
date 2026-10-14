@@ -12,6 +12,7 @@ import {
   MinusCircle,
   XCircle,
   RotateCw,
+  FolderOpen,
 } from "lucide-react"
 
 import { formatDuration } from "@/utils/formatTime"
@@ -37,6 +38,9 @@ export interface PipelineStep {
 
 interface PipelineStepsProps {
   steps: PipelineStep[]
+  // Shown on the upload_drive step itself: that step finishing is precisely the
+  // moment someone wants the folder, and it was only linked further down the page
+  driveFolderUrl?: string
   showDescriptions?: boolean
   compact?: boolean
   className?: string
@@ -87,6 +91,7 @@ const formatStepName = (stepId: string) => {
 
 export default function PipelineSteps({
   steps,
+  driveFolderUrl,
   showDescriptions = false,
   compact = false,
   className = "",
@@ -155,6 +160,19 @@ export default function PipelineSteps({
                     {step.description}
                   </p>
                 )}
+                {driveFolderUrl &&
+                  step.id === "upload_drive" &&
+                  step.status === "completed" && (
+                    <a
+                      href={driveFolderUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      Open the run&apos;s Drive folder
+                    </a>
+                  )}
                 {step.error && (
                   <p className="text-sm text-red-600 mt-1">{step.error}</p>
                 )}
