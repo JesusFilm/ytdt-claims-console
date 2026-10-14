@@ -1,6 +1,6 @@
-import Image from "next/image"
 import Link from "next/link"
 
+import Screenshot from "@/components/Screenshot"
 import { helpHref } from "@/help/anchors"
 
 import type { Metadata } from "next"
@@ -10,19 +10,18 @@ export const metadata: Metadata = {
   robots: "noindex",
 }
 
-// Ben does this once a month, so it assumes nothing is remembered between times.
-// Screenshots are real: taken from the live console and the #ytdt-pipeline bot.
+// Screenshots are real: taken from the live console and the #ytdt-pipeline bot,
+// cropped to the part being described rather than the whole window.
+const SHOTS: Record<string, { w: number; h: number }> = {
+  "/help/slack-detected.jpg": { w: 620, h: 160 },
+  "/help/slack-guided.jpg": { w: 1130, h: 260 },
+  "/help/console-upload-empty.jpg": { w: 1080, h: 700 },
+  "/help/console-upload-ready.jpg": { w: 1080, h: 680 },
+  "/help/console-collection.jpg": { w: 1080, h: 560 },
+}
+
 const Shot = ({ src, alt }: { src: string; alt: string }) => (
-  <figure className="my-4">
-    <Image
-      src={src}
-      alt={alt}
-      width={1456}
-      height={839}
-      className="rounded-lg border border-gray-200 w-full h-auto"
-    />
-    <figcaption className="text-xs text-gray-500 mt-1">{alt}</figcaption>
-  </figure>
+  <Screenshot src={src} alt={alt} width={SHOTS[src].w} height={SHOTS[src].h} />
 )
 
 export default function VerdictsRunbookPage() {
