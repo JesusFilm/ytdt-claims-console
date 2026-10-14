@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 
 import { Activity, AlertTriangle } from "lucide-react"
+import Image from "next/image"
 
 import ClaimsCollectionTab from "@/components/ClaimsCollectionTab"
 import PipelineHistoryTab from "@/components/PipelineHistoryTab"
@@ -501,13 +502,24 @@ export default function Home() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                YouTube MCN Pipeline
-              </h1>
-              <p className="text-gray-600">
-                Multi-Channel Network claims processing dashboard
-              </p>
+            <div className="flex items-center gap-3">
+              {/* 88x88 source, drawn at 40 so it stays sharp on retina */}
+              <Image
+                src="/logo.png"
+                alt=""
+                width={40}
+                height={40}
+                className="rounded-lg"
+                priority
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  YouTube MCN Pipeline
+                </h1>
+                <p className="text-gray-600">
+                  Multi-Channel Network claims processing dashboard
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-4">
