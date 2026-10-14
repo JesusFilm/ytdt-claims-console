@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import FileUpload from "@/components/FileUpload"
+import { helpHref } from "@/help/anchors"
 import { formatRunFiles } from "@/utils/formatFiles"
 
 interface FileState {
@@ -89,7 +90,12 @@ export default function UploadTab({
         <div className="bg-white rounded-2xl border-2 border-gray-200 p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900">
-              Claims Files
+              <a
+                href={helpHref("claimsUpload")}
+                className="hover:underline decoration-dotted underline-offset-2"
+              >
+                Claims Files
+              </a>
             </h3>
             <p className="text-sm text-gray-600">Upload one or both sources</p>
           </div>
@@ -116,9 +122,19 @@ export default function UploadTab({
         {/* Verdicts Section */}
         <div className="bg-blue-50 rounded-2xl border-2 border-blue-200 p-6">
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Verdicts</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              <a
+                href={helpHref("verdicts")}
+                className="hover:underline decoration-dotted underline-offset-2"
+              >
+                Verdicts
+              </a>
+            </h3>
             <p className="text-sm text-gray-600">
-              Optional - Apply to all uploaded claims
+              Ben&apos;s decisions —{" "}
+              <a href={helpHref("mcnVsJfm")} className="underline">
+                MCN or JFM?
+              </a>
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

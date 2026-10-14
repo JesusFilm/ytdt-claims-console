@@ -5,6 +5,7 @@ import { CheckCircle, AlertCircle, Calendar, TrendingUp } from "lucide-react"
 import IngestCard from "@/components/IngestCard"
 import RunCard from "@/components/RunCard"
 import RunDetailsModal from "@/components/RunDetailsModal"
+import { helpHref } from "@/help/anchors"
 import type { ClaimsIngestSummary, HistoryStats } from "@/types/ClaimsIngest"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { formatDuration } from "@/utils/formatTime"
@@ -227,7 +228,12 @@ export default function PipelineHistoryTab({
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Pipeline History</h2>
           <p className="text-gray-600 mt-1">
-            Pipeline runs and daily claims collection
+            <a
+              href={helpHref("history")}
+              className="hover:underline decoration-dotted underline-offset-2"
+            >
+              Pipeline runs and daily claims collection
+            </a>
           </p>
         </div>
 
