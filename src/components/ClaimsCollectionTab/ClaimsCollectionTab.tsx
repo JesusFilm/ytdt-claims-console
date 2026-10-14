@@ -5,6 +5,7 @@ import { FC, useCallback, useEffect, useState } from "react"
 import { AlertCircle, CheckCircle, Clock, KeyRound, Upload } from "lucide-react"
 
 import RefreshButton from "@/components/RefreshButton"
+import { helpHref, type HelpKey } from "@/help/anchors"
 import type {
   ClaimsIngestAttempt,
   ClaimsIngestStatus,
@@ -276,13 +277,34 @@ function scannedClaims(attempt: ClaimsIngestAttempt | null): number {
   )
 }
 
-const Metric: FC<{ label: string; value: string; hint?: string }> = ({
+// The label itself is the link: the explanation belongs where the question is
+const HelpLabel: FC<{ label: string; help?: HelpKey; className?: string }> = ({
   label,
-  value,
-  hint,
-}) => (
+  help,
+  className = "",
+}) =>
+  help ? (
+    <a
+      href={helpHref(help)}
+      className={`${className} hover:underline decoration-dotted underline-offset-2`}
+      title={`What "${label}" means`}
+    >
+      {label}
+    </a>
+  ) : (
+    <span className={className}>{label}</span>
+  )
+
+const Metric: FC<{
+  label: string
+  value: string
+  hint?: string
+  help?: HelpKey
+}> = ({ label, value, hint, help }) => (
   <div className="bg-gray-50 rounded-lg p-4">
-    <p className="text-sm text-gray-600">{label}</p>
+    <p className="text-sm text-gray-600">
+      <HelpLabel label={label} help={help} />
+    </p>
     <p className="text-2xl font-medium text-gray-900 mt-1">{value}</p>
     {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
   </div>
@@ -292,14 +314,15 @@ const Step: FC<{
   label: string
   detail: string
   done: boolean
-}> = ({ label, detail, done }) => (
+  help?: HelpKey
+}> = ({ label, detail, done, help }) => (
   <div
     className={`pl-3 border-l-2 ${done ? "border-green-500" : "border-gray-300"}`}
   >
     <p
       className={`text-sm font-medium ${done ? "text-gray-900" : "text-gray-500"}`}
     >
-      {label}
+      <HelpLabel label={label} help={help} />
     </p>
     <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
   </div>
@@ -422,6 +445,7 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Metric
               label="Claims as of"
+              help="claimsAsOf"
               value={
                 !range
                   ? "—"
@@ -439,11 +463,13 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                 mix counts from different runs into one number. */}
             <Metric
               label="New claims"
+              help="newClaims"
               value={newClaims(last).toLocaleString()}
               hint={`of ${scannedClaims(last).toLocaleString()} scanned · ${formatUtc(last.startedAt)} run`}
             />
             <Metric
               label="Queued for review"
+              help="queuedForReview"
               value={queued != null ? queued.toLocaleString() : "—"}
               hint={last.results?.asrQueue?.skipped ?? "sent to YT-Validator"}
             />
@@ -456,12 +482,19 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Step
                 label="Published"
+                help="published"
                 detail={formatUtc(publishedAt(last))}
                 done
               />
-              <Step label="Ingested" detail={formatUtc(last.endedAt)} done />
+              <Step
+                label="Ingested"
+                help="ingested"
+                detail={formatUtc(last.endedAt)}
+                done
+              />
               <Step
                 label="Queued"
+                help="queued"
                 detail={
                   queued != null ? `${queued.toLocaleString()} rows` : "—"
                 }
@@ -471,6 +504,7 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                   decided in a separate monthly run, so they don't belong. */}
               <Step
                 label="Audio language"
+                help="audioLanguage"
                 detail={
                   audio
                     ? `${audio.done?.toLocaleString() ?? "—"} of ${
@@ -487,7 +521,12 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
             {(collectorRun || breakdown || audio) && (
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <p className="text-xs font-medium text-gray-700 mb-1.5">
-                  Audio language collector
+                  <a
+                    href={helpHref("collector")}
+                    className="hover:underline decoration-dotted underline-offset-2"
+                  >
+                    Audio language collector
+                  </a>
                 </p>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
                   {collectorRun && (
@@ -622,7 +661,12 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
       {status?.recent?.length ? (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-base font-medium text-gray-900 mb-3">
-            Recent runs
+            <a
+              href={helpHref("recentRuns")}
+              className="hover:underline decoration-dotted underline-offset-2"
+            >
+              Recent runs
+            </a>
           </h3>
           <div className="space-y-2">
             {status.recent.slice(0, 5).map((attempt, index) => {
