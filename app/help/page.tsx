@@ -263,6 +263,12 @@ export default function HelpPage() {
           Plain explanations of the figures and buttons on each tab. Every
           heading here is linked from the label it explains.
         </p>
+        <p className="text-gray-700">
+          Doing the monthly verdicts?{" "}
+          <Link href="/help/verdicts" className="text-blue-600 underline">
+            Step-by-step, with screenshots →
+          </Link>
+        </p>
       </header>
 
       {SECTIONS.map((section) => (
