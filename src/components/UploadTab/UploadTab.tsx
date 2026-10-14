@@ -101,6 +101,10 @@ export default function UploadTab({
               Ben&apos;s decisions —{" "}
               <a href={helpHref("mcnVsJfm")} className="underline">
                 MCN or JFM?
+              </a>{" "}
+              ·{" "}
+              <a href="/help/verdicts" className="underline">
+                How to run them
               </a>
             </p>
           </div>
