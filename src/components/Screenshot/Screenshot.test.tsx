@@ -23,6 +23,13 @@ describe("Screenshot", () => {
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 
+  it("should never draw the image larger than it was captured", () => {
+    // a 620px crop stretched across a 1456px column is why the text looked soft
+    render(<Screenshot {...props} />)
+    const button = screen.getByRole("button", { name: /open larger/i })
+    expect(button.style.maxWidth).toBe("620px")
+  })
+
   it("should close on Escape", () => {
     render(<Screenshot {...props} />)
     fireEvent.click(screen.getByRole("button", { name: /open larger/i }))
@@ -32,7 +39,7 @@ describe("Screenshot", () => {
 
   it("should caption the image and say it can be enlarged", () => {
     render(<Screenshot {...props} />)
-    expect(screen.getByText(/tap to enlarge/i)).toBeInTheDocument()
+    expect(screen.getByText(/click to enlarge/i)).toBeInTheDocument()
     expect(screen.getByAltText(props.alt)).toBeInTheDocument()
   })
 })

@@ -5,11 +5,12 @@ import { useState } from "react"
 import Image from "next/image"
 
 /**
- * A screenshot that can be opened full size.
+ * A screenshot shown at its true size, enlargeable on click.
  *
- * Help images are cropped to the part that matters, which makes them small on
- * a phone. Tapping one opens it over the page; tapping again closes it. No
- * library: a dialog, an Escape key, and a click anywhere to dismiss.
+ * It used to stretch to the column width — a 620px crop drawn at 1456px, which
+ * is why the text looked soft. Now it is never drawn larger than it was
+ * captured; clicking opens it at twice that, scrollable, which is what someone
+ * on a phone needs.
  */
 export default function Screenshot({
   src,
@@ -30,7 +31,8 @@ export default function Screenshot({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="block w-full cursor-zoom-in"
+          className="block cursor-zoom-in"
+          style={{ maxWidth: width }}
           aria-label={`${alt} — open larger`}
         >
           <Image
@@ -38,11 +40,12 @@ export default function Screenshot({
             alt={alt}
             width={width}
             height={height}
+            quality={95}
             className="rounded-lg border border-gray-200 w-full h-auto"
           />
         </button>
         <figcaption className="text-xs text-gray-500 mt-1">
-          {alt} <span className="text-gray-400">· tap to enlarge</span>
+          {alt} <span className="text-gray-400">· click to enlarge</span>
         </figcaption>
       </figure>
 
@@ -57,15 +60,18 @@ export default function Screenshot({
             if (event.key === "Escape") setOpen(false)
           }}
           ref={(node) => node?.focus()}
-          className="fixed inset-0 z-50 bg-black/70 p-4 overflow-auto cursor-zoom-out flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/80 overflow-auto cursor-zoom-out p-4"
         >
+          {/* twice captured size, and allowed to overflow: the point is to see
+              it bigger, not to fit it on the screen */}
           <Image
             src={src}
             alt={alt}
             width={width * 2}
             height={height * 2}
-            className="rounded-lg max-w-none w-auto"
-            style={{ maxHeight: "none" }}
+            quality={100}
+            className="rounded-lg mx-auto max-w-none"
+            style={{ width: width * 2, height: "auto" }}
           />
         </div>
       )}
