@@ -5,12 +5,12 @@ import { useState } from "react"
 import Image from "next/image"
 
 /**
- * A screenshot shown at its true size, enlargeable on click.
+ * A screenshot drawn at half its captured size, enlargeable on click.
  *
- * It used to stretch to the column width — a 620px crop drawn at 1456px, which
- * is why the text looked soft. Now it is never drawn larger than it was
- * captured; clicking opens it at twice that, scrollable, which is what someone
- * on a phone needs.
+ * The captures come from the browser's region zoom, so they hold about 2.3x the
+ * pixels of the CSS layout. Drawn at half width they are sharp on a retina
+ * screen; clicking shows them at full captured size, which is a real zoom
+ * rather than an upscale of a 1x grab.
  */
 export default function Screenshot({
   src,
@@ -32,7 +32,7 @@ export default function Screenshot({
           type="button"
           onClick={() => setOpen(true)}
           className="block cursor-zoom-in"
-          style={{ maxWidth: width }}
+          style={{ maxWidth: Math.round(width / 2) }}
           aria-label={`${alt} — open larger`}
         >
           <Image
@@ -67,11 +67,11 @@ export default function Screenshot({
           <Image
             src={src}
             alt={alt}
-            width={width * 2}
-            height={height * 2}
+            width={width}
+            height={height}
             quality={100}
             className="rounded-lg mx-auto max-w-none"
-            style={{ width: width * 2, height: "auto" }}
+            style={{ width, height: "auto" }}
           />
         </div>
       )}

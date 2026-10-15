@@ -4,7 +4,7 @@ import Screenshot from "."
 
 describe("Screenshot", () => {
   const props = {
-    src: "/help/slack-detected.jpg",
+    src: "/help/slack-detected.png",
     alt: "The bot naming each file",
     width: 620,
     height: 160,
@@ -23,11 +23,12 @@ describe("Screenshot", () => {
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 
-  it("should never draw the image larger than it was captured", () => {
-    // a 620px crop stretched across a 1456px column is why the text looked soft
+  it("should draw at half the captured size, never stretched", () => {
+    // a 1x grab stretched across the column is why the text looked soft
     render(<Screenshot {...props} />)
     const button = screen.getByRole("button", { name: /open larger/i })
-    expect(button.style.maxWidth).toBe("620px")
+    // captured at 620 wide; drawn at half, so retina has pixels to spare
+    expect(button.style.maxWidth).toBe("310px")
   })
 
   it("should close on Escape", () => {
