@@ -245,7 +245,9 @@ const SECTIONS: Array<{
             wrong and how many rows they cost: one bad id repeated over a
             hundred rows is still one fix. The download is a plain list of the
             affected rows — video id, the bad id, channel — the same shape as a
-            claims export, so they can be corrected and sent again.
+            claims export, so they can be corrected and sent again. Underneath,
+            &ldquo;In all claims so far&rdquo; counts the bad ids left in the
+            table from every file ever loaded, and offers that list too.
           </>
         ),
       },

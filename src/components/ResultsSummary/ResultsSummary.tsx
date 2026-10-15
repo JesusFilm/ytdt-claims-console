@@ -1,3 +1,5 @@
+import type { FC } from "react"
+
 import {
   CheckCircle,
   AlertCircle,
@@ -8,6 +10,7 @@ import {
 } from "lucide-react"
 
 import type { PipelineRun } from "@/types/PipelineRun"
+import { authFetch } from "@/utils/auth"
 
 interface ResultsSummaryProps {
   results: PipelineRun["results"]
@@ -41,6 +44,88 @@ function issueLabel(noun: string, column: string, rows: Row[] = []) {
 
 const MCID = "media_component_id"
 const LANG = "language_id"
+
+// The backlog: everything in the claims table that still has a bad id,
+// whoever loaded it and whenever. Separate from the panel above on purpose —
+// that one is about the file just sent, this one is the work left over.
+const Backlog: FC<{
+  results: NonNullable<PipelineRun["results"]>
+  runId: string
+}> = ({ results, runId }) => {
+  const total = (key: "invalidMCIDs" | "invalidLanguageIDs") =>
+    (results.mcnVerdicts?.acrossAllClaims?.[key] ?? 0) +
+    (results.jfmVerdicts?.acrossAllClaims?.[key] ?? 0)
+
+  const files = (key: "invalidMCIDs" | "invalidLanguageIDs") =>
+    [
+      results.mcnVerdicts?.acrossAllClaims?.files?.[key],
+      results.jfmVerdicts?.acrossAllClaims?.files?.[key],
+    ].filter((name): name is string => Boolean(name))
+
+  const mcids = total("invalidMCIDs")
+  const languages = total("invalidLanguageIDs")
+  if (!mcids && !languages) return null
+
+  const download = async (name: string) => {
+    try {
+      const response = await authFetch(`/api/exports/run/${runId}/${name}`)
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement("a")
+      link.href = url
+      link.download = name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Download failed:", error)
+    }
+  }
+
+  const row = (
+    label: string,
+    rows: number,
+    key: "invalidMCIDs" | "invalidLanguageIDs"
+  ) =>
+    rows > 0 && (
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="text-gray-700">
+          {rows.toLocaleString()} row{rows === 1 ? "" : "s"} with {label}
+        </span>
+        <span className="flex gap-2">
+          {files(key).map((name) => (
+            <button
+              key={name}
+              onClick={() => download(name)}
+              className="flex items-center gap-1.5 px-2 py-1 text-gray-700 bg-white hover:bg-gray-100 rounded border border-gray-200 transition-colors"
+            >
+              <Download className="w-3 h-3" />
+              {name.includes("-jfm") ? "JFM" : "MCN"}
+            </button>
+          ))}
+        </span>
+      </div>
+    )
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 w-full">
+      <div className="flex items-center gap-2 mb-1">
+        <Database className="w-4 h-4 text-gray-500" />
+        <span className="text-sm font-medium text-gray-700">
+          In all claims so far
+        </span>
+      </div>
+      <p className="text-xs text-gray-500 mb-3">
+        Bad ids still sitting in the claims table, from every file ever loaded —
+        not just this run.
+      </p>
+      <div className="space-y-2">
+        {row("an invalid MCID", mcids, "invalidMCIDs")}
+        {row("an invalid language id", languages, "invalidLanguageIDs")}
+      </div>
+    </div>
+  )
+}
 
 export default function ResultsSummary({
   results,
@@ -192,6 +277,8 @@ export default function ResultsSummary({
           )}
         </div>
       </div>
+
+      <Backlog results={results} runId={runId} />
 
       {getTotalIssues() > 0 && (
         <div className="bg-orange-50 rounded-lg p-4 border border-orange-200 w-full">

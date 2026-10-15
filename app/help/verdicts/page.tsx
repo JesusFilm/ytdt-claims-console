@@ -138,8 +138,10 @@ export default function VerdictsRunbookPage() {
             invalid ids
           </Link>{" "}
           — those rows were not applied. The download is a plain list of them,
-          one line per row, laid out like a claims export. The scored file lands
-          in the run&apos;s Drive folder.
+          one line per row, laid out like a claims export. Below it, &ldquo;In
+          all claims so far&rdquo; is the backlog: bad ids left over from every
+          file ever loaded, downloadable the same way, and it shrinks as they
+          get fixed. The scored file lands in the run&apos;s Drive folder.
         </p>
         <p className="text-gray-700">
           The{" "}
