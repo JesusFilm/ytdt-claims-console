@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import HelpSection from "@/components/HelpSection"
 import { HELP } from "@/help/anchors"
 
 import type { Metadata } from "next"
@@ -251,7 +252,7 @@ const SECTIONS: Array<{
 
 export default function HelpPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 space-y-10">
+    <main className="max-w-3xl mx-auto px-6 py-12 space-y-4">
       <header className="space-y-2">
         <Link href="/" className="text-sm text-blue-600 hover:underline">
           ← Back to the console
@@ -272,17 +273,18 @@ export default function HelpPage() {
       </header>
 
       {SECTIONS.map((section) => (
-        <section key={section.title} className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">
-            {section.title}
-          </h2>
+        <HelpSection
+          key={section.title}
+          title={section.title}
+          anchors={section.entries.map((entry) => entry.id)}
+        >
           {section.entries.map((entry) => (
             <div key={entry.id} id={entry.id} className="scroll-mt-6 space-y-1">
               <h3 className="font-medium text-gray-900">{entry.term}</h3>
               <p className="text-gray-700">{entry.body}</p>
             </div>
           ))}
-        </section>
+        </HelpSection>
       ))}
 
       <footer className="border-t border-gray-200 pt-4 text-xs text-gray-400">

@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import HelpSection from "@/components/HelpSection"
 import Screenshot from "@/components/Screenshot"
 import { helpHref } from "@/help/anchors"
 
@@ -79,10 +80,10 @@ export default function VerdictsRunbookPage() {
         </p>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">
-          In Slack — guided, if you prefer prompts
-        </h2>
+      <HelpSection
+        title="In Slack — guided, if you prefer prompts"
+        anchors={["guided"]}
+      >
         <p className="text-gray-700">
           Type <code>/run-verdicts</code> and the bot asks for one file at a
           time: MCN first, then JFM. You can skip either. It behaves the same
@@ -92,12 +93,9 @@ export default function VerdictsRunbookPage() {
           src="/help/slack-guided.jpg"
           alt="The guided flow asking for the MCN verdicts file, step 1 of 2"
         />
-      </section>
+      </HelpSection>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">
-          In the console
-        </h2>
+      <HelpSection title="In the console" anchors={["console"]}>
         <ol className="list-decimal pl-5 space-y-2 text-gray-700">
           <li>
             Open <strong>Upload &amp; Run</strong>. The{" "}
@@ -128,12 +126,9 @@ export default function VerdictsRunbookPage() {
           src="/help/console-upload-ready.jpg"
           alt="Both verdict files attached, with Ready to Process listing them"
         />
-      </section>
+      </HelpSection>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">
-          Afterwards
-        </h2>
+      <HelpSection title="Afterwards" anchors={["afterwards"]}>
         <p className="text-gray-700">
           The notification says how many verdicts were applied, and how many
           rows had{" "}
@@ -155,12 +150,12 @@ export default function VerdictsRunbookPage() {
           src="/help/console-collection.jpg"
           alt="The Collection tab, showing claims arriving automatically each morning"
         />
-      </section>
+      </HelpSection>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">
-          If something looks wrong
-        </h2>
+      <HelpSection
+        title="If something looks wrong"
+        anchors={["troubleshooting"]}
+      >
         <ul className="list-disc pl-5 space-y-2 text-gray-700">
           <li>
             <strong>The bot says nothing after you send files.</strong> They may
@@ -182,7 +177,7 @@ export default function VerdictsRunbookPage() {
             there are reported in the same channel.
           </li>
         </ul>
-      </section>
+      </HelpSection>
     </main>
   )
 }
