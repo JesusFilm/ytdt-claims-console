@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import ResultsSummary from "@/components/ResultsSummary"
+import ShareLink from "@/components/ShareLink"
 import type { PipelineRun } from "@/types/PipelineRun"
 import { formatTimestamp } from "@/utils/formatTime"
 
@@ -134,6 +135,7 @@ export default function RunCard({
         </div>
 
         <div className="flex items-center gap-2">
+          <ShareLink id={run.id} />
           <button
             onClick={() => onViewDetails && onViewDetails(run)}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"

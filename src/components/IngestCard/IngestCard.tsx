@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { formatUtc } from "@/components/ClaimsCollectionTab"
+import ShareLink from "@/components/ShareLink"
 import type { ClaimsIngestSummary } from "@/types/ClaimsIngest"
 
 const OWNER_LABELS: Record<string, string> = {
@@ -96,6 +97,7 @@ const IngestCard: FC<IngestCardProps> = ({ ingest, highlighted = false }) => {
             {ingest.trigger === "manual" && " · run by hand"}
           </p>
         </div>
+        <ShareLink id={ingest.id} label="Copy link to this collection" />
       </div>
 
       {ingest.status === "completed" && (
