@@ -136,45 +136,19 @@ export default function PipelineHistoryTab({
     return merged.sort((a, b) => b.at - a.at)
   }, [runs, ingests, effectiveFilter])
 
-  // One file per click, grouped by the id that is wrong and worst first: a bad
-  // id is one fix, however many rows carry it, so Ben works down a list of 27
-  // rather than scrolling 1,247 rows. Every affected video_id is still in the
-  // file — one quoted column — so the rows can be recovered for a join.
-  const groupedCsv = (
+  // One line per record, quoted, in the same column order as the claims
+  // exports out of MySQL — the file Ben already knows. The console counts the
+  // distinct ids for him on screen; the download stays a plain list of rows.
+  const rowsCsv = (
     rows: Array<Record<string, string | number>>,
-    column: string,
-    extra?: { header: string; sum: string }
+    columns: string[]
   ) => {
-    const byId = new Map<
-      string,
-      { rows: number; total: number; videos: string[] }
-    >()
-    rows.forEach((row) => {
-      const id = String(row[column] ?? "")
-      const entry = byId.get(id) ?? { rows: 0, total: 0, videos: [] }
-      entry.rows += 1
-      if (extra) entry.total += Number(row[extra.sum]) || 0
-      if (row.video_id) entry.videos.push(String(row.video_id))
-      byId.set(id, entry)
-    })
-
-    const header = [
-      column,
-      "rows",
-      ...(extra ? [extra.header] : []),
-      "video_ids",
-    ]
-    const lines = [...byId.entries()]
-      .sort((a, b) => b[1].rows - a[1].rows)
-      .map(([id, entry]) =>
-        [
-          id,
-          entry.rows,
-          ...(extra ? [entry.total] : []),
-          `"${entry.videos.join(" ")}"`,
-        ].join(",")
-      )
-    return [header.join(","), ...lines].join("\n")
+    const cell = (value: string | number | undefined) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`
+    return [
+      columns.map(cell).join(","),
+      ...rows.map((row) => columns.map((c) => cell(row[c])).join(",")),
+    ].join("\n")
   }
 
   const saveCsv = (content: string, filename: string) => {
@@ -208,10 +182,13 @@ export default function PipelineHistoryTab({
     const rows = invalidRows(runId, type, "invalidMCIDs")
     if (!rows?.length) return
     saveCsv(
-      groupedCsv(rows, "media_component_id", {
-        header: "views",
-        sum: "views",
-      }),
+      rowsCsv(rows, [
+        "video_id",
+        "media_component_id",
+        "channel_id",
+        "wave",
+        "views",
+      ]),
       `invalid-mcids-${type}-${runId}.csv`
     )
   }
@@ -223,7 +200,7 @@ export default function PipelineHistoryTab({
     const rows = invalidRows(runId, type, "invalidLanguageIDs")
     if (!rows?.length) return
     saveCsv(
-      groupedCsv(rows, "language_id"),
+      rowsCsv(rows, ["video_id", "language_id", "channel_id"]),
       `invalid-language-ids-${type}-${runId}.csv`
     )
   }

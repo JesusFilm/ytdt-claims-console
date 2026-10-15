@@ -243,9 +243,9 @@ const SECTIONS: Array<{
             not exist in our reference data — usually a typo or an outdated
             code. They are reported, not applied. The run shows how many ids are
             wrong and how many rows they cost: one bad id repeated over a
-            hundred rows is still one fix. The download lists each bad id once,
-            with the videos carrying it, so they can be corrected and sent
-            again.
+            hundred rows is still one fix. The download is a plain list of the
+            affected rows — video id, the bad id, channel — the same shape as a
+            claims export, so they can be corrected and sent again.
           </>
         ),
       },

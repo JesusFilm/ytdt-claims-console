@@ -137,9 +137,9 @@ export default function VerdictsRunbookPage() {
           <Link href={helpHref("invalidIds")} className="underline">
             invalid ids
           </Link>{" "}
-          — those rows were not applied. The download lists each bad id once,
-          with the videos carrying it, so you fix the id rather than scroll the
-          rows. The scored file lands in the run&apos;s Drive folder.
+          — those rows were not applied. The download is a plain list of them,
+          one line per row, laid out like a claims export. The scored file lands
+          in the run&apos;s Drive folder.
         </p>
         <p className="text-gray-700">
           The{" "}
