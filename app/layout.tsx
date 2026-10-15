@@ -16,13 +16,40 @@ const inter = Inter({
   variable: "--font-inter",
 })
 
+// Relative image paths in the metadata below are resolved against this, so
+// without it Slack would be sent a localhost URL for the thumbnail.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  "https://ytdt-claims-console.jesusfilm.org"
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "YouTube MCN Pipeline Dashboard",
   description:
     "Multi-Channel Network claims processing and management dashboard",
   keywords: ["youtube", "mcn", "claims", "pipeline", "dashboard"],
   authors: [{ name: "Jesus Film Project" }],
   robots: "noindex, nofollow", // Remove for production
+  // Without an image Slack still lays out a preview card and leaves a grey
+  // box where the thumbnail would go, which is what a shared run link looks
+  // like in the channel. The logo is small but it is ours.
+  openGraph: {
+    type: "website",
+    siteName: "YTDT Claims Console",
+    title: "YouTube MCN Pipeline Dashboard",
+    description:
+      "Multi-Channel Network claims processing and management dashboard",
+    images: [
+      { url: "/logo.png", width: 88, height: 88, alt: "Jesus Film Project" },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "YouTube MCN Pipeline Dashboard",
+    description:
+      "Multi-Channel Network claims processing and management dashboard",
+    images: ["/logo.png"],
+  },
 }
 
 export const viewport: Viewport = {
