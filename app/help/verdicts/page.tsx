@@ -13,12 +13,14 @@ export const metadata: Metadata = {
 
 // Screenshots are real: taken from the live console and the #ytdt-pipeline bot,
 // cropped to the part being described rather than the whole window.
+// Captured with the browser's region zoom, so these are true pixels rather than
+// a 1x screenshot stretched: 2.3x the CSS size, drawn at half their width.
 const SHOTS: Record<string, { w: number; h: number }> = {
-  "/help/slack-detected.jpg": { w: 620, h: 160 },
-  "/help/slack-guided.jpg": { w: 1130, h: 260 },
-  "/help/console-upload-empty.jpg": { w: 1080, h: 700 },
-  "/help/console-upload-ready.jpg": { w: 1080, h: 680 },
-  "/help/console-collection.jpg": { w: 1080, h: 560 },
+  "/help/slack-detected.png": { w: 1486, h: 332 },
+  "/help/slack-guided.png": { w: 1568, h: 335 },
+  "/help/console-upload-empty.png": { w: 1568, h: 748 },
+  "/help/console-upload-ready.png": { w: 1456, h: 829 },
+  "/help/console-collection.png": { w: 1568, h: 719 },
 }
 
 const Shot = ({ src, alt }: { src: string; alt: string }) => (
@@ -65,7 +67,7 @@ export default function VerdictsRunbookPage() {
           </li>
         </ol>
         <Shot
-          src="/help/slack-detected.jpg"
+          src="/help/slack-detected.png"
           alt="The bot naming each file — MCN verdicts and JFM verdicts — above a Run Pipeline button"
         />
         <p className="text-gray-700">
@@ -90,7 +92,7 @@ export default function VerdictsRunbookPage() {
           way afterwards.
         </p>
         <Shot
-          src="/help/slack-guided.jpg"
+          src="/help/slack-guided.png"
           alt="The guided flow asking for the MCN verdicts file, step 1 of 2"
         />
       </HelpSection>
@@ -119,11 +121,11 @@ export default function VerdictsRunbookPage() {
           </li>
         </ol>
         <Shot
-          src="/help/console-upload-empty.jpg"
+          src="/help/console-upload-empty.png"
           alt="Upload & Run with the Verdicts boxes first and claims collapsed below"
         />
         <Shot
-          src="/help/console-upload-ready.jpg"
+          src="/help/console-upload-ready.png"
           alt="Both verdict files attached, with Ready to Process listing them"
         />
       </HelpSection>
@@ -147,7 +149,7 @@ export default function VerdictsRunbookPage() {
           from you.
         </p>
         <Shot
-          src="/help/console-collection.jpg"
+          src="/help/console-collection.png"
           alt="The Collection tab, showing claims arriving automatically each morning"
         />
       </HelpSection>
