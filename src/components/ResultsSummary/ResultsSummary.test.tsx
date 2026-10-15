@@ -100,7 +100,10 @@ describe("ResultsSummary", () => {
     const results: PipelineRun["results"] = {
       mcnVerdicts: {
         processed: 100,
-        invalidMCIDs: [{ mcid: "mcid1" }, { mcid: "mcid2" }],
+        invalidMCIDs: [
+          { media_component_id: "mcid1", video_id: "v1" },
+          { media_component_id: "mcid2", video_id: "v2" },
+        ],
         invalidLanguageIDs: [],
       },
     }
@@ -113,7 +116,7 @@ describe("ResultsSummary", () => {
       />
     )
     expect(screen.getByText("Issues (2)")).toBeInTheDocument()
-    expect(screen.getByText("2 invalid MCIDs")).toBeInTheDocument()
+    expect(screen.getByText("2 invalid MCIDs · 2 rows")).toBeInTheDocument()
   })
 
   it("should render issues section when there are invalid language IDs", () => {
@@ -122,9 +125,9 @@ describe("ResultsSummary", () => {
         processed: 100,
         invalidMCIDs: [],
         invalidLanguageIDs: [
-          { langId: "lang1" },
-          { langId: "lang2" },
-          { langId: "lang3" },
+          { language_id: "lang1", video_id: "v1" },
+          { language_id: "lang2", video_id: "v2" },
+          { language_id: "lang3", video_id: "v3" },
         ],
       },
     }
@@ -136,14 +139,14 @@ describe("ResultsSummary", () => {
       />
     )
     expect(screen.getByText("Issues (3)")).toBeInTheDocument()
-    expect(screen.getByText("3 invalid Lang IDs")).toBeInTheDocument()
+    expect(screen.getByText("3 invalid Lang IDs · 3 rows")).toBeInTheDocument()
   })
 
   it("should call onDownloadInvalidMCIDs when download button is clicked", () => {
     const results: PipelineRun["results"] = {
       mcnVerdicts: {
         processed: 100,
-        invalidMCIDs: [{ mcid: "mcid1" }],
+        invalidMCIDs: [{ media_component_id: "mcid1", video_id: "v1" }],
         invalidLanguageIDs: [],
       },
     }
@@ -154,7 +157,7 @@ describe("ResultsSummary", () => {
         onDownloadInvalidMCIDs={mockOnDownloadMCIDs}
       />
     )
-    fireEvent.click(screen.getByText("1 invalid MCIDs"))
+    fireEvent.click(screen.getByText("1 invalid MCIDs · 1 row"))
     expect(mockOnDownloadMCIDs).toHaveBeenCalledWith("test-1", "mcn")
   })
 
@@ -163,7 +166,7 @@ describe("ResultsSummary", () => {
       mcnVerdicts: {
         processed: 100,
         invalidMCIDs: [],
-        invalidLanguageIDs: [{ langId: "lang1" }],
+        invalidLanguageIDs: [{ language_id: "lang1", video_id: "v1" }],
       },
     }
     render(
@@ -173,7 +176,7 @@ describe("ResultsSummary", () => {
         onDownloadInvalidLanguageIDs={mockOnDownloadLanguageIDs}
       />
     )
-    fireEvent.click(screen.getByText("1 invalid Lang IDs"))
+    fireEvent.click(screen.getByText("1 invalid Lang IDs · 1 row"))
     expect(mockOnDownloadLanguageIDs).toHaveBeenCalledWith("test-1", "mcn")
   })
 
@@ -205,7 +208,7 @@ describe("ResultsSummary", () => {
     expect(screen.getByText("100")).toBeInTheDocument()
   })
 
-  it("should count ids to fix, and say how many rows they cost", () => {
+  it("should count ids to fix from the rows, summary or not", () => {
     const results: PipelineRun["results"] = {
       mcnVerdicts: {
         processed: 100,
@@ -215,17 +218,6 @@ describe("ResultsSummary", () => {
           { media_component_id: "MC99", video_id: "v3" },
         ],
         invalidLanguageIDs: [],
-        invalidSummary: {
-          mcids: {
-            distinct: 2,
-            rows: 3,
-            byId: [
-              { id: "1_jf-0-0", rows: 2, examples: ["v1", "v2"] },
-              { id: "MC99", rows: 1, examples: ["v3"] },
-            ],
-          },
-          languages: { distinct: 0, rows: 0, byId: [] },
-        },
       },
     }
     render(
@@ -246,14 +238,6 @@ describe("ResultsSummary", () => {
         processed: 10,
         invalidMCIDs: [],
         invalidLanguageIDs: [{ language_id: "9999", video_id: "v1" }],
-        invalidSummary: {
-          mcids: { distinct: 0, rows: 0, byId: [] },
-          languages: {
-            distinct: 1,
-            rows: 1,
-            byId: [{ id: "9999", rows: 1, examples: ["v1"] }],
-          },
-        },
       },
     }
     render(

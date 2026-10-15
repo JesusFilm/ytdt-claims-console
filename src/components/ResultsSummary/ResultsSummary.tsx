@@ -24,19 +24,23 @@ interface ResultsSummaryProps {
 }
 
 // "27 invalid MCIDs · 1,247 rows" — fixing an id corrects every row carrying
-// it, so the id count is the work and the row count is the reach. Runs from
-// before the pipeline reported the breakdown show rows alone.
-function issueLabel(
-  noun: string,
-  rows: Array<unknown>,
-  summary?: { distinct: number; rows: number }
-) {
-  if (!summary) return `${rows.length.toLocaleString()} invalid ${noun}`
+// it, so the id count is the work and the row count is the reach. Counted from
+// the rows the run stored rather than from the pipeline's own summary, so runs
+// recorded before the pipeline reported one read correctly too.
+type Row = Record<string, string | number>
+
+const distinctIds = (rows: Row[] = [], column: string) =>
+  new Set(rows.map((row) => String(row[column] ?? ""))).size
+
+function issueLabel(noun: string, column: string, rows: Row[] = []) {
   return (
-    `${summary.distinct.toLocaleString()} invalid ${noun} · ` +
-    `${summary.rows.toLocaleString()} row${summary.rows === 1 ? "" : "s"}`
+    `${distinctIds(rows, column).toLocaleString()} invalid ${noun} · ` +
+    `${rows.length.toLocaleString()} row${rows.length === 1 ? "" : "s"}`
   )
 }
+
+const MCID = "media_component_id"
+const LANG = "language_id"
 
 export default function ResultsSummary({
   results,
@@ -47,37 +51,23 @@ export default function ResultsSummary({
 }: ResultsSummaryProps) {
   if (!results) return null
 
-  const getTotalInvalidMCIDs = () => {
-    const mcnCount =
-      results.mcnVerdicts?.invalidSummary?.mcids?.distinct ??
-      results.mcnVerdicts?.invalidMCIDs?.length ??
-      0
-    const jfmCount =
-      results.jfmVerdicts?.invalidSummary?.mcids?.distinct ??
-      results.jfmVerdicts?.invalidMCIDs?.length ??
-      0
-    const meCount =
-      results.claimsProcessed?.matter_entertainment?.invalidMCIDs?.length || 0
-    const m2Count = results.claimsProcessed?.matter_2?.invalidMCIDs?.length || 0
-    return mcnCount + jfmCount + meCount + m2Count
-  }
+  const getTotalInvalidMCIDs = () =>
+    distinctIds(results.mcnVerdicts?.invalidMCIDs, MCID) +
+    distinctIds(results.jfmVerdicts?.invalidMCIDs, MCID) +
+    distinctIds(
+      results.claimsProcessed?.matter_entertainment?.invalidMCIDs,
+      MCID
+    ) +
+    distinctIds(results.claimsProcessed?.matter_2?.invalidMCIDs, MCID)
 
-  const getTotalInvalidLanguageIDs = () => {
-    const mcnCount =
-      results.mcnVerdicts?.invalidSummary?.languages?.distinct ??
-      results.mcnVerdicts?.invalidLanguageIDs?.length ??
-      0
-    const jfmCount =
-      results.jfmVerdicts?.invalidSummary?.languages?.distinct ??
-      results.jfmVerdicts?.invalidLanguageIDs?.length ??
-      0
-    const meCount =
-      results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs
-        ?.length || 0
-    const m2Count =
-      results.claimsProcessed?.matter_2?.invalidLanguageIDs?.length || 0
-    return mcnCount + jfmCount + meCount + m2Count
-  }
+  const getTotalInvalidLanguageIDs = () =>
+    distinctIds(results.mcnVerdicts?.invalidLanguageIDs, LANG) +
+    distinctIds(results.jfmVerdicts?.invalidLanguageIDs, LANG) +
+    distinctIds(
+      results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs,
+      LANG
+    ) +
+    distinctIds(results.claimsProcessed?.matter_2?.invalidLanguageIDs, LANG)
 
   const getTotalIssues = () => {
     return getTotalInvalidMCIDs() + getTotalInvalidLanguageIDs()
@@ -226,8 +216,8 @@ export default function ResultsSummary({
                     <div className="text-orange-600">
                       {issueLabel(
                         "MCIDs",
-                        results.mcnVerdicts.invalidMCIDs,
-                        results.mcnVerdicts.invalidSummary?.mcids
+                        MCID,
+                        results.mcnVerdicts.invalidMCIDs
                       )}
                     </div>
                   </span>
@@ -248,8 +238,8 @@ export default function ResultsSummary({
                     <div className="text-orange-600">
                       {issueLabel(
                         "MCIDs",
-                        results.jfmVerdicts.invalidMCIDs,
-                        results.jfmVerdicts.invalidSummary?.mcids
+                        MCID,
+                        results.jfmVerdicts.invalidMCIDs
                       )}
                     </div>
                   </span>
@@ -271,11 +261,12 @@ export default function ResultsSummary({
                   <span className="text-left">
                     <div className="font-medium">ME Claims</div>
                     <div className="text-orange-600">
-                      {
+                      {issueLabel(
+                        "MCIDs",
+                        MCID,
                         results.claimsProcessed.matter_entertainment
-                          .invalidMCIDs.length
-                      }{" "}
-                      invalid MCIDs
+                          .invalidMCIDs
+                      )}
                     </div>
                   </span>
                 </button>
@@ -293,8 +284,11 @@ export default function ResultsSummary({
                   <span className="text-left">
                     <div className="font-medium">M2 Claims</div>
                     <div className="text-orange-600">
-                      {results.claimsProcessed.matter_2.invalidMCIDs.length}{" "}
-                      invalid MCIDs
+                      {issueLabel(
+                        "MCIDs",
+                        MCID,
+                        results.claimsProcessed.matter_2.invalidMCIDs
+                      )}
                     </div>
                   </span>
                 </button>
@@ -314,8 +308,8 @@ export default function ResultsSummary({
                     <div className="text-orange-600">
                       {issueLabel(
                         "Lang IDs",
-                        results.mcnVerdicts.invalidLanguageIDs,
-                        results.mcnVerdicts.invalidSummary?.languages
+                        LANG,
+                        results.mcnVerdicts.invalidLanguageIDs
                       )}
                     </div>
                   </span>
@@ -336,8 +330,8 @@ export default function ResultsSummary({
                     <div className="text-orange-600">
                       {issueLabel(
                         "Lang IDs",
-                        results.jfmVerdicts.invalidLanguageIDs,
-                        results.jfmVerdicts.invalidSummary?.languages
+                        LANG,
+                        results.jfmVerdicts.invalidLanguageIDs
                       )}
                     </div>
                   </span>
@@ -360,11 +354,12 @@ export default function ResultsSummary({
                   <span className="text-left">
                     <div className="font-medium">ME Claims</div>
                     <div className="text-orange-600">
-                      {
+                      {issueLabel(
+                        "Lang IDs",
+                        LANG,
                         results.claimsProcessed.matter_entertainment
-                          .invalidLanguageIDs.length
-                      }{" "}
-                      invalid Lang IDs
+                          .invalidLanguageIDs
+                      )}
                     </div>
                   </span>
                 </button>
@@ -385,11 +380,11 @@ export default function ResultsSummary({
                   <span className="text-left">
                     <div className="font-medium">M2 Claims</div>
                     <div className="text-orange-600">
-                      {
+                      {issueLabel(
+                        "Lang IDs",
+                        LANG,
                         results.claimsProcessed.matter_2.invalidLanguageIDs
-                          .length
-                      }{" "}
-                      invalid Lang IDs
+                      )}
                     </div>
                   </span>
                 </button>
