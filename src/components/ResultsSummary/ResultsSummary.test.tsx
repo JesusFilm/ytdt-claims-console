@@ -4,6 +4,9 @@ import type { PipelineRun } from "@/types/PipelineRun"
 
 import ResultsSummary from "."
 
+const authFetch = vi.hoisted(() => vi.fn())
+vi.mock("@/utils/auth", () => ({ authFetch }))
+
 describe("ResultsSummary", () => {
   const mockOnDownloadMCIDs = vi.fn()
   const mockOnDownloadLanguageIDs = vi.fn()
@@ -248,5 +251,79 @@ describe("ResultsSummary", () => {
       />
     )
     expect(screen.getByText("1 invalid Lang IDs · 1 row")).toBeInTheDocument()
+  })
+
+  it("should show the whole-table backlog, separately from this run", () => {
+    const results: PipelineRun["results"] = {
+      mcnVerdicts: {
+        processed: 10,
+        invalidMCIDs: [],
+        invalidLanguageIDs: [],
+        acrossAllClaims: {
+          invalidMCIDs: 0,
+          invalidLanguageIDs: 10106,
+          files: {
+            invalidMCIDs: null,
+            invalidLanguageIDs: "invalid-language-ids-all-claims-mcn.csv",
+          },
+        },
+      },
+      jfmVerdicts: {
+        processed: 5,
+        invalidMCIDs: [],
+        invalidLanguageIDs: [],
+        acrossAllClaims: {
+          invalidMCIDs: 12,
+          invalidLanguageIDs: 0,
+          files: {
+            invalidMCIDs: "invalid-mcids-all-claims-jfm.csv",
+            invalidLanguageIDs: null,
+          },
+        },
+      },
+    }
+    render(<ResultsSummary results={results} runId="test-1" />)
+
+    // Nothing wrong with this run's own file, but the backlog still shows.
+    expect(screen.getByText("In all claims so far")).toBeInTheDocument()
+    expect(
+      screen.getByText("10,106 rows with an invalid language id")
+    ).toBeInTheDocument()
+    expect(screen.getByText("12 rows with an invalid MCID")).toBeInTheDocument()
+    expect(screen.queryByText("Issues (0)")).not.toBeInTheDocument()
+  })
+
+  it("should fetch the backlog file when its button is clicked", async () => {
+    authFetch.mockResolvedValue({ blob: async () => new Blob(["csv"]) })
+    const results: PipelineRun["results"] = {
+      mcnVerdicts: {
+        processed: 10,
+        invalidMCIDs: [],
+        invalidLanguageIDs: [],
+        acrossAllClaims: {
+          invalidMCIDs: 0,
+          invalidLanguageIDs: 4,
+          files: {
+            invalidMCIDs: null,
+            invalidLanguageIDs: "invalid-language-ids-all-claims-mcn.csv",
+          },
+        },
+      },
+    }
+    render(<ResultsSummary results={results} runId="run-9" />)
+    fireEvent.click(screen.getByText("MCN"))
+    await vi.waitFor(() =>
+      expect(authFetch).toHaveBeenCalledWith(
+        "/api/exports/run/run-9/invalid-language-ids-all-claims-mcn.csv"
+      )
+    )
+  })
+
+  it("should say nothing when there is no backlog", () => {
+    const results: PipelineRun["results"] = {
+      mcnVerdicts: { processed: 10, invalidMCIDs: [], invalidLanguageIDs: [] },
+    }
+    render(<ResultsSummary results={results} runId="test-1" />)
+    expect(screen.queryByText("In all claims so far")).not.toBeInTheDocument()
   })
 })

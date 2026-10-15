@@ -18,6 +18,11 @@ export interface VerdictResult {
   acrossAllClaims?: {
     invalidMCIDs: number
     invalidLanguageIDs: number
+    // written beside the run's other exports, so the backlog can be downloaded
+    files?: {
+      invalidMCIDs: string | null
+      invalidLanguageIDs: string | null
+    }
   }
 }
 
