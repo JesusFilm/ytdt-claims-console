@@ -112,7 +112,7 @@ describe("RunCard", () => {
       results: {
         mcnVerdicts: {
           processed: 100,
-          invalidMCIDs: [{ mcid: "mcid1" }],
+          invalidMCIDs: [{ media_component_id: "mcid1", video_id: "v1" }],
           invalidLanguageIDs: [],
         },
       },
@@ -124,7 +124,7 @@ describe("RunCard", () => {
         onDownloadInvalidLanguageIDs={mockOnDownloadInvalidLanguageIDs}
       />
     )
-    fireEvent.click(screen.getByText("1 invalid MCIDs"))
+    fireEvent.click(screen.getByText("1 invalid MCIDs · 1 row"))
     expect(mockOnDownloadInvalidMCIDs).toHaveBeenCalledWith("run-1", "mcn")
   })
 

@@ -333,9 +333,8 @@ describe("PipelineHistoryTab", () => {
     }
 
     render(<PipelineHistoryTab runs={[run]} />)
-    // No invalidSummary here: grouping is done from the rows, so runs
-    // recorded before the pipeline reported a breakdown group too.
-    fireEvent.click(screen.getByText("3 invalid MCIDs"))
+    // Two ids over three rows, counted from the rows themselves.
+    fireEvent.click(screen.getByText("2 invalid MCIDs · 3 rows"))
 
     global.Blob = RealBlob
     const csv = written[0]
