@@ -241,8 +241,11 @@ const SECTIONS: Array<{
           <>
             Rows in a verdicts file whose media component id or language id does
             not exist in our reference data — usually a typo or an outdated
-            code. They are reported, not applied, and can be downloaded from the
-            run to be corrected and sent again.
+            code. They are reported, not applied. The run shows how many ids are
+            wrong and how many rows they cost: one bad id repeated over a
+            hundred rows is still one fix. The download lists each bad id once,
+            with the videos carrying it, so they can be corrected and sent
+            again.
           </>
         ),
       },

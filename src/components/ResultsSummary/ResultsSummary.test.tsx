@@ -204,4 +204,65 @@ describe("ResultsSummary", () => {
     expect(screen.getByText("50")).toBeInTheDocument()
     expect(screen.getByText("100")).toBeInTheDocument()
   })
+
+  it("should count ids to fix, and say how many rows they cost", () => {
+    const results: PipelineRun["results"] = {
+      mcnVerdicts: {
+        processed: 100,
+        invalidMCIDs: [
+          { media_component_id: "1_jf-0-0", video_id: "v1" },
+          { media_component_id: "1_jf-0-0", video_id: "v2" },
+          { media_component_id: "MC99", video_id: "v3" },
+        ],
+        invalidLanguageIDs: [],
+        invalidSummary: {
+          mcids: {
+            distinct: 2,
+            rows: 3,
+            byId: [
+              { id: "1_jf-0-0", rows: 2, examples: ["v1", "v2"] },
+              { id: "MC99", rows: 1, examples: ["v3"] },
+            ],
+          },
+          languages: { distinct: 0, rows: 0, byId: [] },
+        },
+      },
+    }
+    render(
+      <ResultsSummary
+        results={results}
+        runId="test-1"
+        onDownloadInvalidMCIDs={mockOnDownloadMCIDs}
+      />
+    )
+    // Two ids to chase, not three rows to scroll.
+    expect(screen.getByText("Issues (2)")).toBeInTheDocument()
+    expect(screen.getByText("2 invalid MCIDs · 3 rows")).toBeInTheDocument()
+  })
+
+  it("should say 'row' once for a single affected row", () => {
+    const results: PipelineRun["results"] = {
+      jfmVerdicts: {
+        processed: 10,
+        invalidMCIDs: [],
+        invalidLanguageIDs: [{ language_id: "9999", video_id: "v1" }],
+        invalidSummary: {
+          mcids: { distinct: 0, rows: 0, byId: [] },
+          languages: {
+            distinct: 1,
+            rows: 1,
+            byId: [{ id: "9999", rows: 1, examples: ["v1"] }],
+          },
+        },
+      },
+    }
+    render(
+      <ResultsSummary
+        results={results}
+        runId="test-1"
+        onDownloadInvalidLanguageIDs={mockOnDownloadLanguageIDs}
+      />
+    )
+    expect(screen.getByText("1 invalid Lang IDs · 1 row")).toBeInTheDocument()
+  })
 })

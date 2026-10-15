@@ -281,4 +281,69 @@ describe("PipelineHistoryTab", () => {
       screen.getByText(/Snapshot 2024-01-01/).closest(".ring-2")
     ).not.toBeNull()
   })
+
+  it("should download invalid ids grouped by the id that is wrong", () => {
+    // jsdom's Blob has no text(), so read the content on its way in.
+    const written: string[] = []
+    const RealBlob = global.Blob
+    class CapturingBlob extends RealBlob {
+      constructor(chunks: BlobPart[], options?: BlobPropertyBag) {
+        written.push(String(chunks[0]))
+        super(chunks, options)
+      }
+    }
+    global.Blob = CapturingBlob as unknown as typeof Blob
+
+    const run: PipelineRun = {
+      id: "run-csv",
+      startTime: new Date("2024-01-03T10:00:00Z"),
+      status: "completed",
+      duration: 1000,
+      files: {},
+      startedSteps: [],
+      results: {
+        mcnVerdicts: {
+          processed: 3,
+          invalidMCIDs: [
+            {
+              video_id: "v1",
+              media_component_id: "1_jf-0-0",
+              channel_id: "c1",
+              wave: "262",
+              views: 10,
+            },
+            {
+              video_id: "v2",
+              media_component_id: "1_jf-0-0",
+              channel_id: "c1",
+              wave: "262",
+              views: 5,
+            },
+            {
+              video_id: "v3",
+              media_component_id: "MC99",
+              channel_id: "c2",
+              wave: "262",
+              views: 1,
+            },
+          ],
+          invalidLanguageIDs: [],
+        },
+      },
+    }
+
+    render(<PipelineHistoryTab runs={[run]} />)
+    // No invalidSummary here: grouping is done from the rows, so runs
+    // recorded before the pipeline reported a breakdown group too.
+    fireEvent.click(screen.getByText("3 invalid MCIDs"))
+
+    global.Blob = RealBlob
+    const csv = written[0]
+    // Worst id first, its rows folded into one line, every video kept.
+    expect(csv.split("\n")).toEqual([
+      "media_component_id,rows,views,video_ids",
+      '1_jf-0-0,2,15,"v1 v2"',
+      'MC99,1,1,"v3"',
+    ])
+  })
 })

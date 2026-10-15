@@ -132,13 +132,14 @@ export default function VerdictsRunbookPage() {
 
       <HelpSection title="Afterwards" anchors={["afterwards"]}>
         <p className="text-gray-700">
-          The notification says how many verdicts were applied, and how many
-          rows had{" "}
+          The notification says how many verdicts were applied, and how many ids
+          were wrong — with the rows they affect — for{" "}
           <Link href={helpHref("invalidIds")} className="underline">
             invalid ids
           </Link>{" "}
-          — those were not applied and can be corrected and sent again. The
-          scored file lands in the run&apos;s Drive folder.
+          — those rows were not applied. The download lists each bad id once,
+          with the videos carrying it, so you fix the id rather than scroll the
+          rows. The scored file lands in the run&apos;s Drive folder.
         </p>
         <p className="text-gray-700">
           The{" "}

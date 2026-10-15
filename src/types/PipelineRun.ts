@@ -1,4 +1,26 @@
 // types/PipelineRun.ts
+// How many ids are wrong, and how many rows they cost. Absent on runs from
+// before the pipeline reported it, where only the row count is known.
+export interface InvalidIdSummary {
+  distinct: number
+  rows: number
+  byId: Array<{ id: string; rows: number; examples: string[] }>
+}
+
+export interface VerdictResult {
+  processed: number
+  invalidMCIDs: Array<Record<string, string | number>>
+  invalidLanguageIDs: Array<Record<string, string | number>>
+  invalidSummary?: {
+    mcids: InvalidIdSummary
+    languages: InvalidIdSummary
+  }
+  acrossAllClaims?: {
+    invalidMCIDs: number
+    invalidLanguageIDs: number
+  }
+}
+
 export interface PipelineRun {
   id: string
   startTime: Date
@@ -26,16 +48,8 @@ export interface PipelineRun {
         invalidLanguageIDs: Array<Record<string, string | number>>
       }
     }
-    mcnVerdicts?: {
-      processed: number
-      invalidMCIDs: Array<Record<string, string | number>>
-      invalidLanguageIDs: Array<Record<string, string | number>>
-    }
-    jfmVerdicts?: {
-      processed: number
-      invalidMCIDs: Array<Record<string, string | number>>
-      invalidLanguageIDs: Array<Record<string, string | number>>
-    }
+    mcnVerdicts?: VerdictResult
+    jfmVerdicts?: VerdictResult
     enrichShorts?: {
       checked: number
       marked: number
