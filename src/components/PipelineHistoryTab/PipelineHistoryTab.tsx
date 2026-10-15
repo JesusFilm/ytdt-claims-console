@@ -136,84 +136,96 @@ export default function PipelineHistoryTab({
     return merged.sort((a, b) => b.at - a.at)
   }, [runs, ingests, effectiveFilter])
 
-  const downloadInvalidMCIDs = (
-    runId: string,
-    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
+  // One file per click, grouped by the id that is wrong and worst first: a bad
+  // id is one fix, however many rows carry it, so Ben works down a list of 27
+  // rather than scrolling 1,247 rows. Every affected video_id is still in the
+  // file — one quoted column — so the rows can be recovered for a join.
+  const groupedCsv = (
+    rows: Array<Record<string, string | number>>,
+    column: string,
+    extra?: { header: string; sum: string }
   ) => {
-    const run = runs.find((r) => r.id === runId)
-    if (!run?.results) return
+    const byId = new Map<
+      string,
+      { rows: number; total: number; videos: string[] }
+    >()
+    rows.forEach((row) => {
+      const id = String(row[column] ?? "")
+      const entry = byId.get(id) ?? { rows: 0, total: 0, videos: [] }
+      entry.rows += 1
+      if (extra) entry.total += Number(row[extra.sum]) || 0
+      if (row.video_id) entry.videos.push(String(row.video_id))
+      byId.set(id, entry)
+    })
 
-    let invalidMCIDs: Array<Record<string, string | number>> | undefined
-    if (type === "mcn") {
-      invalidMCIDs = run.results.mcnVerdicts?.invalidMCIDs
-    } else if (type === "jfm") {
-      invalidMCIDs = run.results.jfmVerdicts?.invalidMCIDs
-    } else if (type === "matter_entertainment") {
-      invalidMCIDs =
-        run.results.claimsProcessed?.matter_entertainment?.invalidMCIDs
-    } else if (type === "matter_2") {
-      invalidMCIDs = run.results.claimsProcessed?.matter_2?.invalidMCIDs
-    }
+    const header = [
+      column,
+      "rows",
+      ...(extra ? [extra.header] : []),
+      "video_ids",
+    ]
+    const lines = [...byId.entries()]
+      .sort((a, b) => b[1].rows - a[1].rows)
+      .map(([id, entry]) =>
+        [
+          id,
+          entry.rows,
+          ...(extra ? [entry.total] : []),
+          `"${entry.videos.join(" ")}"`,
+        ].join(",")
+      )
+    return [header.join(","), ...lines].join("\n")
+  }
 
-    if (!invalidMCIDs?.length) return
-
-    const csvContent = [
-      "video_id,media_component_id,channel_id,wave,views",
-      ...invalidMCIDs.map(
-        (r) =>
-          `${r.video_id},${r.media_component_id},${r.channel_id},${r.wave},${r.views}`
-      ),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "text/csv" })
+  const saveCsv = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `invalid-mcids-${type}-${runId}.csv`
+    link.download = filename
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
+  const invalidRows = (
+    runId: string,
+    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2",
+    field: "invalidMCIDs" | "invalidLanguageIDs"
+  ) => {
+    const results = runs.find((r) => r.id === runId)?.results
+    if (!results) return undefined
+    if (type === "mcn") return results.mcnVerdicts?.[field]
+    if (type === "jfm") return results.jfmVerdicts?.[field]
+    return results.claimsProcessed?.[type]?.[field]
+  }
+
+  const downloadInvalidMCIDs = (
+    runId: string,
+    type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
+  ) => {
+    const rows = invalidRows(runId, type, "invalidMCIDs")
+    if (!rows?.length) return
+    saveCsv(
+      groupedCsv(rows, "media_component_id", {
+        header: "views",
+        sum: "views",
+      }),
+      `invalid-mcids-${type}-${runId}.csv`
+    )
+  }
+
   const downloadInvalidLanguageIDs = (
     runId: string,
     type: "mcn" | "jfm" | "matter_entertainment" | "matter_2"
   ) => {
-    const run = runs.find((r) => r.id === runId)
-    if (!run?.results) return
-
-    let invalidLanguageIDs: Array<Record<string, string | number>> | undefined
-    if (type === "mcn") {
-      invalidLanguageIDs = run.results.mcnVerdicts?.invalidLanguageIDs
-    } else if (type === "jfm") {
-      invalidLanguageIDs = run.results.jfmVerdicts?.invalidLanguageIDs
-    } else if (type === "matter_entertainment") {
-      invalidLanguageIDs =
-        run.results.claimsProcessed?.matter_entertainment?.invalidLanguageIDs
-    } else if (type === "matter_2") {
-      invalidLanguageIDs =
-        run.results.claimsProcessed?.matter_2?.invalidLanguageIDs
-    }
-
-    if (!invalidLanguageIDs?.length) return
-
-    const csvContent = [
-      "video_id,language_id,channel_id",
-      ...invalidLanguageIDs.map(
-        (r) => `${r.video_id},${r.language_id},${r.channel_id}`
-      ),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `invalid-language-ids-${type}-${runId}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    const rows = invalidRows(runId, type, "invalidLanguageIDs")
+    if (!rows?.length) return
+    saveCsv(
+      groupedCsv(rows, "language_id"),
+      `invalid-language-ids-${type}-${runId}.csv`
+    )
   }
 
   const filters: Array<{ id: Filter; label: string }> = [
