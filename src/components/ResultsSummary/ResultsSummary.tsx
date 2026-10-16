@@ -52,19 +52,27 @@ const Backlog: FC<{
   results: NonNullable<PipelineRun["results"]>
   runId: string
 }> = ({ results, runId }) => {
-  const total = (key: "invalidMCIDs" | "invalidLanguageIDs") =>
-    (results.mcnVerdicts?.acrossAllClaims?.[key] ?? 0) +
-    (results.jfmVerdicts?.acrossAllClaims?.[key] ?? 0)
-
-  const files = (key: "invalidMCIDs" | "invalidLanguageIDs") =>
+  // One button per list, each saying which table and which id — two tables
+  // added together make a number nobody can check against anything.
+  const lists = (
     [
-      results.mcnVerdicts?.acrossAllClaims?.files?.[key],
-      results.jfmVerdicts?.acrossAllClaims?.files?.[key],
-    ].filter((name): name is string => Boolean(name))
+      ["MCN Verdicts", results.mcnVerdicts],
+      ["JFM Verdicts", results.jfmVerdicts],
+    ] as const
+  ).flatMap(([source, verdicts]) =>
+    (
+      [
+        ["invalidMCIDs", "invalid MCIDs"],
+        ["invalidLanguageIDs", "invalid Lang IDs"],
+      ] as const
+    ).flatMap(([key, noun]) => {
+      const rows = verdicts?.acrossAllClaims?.[key] ?? 0
+      const file = verdicts?.acrossAllClaims?.files?.[key]
+      return rows > 0 ? [{ source, noun, rows, file }] : []
+    })
+  )
 
-  const mcids = total("invalidMCIDs")
-  const languages = total("invalidLanguageIDs")
-  if (!mcids && !languages) return null
+  if (!lists.length) return null
 
   const download = async (name: string) => {
     try {
@@ -82,31 +90,6 @@ const Backlog: FC<{
     }
   }
 
-  const row = (
-    label: string,
-    rows: number,
-    key: "invalidMCIDs" | "invalidLanguageIDs"
-  ) =>
-    rows > 0 && (
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="text-gray-700">
-          {rows.toLocaleString()} row{rows === 1 ? "" : "s"} with {label}
-        </span>
-        <span className="flex gap-2">
-          {files(key).map((name) => (
-            <button
-              key={name}
-              onClick={() => download(name)}
-              className="flex items-center gap-1.5 px-2 py-1 text-gray-700 bg-white hover:bg-gray-100 rounded border border-gray-200 transition-colors"
-            >
-              <Download className="w-3 h-3" />
-              {name.includes("-jfm") ? "JFM" : "MCN"}
-            </button>
-          ))}
-        </span>
-      </div>
-    )
-
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 w-full">
       <div className="flex items-center gap-2 mb-1">
@@ -119,9 +102,35 @@ const Backlog: FC<{
         Bad ids still sitting in the claims table, from every file ever loaded —
         not just this run.
       </p>
-      <div className="space-y-2">
-        {row("an invalid MCID", mcids, "invalidMCIDs")}
-        {row("an invalid language id", languages, "invalidLanguageIDs")}
+      <div className="grid grid-cols-2 gap-2">
+        {lists.map(({ source, noun, rows, file }) => {
+          const label = (
+            <span className="text-left">
+              <div className="font-medium">{source}</div>
+              <div className="text-gray-600">
+                {rows.toLocaleString()} {noun}
+              </div>
+            </span>
+          )
+          return file ? (
+            <button
+              key={`${source}-${noun}`}
+              onClick={() => download(file)}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 bg-white hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+            >
+              <Download className="w-3 h-3 flex-shrink-0" />
+              {label}
+            </button>
+          ) : (
+            // Counted on an older run, before the lists were written out
+            <div
+              key={`${source}-${noun}`}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 bg-white rounded-lg border border-gray-200"
+            >
+              {label}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
