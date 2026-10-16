@@ -286,10 +286,12 @@ describe("ResultsSummary", () => {
 
     // Nothing wrong with this run's own file, but the backlog still shows.
     expect(screen.getByText("In all claims so far")).toBeInTheDocument()
-    expect(
-      screen.getByText("10,106 rows with an invalid language id")
-    ).toBeInTheDocument()
-    expect(screen.getByText("12 rows with an invalid MCID")).toBeInTheDocument()
+    // Each list says which table and which id, so two JFM buttons are never
+    // left side by side labelled only "JFM".
+    expect(screen.getByText("10,106 invalid Lang IDs")).toBeInTheDocument()
+    expect(screen.getByText("12 invalid MCIDs")).toBeInTheDocument()
+    expect(screen.getByText("MCN Verdicts")).toBeInTheDocument()
+    expect(screen.getByText("JFM Verdicts")).toBeInTheDocument()
     expect(screen.queryByText("Issues (0)")).not.toBeInTheDocument()
   })
 
@@ -311,7 +313,7 @@ describe("ResultsSummary", () => {
       },
     }
     render(<ResultsSummary results={results} runId="run-9" />)
-    fireEvent.click(screen.getByText("MCN"))
+    fireEvent.click(screen.getByText("4 invalid Lang IDs"))
     await vi.waitFor(() =>
       expect(authFetch).toHaveBeenCalledWith(
         "/api/exports/run/run-9/invalid-language-ids-all-claims-mcn.csv"
