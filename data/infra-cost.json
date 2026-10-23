@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-10-23T19:24:46.304Z",
+  "zone": "us-east1-b",
+  "region": "us-east1",
+  "filter": "labels.stack=analytics",
+  "hoursPerMonth": 730,
+  "daysPerMonth": 30.44,
+  "rates": {
+    "core": 0.02181159,
+    "ram": 0.00292353,
+    "disk": {
+      "pd-standard": 0.04,
+      "pd-balanced": 0.1,
+      "pd-ssd": 0.17
+    }
+  },
+  "instances": [
+    {
+      "name": "airbyte-server",
+      "system": "data-platform",
+      "role": "ingestion",
+      "machineType": "e2-standard-8",
+      "guestCpus": 8,
+      "vcpu": 8,
+      "sharedCore": false,
+      "ramGib": 32,
+      "computeHourly": 0.26804568,
+      "computeMonthly": 195.6733464,
+      "disks": [
+        {
+          "type": "pd-balanced",
+          "sizeGb": 60,
+          "rate": 0.1,
+          "monthly": 6
+        }
+      ],
+      "diskMonthly": 6,
+      "monthly": 201.6733464,
+      "daily": 6.625274191852825
+    },
+    {
+      "name": "ytdt-claims",
+      "system": "ytdt",
+      "role": "api",
+      "machineType": "e2-standard-4",
+      "guestCpus": 4,
+      "vcpu": 4,
+      "sharedCore": false,
+      "ramGib": 16,
+      "computeHourly": 0.13402284,
+      "computeMonthly": 97.8366732,
+      "disks": [
+        {
+          "type": "pd-standard",
+          "sizeGb": 50,
+          "rate": 0.04,
+          "monthly": 2
+        }
+      ],
+      "diskMonthly": 2,
+      "monthly": 99.8366732,
+      "daily": 3.279785584756899
+    },
+    {
+      "name": "ytdt-mongodb",
+      "system": "ytdt",
+      "role": "database",
+      "machineType": "e2-small",
+      "guestCpus": 2,
+      "vcpu": 0.5,
+      "sharedCore": true,
+      "ramGib": 2,
+      "computeHourly": 0.016752855,
+      "computeMonthly": 12.22958415,
+      "disks": [
+        {
+          "type": "pd-standard",
+          "sizeGb": 30,
+          "rate": 0.04,
+          "monthly": 1.2
+        }
+      ],
+      "diskMonthly": 1.2,
+      "monthly": 13.42958415,
+      "daily": 0.44118213370565046
+    }
+  ]
+}
