@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Regenerates data/infra-cost.json — the figures behind /costs.
+// Regenerates data/infra-cost.json — the figures behind /infra.
 //
 // Run it by hand after the VMs change (resize, new disk, new instance):
 //   node scripts/vm-cost.mjs
@@ -9,8 +9,7 @@
 // is why this is a committed snapshot rather than a live call from the app.
 //
 // Everything here is LIST PRICE for a VM running continuously. It is not
-// measured usage and it carries no sustained-use discount. See /costs for the
-// method, written out for the reader.
+// measured usage and it carries no sustained-use discount.
 
 import { execFileSync } from "node:child_process"
 import { writeFileSync } from "node:fs"
