@@ -26,7 +26,7 @@ export default function InfraPage() {
   const monthly = instances.reduce((sum, vm) => sum + vm.monthly, 0)
 
   return (
-    <main className="max-w-2xl mx-auto px-6 py-12 space-y-4">
+    <main className="max-w-3xl mx-auto px-6 py-12 space-y-4">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold text-gray-900">Infrastructure</h1>
         <p className="text-gray-600">
@@ -36,7 +36,7 @@ export default function InfraPage() {
 
       <section id="machines" className="scroll-mt-6">
         <HelpSection title="Machines" anchors={["machines"]}>
-          <table className="w-full text-sm">
+          <table className="w-full text-sm whitespace-nowrap">
             <thead>
               <tr className="border-b border-gray-200 text-left text-gray-500">
                 <th className="py-2 pr-4 font-medium">Machine</th>
