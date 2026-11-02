@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import FileUpload from "@/components/FileUpload"
+import VerdictsDrop, { type VerdictFile } from "@/components/VerdictsDrop"
 import { helpHref } from "@/help/anchors"
 import { formatRunFiles } from "@/utils/formatFiles"
 
@@ -28,6 +29,11 @@ interface UploadTabProps {
   handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void
   handleFileRemove: (fileType: keyof FileState) => void
   handleRunPipeline: () => void
+  verdicts: VerdictFile[]
+  classifying: boolean
+  handleVerdictsDrop: (files: File[]) => void
+  handleVerdictAssign: (name: string, side: "mcn" | "jfm") => void
+  handleVerdictRemove: (name: string) => void
   scoreWithMl: boolean
   setScoreWithMl: (value: boolean) => void
   handleScoreUnprocessed?: () => void
@@ -44,6 +50,11 @@ export default function UploadTab({
   handleFileDrop,
   handleFileRemove,
   handleRunPipeline,
+  verdicts,
+  classifying,
+  handleVerdictsDrop,
+  handleVerdictAssign,
+  handleVerdictRemove,
   scoreWithMl,
   setScoreWithMl,
   handleScoreUnprocessed,
@@ -53,6 +64,9 @@ export default function UploadTab({
 }: UploadTabProps) {
   const hasFiles =
     files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts
+  // A dropped file nobody has placed would be left out of the run without a
+  // word, so Run waits until every one of them is in a box or taken away.
+  const unplaced = verdicts.some((verdict) => !verdict.side)
 
   return (
     <div className="space-y-8">
@@ -112,24 +126,14 @@ export default function UploadTab({
               </a>
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FileUpload
-              file={files.mcnVerdicts}
-              onDrop={(files) => handleFileDrop(files, "mcnVerdicts")}
-              onRemove={() => handleFileRemove("mcnVerdicts")}
-              title="MCN Verdicts"
-              description="Verdict decisions for MCN claims"
-              disabled={isRunning}
-            />
-            <FileUpload
-              file={files.jfmVerdicts}
-              onDrop={(files) => handleFileDrop(files, "jfmVerdicts")}
-              onRemove={() => handleFileRemove("jfmVerdicts")}
-              title="JFM Verdicts"
-              description="Verdict decisions for owned videos"
-              disabled={isRunning}
-            />
-          </div>
+          <VerdictsDrop
+            verdicts={verdicts}
+            classifying={classifying}
+            disabled={isRunning}
+            onDrop={handleVerdictsDrop}
+            onAssign={handleVerdictAssign}
+            onRemove={handleVerdictRemove}
+          />
         </div>
         {/* Claims arrive on their own every morning, so uploading them by hand
             is the exception: collapsed, and below the verdicts people send. */}
@@ -202,7 +206,7 @@ export default function UploadTab({
         )}
         <button
           onClick={handleRunPipeline}
-          disabled={isRunning || !hasFiles}
+          disabled={isRunning || !hasFiles || classifying || unplaced}
           className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {loading ? (
@@ -244,6 +248,13 @@ export default function UploadTab({
             </span>
           </span>
         </label>
+      )}
+
+      {unplaced && (
+        <p className="text-center text-sm text-amber-700">
+          Say which verdicts the file above is, or remove it, and Run will be
+          available.
+        </p>
       )}
 
       {/* File Summary */}
