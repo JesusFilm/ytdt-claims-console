@@ -28,6 +28,8 @@ interface UploadTabProps {
   handleFileDrop: (acceptedFiles: File[], fileType: keyof FileState) => void
   handleFileRemove: (fileType: keyof FileState) => void
   handleRunPipeline: () => void
+  scoreWithMl: boolean
+  setScoreWithMl: (value: boolean) => void
   handleScoreUnprocessed?: () => void
   handleSaveClaims: () => void
   handleClearPendingRun: () => void
@@ -42,6 +44,8 @@ export default function UploadTab({
   handleFileDrop,
   handleFileRemove,
   handleRunPipeline,
+  scoreWithMl,
+  setScoreWithMl,
   handleScoreUnprocessed,
   handleSaveClaims,
   handleClearPendingRun,
@@ -219,6 +223,28 @@ export default function UploadTab({
           )}
         </button>
       </div>
+
+      {/* Scoring is the slowest part of a run and not always wanted: a verdicts
+          import on its own finishes in minutes and still uploads the exports. */}
+      {hasFiles && (
+        <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={scoreWithMl}
+            onChange={(event) => setScoreWithMl(event.target.checked)}
+            disabled={isRunning || loading}
+            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600"
+          />
+          <span>
+            Score claims with YT-Validator
+            <span className="block text-xs text-gray-500">
+              {scoreWithMl
+                ? "The model scores unprocessed claims and the scored CSV goes to Drive."
+                : "Skipped. The run imports and exports as usual, with no scored CSV."}
+            </span>
+          </span>
+        </label>
+      )}
 
       {/* File Summary */}
       {hasFiles && (

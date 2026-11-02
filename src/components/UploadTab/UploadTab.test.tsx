@@ -6,6 +6,7 @@ describe("UploadTab", () => {
   const mockHandleFileDrop = vi.fn()
   const mockHandleFileRemove = vi.fn()
   const mockHandleRunPipeline = vi.fn()
+  const mockSetScoreWithMl = vi.fn()
   const mockHandleScoreUnprocessed = vi.fn()
   const mockHandleSaveClaims = vi.fn()
   const mockHandleClearPendingRun = vi.fn()
@@ -24,6 +25,8 @@ describe("UploadTab", () => {
     handleFileDrop: mockHandleFileDrop,
     handleFileRemove: mockHandleFileRemove,
     handleRunPipeline: mockHandleRunPipeline,
+    scoreWithMl: true,
+    setScoreWithMl: mockSetScoreWithMl,
     handleScoreUnprocessed: mockHandleScoreUnprocessed,
     handleSaveClaims: mockHandleSaveClaims,
     handleClearPendingRun: mockHandleClearPendingRun,
@@ -32,6 +35,28 @@ describe("UploadTab", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it("should let the user turn scoring off once a file is chosen", () => {
+    const file = new File(["a"], "claims.csv", { type: "text/csv" })
+    render(
+      <UploadTab
+        {...defaultProps}
+        files={{ ...defaultProps.files, claimsME: file }}
+      />
+    )
+
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Score claims with YT-Validator/,
+    })
+    expect(checkbox).toBeChecked()
+    fireEvent.click(checkbox)
+    expect(mockSetScoreWithMl).toHaveBeenCalledWith(false)
+  })
+
+  it("should not offer the scoring choice before a file is chosen", () => {
+    render(<UploadTab {...defaultProps} />)
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
   })
 
   it("should render title and description", () => {
