@@ -178,8 +178,8 @@ const SECTIONS: Array<{
             people&apos;s channels that use our content. <strong>JFM</strong>{" "}
             verdicts are about videos on our own channels. The two files look
             identical — same columns — so the difference is whose videos are
-            listed inside. In Slack the bot works this out itself and tells you
-            what it found.
+            listed inside. Both Slack and the console work this out themselves
+            and tell you what they found.
           </>
         ),
       },

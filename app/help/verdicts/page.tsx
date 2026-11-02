@@ -18,8 +18,7 @@ export const metadata: Metadata = {
 const SHOTS: Record<string, { w: number; h: number }> = {
   "/help/slack-detected.png": { w: 1486, h: 332 },
   "/help/slack-guided.png": { w: 1568, h: 335 },
-  "/help/console-upload-empty.png": { w: 1568, h: 748 },
-  "/help/console-upload-ready.png": { w: 1456, h: 829 },
+  "/help/console-upload-empty.png": { w: 1490, h: 825 },
   "/help/console-collection.png": { w: 1568, h: 719 },
 }
 
@@ -105,14 +104,16 @@ export default function VerdictsRunbookPage() {
             want.
           </li>
           <li>
-            Drop the MCN verdicts on the left and the JFM verdicts on the right.{" "}
+            Drop both verdict CSVs into it — one box takes them both. Each file
+            is read and named for you:{" "}
             <Link href={helpHref("mcnVsJfm")} className="underline">
-              Which is which?
+              MCN or JFM
             </Link>
+            , and how many rows.
           </li>
           <li>
-            Check <strong>Ready to Process</strong> underneath: it lists the
-            file names it is about to use.
+            Check those lines, then <strong>Ready to Process</strong>
+            underneath, which lists the files it is about to use.
           </li>
           <li>
             Press <strong>Run Pipeline</strong>, then watch{" "}
@@ -122,12 +123,14 @@ export default function VerdictsRunbookPage() {
         </ol>
         <Shot
           src="/help/console-upload-empty.png"
-          alt="Upload & Run with the Verdicts boxes first and claims collapsed below"
+          alt="Upload & Run with the single Verdicts box first and claims collapsed below"
         />
-        <Shot
-          src="/help/console-upload-ready.png"
-          alt="Both verdict files attached, with Ready to Process listing them"
-        />
+        <p className="text-gray-700">
+          It decides by looking at whose videos are listed inside the file, not
+          by its name. When a file is too close to call it says so and asks you
+          which it is; <strong>Run Pipeline</strong> stays greyed out until
+          every file has an answer, so nothing is left out of a run quietly.
+        </p>
       </HelpSection>
 
       <HelpSection title="Afterwards" anchors={["afterwards"]}>
