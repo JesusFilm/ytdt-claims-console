@@ -119,6 +119,10 @@ export function audioLanguageProgress(collector?: CollectorStatus | null) {
     total,
     done,
     remaining: run.remaining,
+    // Called out because a row with a verdict is not waiting for an answer:
+    // it is there to prove the ASR tier gets that language right. Cached rows
+    // drop out of the queue, so this is what is left to fetch, not the total.
+    remainingLabelled: run.remaining_labelled ?? null,
   }
 }
 
@@ -603,6 +607,13 @@ const ClaimsCollectionTab: FC<ClaimsCollectionTabProps> = ({
                         {audio.total
                           ? ` · ${Math.round((audio.remaining / audio.total) * 100)}% left`
                           : ""}
+                        {audio.remainingLabelled != null ? (
+                          <span className="text-gray-500">
+                            {" "}
+                            · {audio.remainingLabelled.toLocaleString()} of them
+                            already have a human verdict
+                          </span>
+                        ) : null}
                       </dd>
                     </>
                   )}

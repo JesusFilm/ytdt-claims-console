@@ -422,6 +422,47 @@ describe("ClaimsCollectionTab", () => {
     expect(screen.queryByText(/more days/)).not.toBeInTheDocument()
   })
 
+  it("says how many of the remaining videos already have a verdict", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        queue: { rows: 6145 },
+        cache: { videos: 8642, with_track: 7041, no_track: 1601 },
+        collector: {
+          last_run: "2026-11-02T08:15:00",
+          remaining: 1714,
+          remaining_labelled: 750,
+          queue_videos_needing_asr: 6145,
+        },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
+        "1,714 of 6,145 · 28% left · 750 of them already have a human verdict"
+      )
+    })
+  })
+
+  it("leaves the verdict count out when YT-Validator does not send it", async () => {
+    await mockStatus({
+      ...completedRun,
+      collector: {
+        queue: { rows: 4523 },
+        cache: {},
+        collector: { remaining: 4341, queue_videos_needing_asr: 4523 },
+      },
+    })
+    render(<ClaimsCollectionTab />)
+
+    await waitFor(() => {
+      expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
+        "4,341 of 4,523 · 96% left"
+      )
+    })
+  })
+
   it("should list the top audio languages found, by name", async () => {
     await mockStatus({
       ...completedRun,

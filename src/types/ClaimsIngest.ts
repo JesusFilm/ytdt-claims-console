@@ -99,6 +99,9 @@ export interface CollectorStatus {
     failed?: number
     // as of the last run, not live: recomputing per request is too expensive
     remaining?: number
+    // how many of `remaining` already carry a human verdict: those are there to
+    // certify a language, not to be answered. Absent until YT-Validator sends it.
+    remaining_labelled?: number
     queue_videos_needing_asr?: number
     budget?: number
     stopped_reason?: "quota" | "outage" | null

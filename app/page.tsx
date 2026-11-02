@@ -270,6 +270,10 @@ export default function Home() {
     }))
   }, [])
 
+  // Scoring is the slow part of a run, and a verdicts-only import often does
+  // not need it. Unchecked, the run skips enrich_ml and everything else stays.
+  const [scoreWithMl, setScoreWithMl] = useState(true)
+
   const handleRunPipeline = async () => {
     const hasFiles =
       files.claimsME || files.claimsM2 || files.mcnVerdicts || files.jfmVerdicts
@@ -292,6 +296,9 @@ export default function Home() {
     }
     if (files.jfmVerdicts) {
       formData.append("jfm_verdicts", files.jfmVerdicts)
+    }
+    if (!scoreWithMl) {
+      formData.append("skip", "enrich_ml")
     }
 
     try {
@@ -659,6 +666,8 @@ export default function Home() {
             handleFileDrop={handleFileDrop}
             handleFileRemove={handleFileRemove}
             handleRunPipeline={handleRunPipeline}
+            scoreWithMl={scoreWithMl}
+            setScoreWithMl={setScoreWithMl}
             handleScoreUnprocessed={handleScoreUnprocessed}
             handleSaveClaims={handleSaveClaims}
             handleClearPendingRun={handleClearPendingRun}
