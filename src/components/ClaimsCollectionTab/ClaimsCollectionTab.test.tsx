@@ -439,7 +439,9 @@ describe("ClaimsCollectionTab", () => {
     render(<ClaimsCollectionTab />)
 
     await waitFor(() => {
-      expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
+      expect(
+        screen.getByText("remaining").nextElementSibling?.textContent
+      ).toBe(
         "1,714 of 6,145 · 28% left · 750 of them already have a human verdict"
       )
     })
@@ -457,9 +459,9 @@ describe("ClaimsCollectionTab", () => {
     render(<ClaimsCollectionTab />)
 
     await waitFor(() => {
-      expect(screen.getByText("remaining").nextElementSibling?.textContent).toBe(
-        "4,341 of 4,523 · 96% left"
-      )
+      expect(
+        screen.getByText("remaining").nextElementSibling?.textContent
+      ).toBe("4,341 of 4,523 · 96% left")
     })
   })
 
