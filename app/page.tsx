@@ -12,6 +12,7 @@ import PipelineStatusTab from "@/components/PipelineStatusTab"
 import type { PipelineStep } from "@/components/PipelineSteps"
 import UploadTab from "@/components/UploadTab"
 import UserMenu from "@/components/UserMenu"
+import { type VerdictFile } from "@/components/VerdictsDrop"
 import { env } from "@/env"
 import type { ClaimsIngestSummary, HistoryStats } from "@/types/ClaimsIngest"
 import type { PipelineRun } from "@/types/PipelineRun"
@@ -24,6 +25,35 @@ interface FileState {
   claimsM2: File | null
   mcnVerdicts: File | null
   jfmVerdicts: File | null
+}
+
+/** One file's answer from POST /api/verdicts/classify. */
+interface ClassifiedVerdict {
+  name: string
+  kind: "verdicts" | "claims" | "unknown"
+  field: "mcn_verdicts" | "jfm_verdicts" | null
+  rows: number | null
+  ratio: number | null
+  reason: string | null
+}
+
+// Why a file is still sitting unplaced, in words the person can act on. Only
+// ever shown for a file with no box: a placed one says what it is instead.
+function problemText(result: ClassifiedVerdict): string {
+  if (result.kind === "claims") {
+    return "This is a claims file, not verdicts — claims are collected every morning."
+  }
+  if (result.kind !== "verdicts") {
+    return (
+      result.reason ??
+      "Not a verdicts file: its columns are neither claims nor verdicts."
+    )
+  }
+  if (result.reason) {
+    return `MCN or JFM is unclear (${result.reason}). Say which it is.`
+  }
+  const owned = Math.round((result.ratio ?? 0) * 100)
+  return `MCN or JFM is unclear — ${owned}% of these videos are ours. Say which it is.`
 }
 
 interface PipelineStatusState {
@@ -270,6 +300,123 @@ export default function Home() {
     }))
   }, [])
 
+  const [verdicts, setVerdicts] = useState<VerdictFile[]>([])
+  const [classifying, setClassifying] = useState(false)
+
+  // `verdicts` carries what to show; `files` is what the run is built from.
+  // Both are written here together so the boxes cannot disagree with the list.
+  const placeVerdicts = useCallback((next: VerdictFile[]) => {
+    setVerdicts(next)
+    setFiles((prev) => ({
+      ...prev,
+      mcnVerdicts: next.find((v) => v.side === "mcn")?.file ?? null,
+      jfmVerdicts: next.find((v) => v.side === "jfm")?.file ?? null,
+    }))
+  }, [])
+
+  // Which box each file belongs in is decided on the pipeline: MCN and JFM
+  // verdicts share the same columns, so it takes the owned-videos export to
+  // tell them apart and that only exists on the VM.
+  const handleVerdictsDrop = useCallback(
+    async (accepted: File[]) => {
+      const incoming = accepted.filter(
+        (file) => !verdicts.some((v) => v.file.name === file.name)
+      )
+      if (!incoming.length) return
+
+      let next: VerdictFile[] = [
+        ...verdicts,
+        ...incoming.map((file) => ({
+          file,
+          side: null,
+          problem: "Being read…",
+          rows: null,
+          ratio: null,
+          manual: false,
+        })),
+      ]
+      placeVerdicts(next)
+      setClassifying(true)
+
+      try {
+        const formData = new FormData()
+        for (const file of incoming) formData.append("verdicts", file)
+        const response = await authFetch(`/api/verdicts/classify`, {
+          method: "POST",
+          body: formData,
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const data: { results?: ClassifiedVerdict[] } = await response.json()
+
+        next = next.map((v) => {
+          const result = data.results?.find((r) => r.name === v.file.name)
+          if (!result) return v
+          return {
+            ...v,
+            side:
+              result.field === "mcn_verdicts"
+                ? "mcn"
+                : result.field === "jfm_verdicts"
+                  ? "jfm"
+                  : null,
+            problem: result.field ? null : problemText(result),
+            rows: result.rows,
+            ratio: result.ratio,
+            manual: false,
+          }
+        })
+      } catch (error) {
+        // The pipeline being unreachable must not lose the files: leave them
+        // here to be placed by hand rather than dropping them on the floor.
+        console.error("Could not classify the verdicts:", error)
+        const names = new Set(incoming.map((file) => file.name))
+        next = next.map((v) =>
+          names.has(v.file.name)
+            ? {
+                ...v,
+                problem:
+                  "The pipeline could not be reached to check this. Say which it is.",
+              }
+            : v
+        )
+      }
+
+      placeVerdicts(next)
+      setClassifying(false)
+    },
+    [verdicts, placeVerdicts]
+  )
+
+  // One box holds one file, so placing a file by hand turns out whatever was
+  // in that box; the run would otherwise carry only one of the two anyway.
+  const handleVerdictAssign = useCallback(
+    (name: string, side: "mcn" | "jfm") => {
+      placeVerdicts(
+        verdicts.map((v) => {
+          if (v.file.name === name) {
+            return { ...v, side, problem: null, manual: true }
+          }
+          if (v.side === side) {
+            return {
+              ...v,
+              side: null,
+              problem: `Replaced in the ${side.toUpperCase()} box by ${name}.`,
+            }
+          }
+          return v
+        })
+      )
+    },
+    [verdicts, placeVerdicts]
+  )
+
+  const handleVerdictRemove = useCallback(
+    (name: string) => {
+      placeVerdicts(verdicts.filter((v) => v.file.name !== name))
+    },
+    [verdicts, placeVerdicts]
+  )
+
   // Scoring is the slow part of a run, and a verdicts-only import often does
   // not need it. Unchecked, the run skips enrich_ml and everything else stays.
   const [scoreWithMl, setScoreWithMl] = useState(true)
@@ -369,6 +516,7 @@ export default function Home() {
       mcnVerdicts: null,
       jfmVerdicts: null,
     })
+    setVerdicts([])
     setStatus({ running: false, status: "idle", error: null, steps: [] })
     setActiveTab("upload")
   }
@@ -666,6 +814,11 @@ export default function Home() {
             handleFileDrop={handleFileDrop}
             handleFileRemove={handleFileRemove}
             handleRunPipeline={handleRunPipeline}
+            verdicts={verdicts}
+            classifying={classifying}
+            handleVerdictsDrop={handleVerdictsDrop}
+            handleVerdictAssign={handleVerdictAssign}
+            handleVerdictRemove={handleVerdictRemove}
             scoreWithMl={scoreWithMl}
             setScoreWithMl={setScoreWithMl}
             handleScoreUnprocessed={handleScoreUnprocessed}

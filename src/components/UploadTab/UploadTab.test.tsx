@@ -11,6 +11,9 @@ describe("UploadTab", () => {
   const mockHandleSaveClaims = vi.fn()
   const mockHandleClearPendingRun = vi.fn()
   const mockHandleReset = vi.fn()
+  const mockHandleVerdictsDrop = vi.fn()
+  const mockHandleVerdictAssign = vi.fn()
+  const mockHandleVerdictRemove = vi.fn()
 
   const defaultProps = {
     files: {
@@ -25,6 +28,11 @@ describe("UploadTab", () => {
     handleFileDrop: mockHandleFileDrop,
     handleFileRemove: mockHandleFileRemove,
     handleRunPipeline: mockHandleRunPipeline,
+    verdicts: [],
+    classifying: false,
+    handleVerdictsDrop: mockHandleVerdictsDrop,
+    handleVerdictAssign: mockHandleVerdictAssign,
+    handleVerdictRemove: mockHandleVerdictRemove,
     scoreWithMl: true,
     setScoreWithMl: mockSetScoreWithMl,
     handleScoreUnprocessed: mockHandleScoreUnprocessed,
@@ -73,8 +81,67 @@ describe("UploadTab", () => {
     expect(screen.getByText("Verdicts")).toBeInTheDocument()
     expect(screen.getByText("Matter Entertainment")).toBeInTheDocument()
     expect(screen.getByText("Matter 2")).toBeInTheDocument()
-    expect(screen.getByText("MCN Verdicts")).toBeInTheDocument()
-    expect(screen.getByText("JFM Verdicts")).toBeInTheDocument()
+    expect(screen.getByText("Drop the verdicts CSV")).toBeInTheDocument()
+  })
+
+  it("should place a classified file without asking which it is", () => {
+    const file = new File(["a"], "verdicts.csv", { type: "text/csv" })
+    render(
+      <UploadTab
+        {...defaultProps}
+        files={{ ...defaultProps.files, mcnVerdicts: file }}
+        verdicts={[
+          {
+            file,
+            side: "mcn",
+            problem: null,
+            rows: 45495,
+            ratio: 0.04,
+            manual: false,
+          },
+        ]}
+      />
+    )
+
+    expect(screen.getByText("verdicts.csv")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /MCN verdicts · 45,495 rows · 4% of these videos are ours/
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /Run Pipeline/ })
+    ).not.toBeDisabled()
+  })
+
+  // A file left unplaced would be dropped from the run without a word
+  it("should hold Run back while a file has no box", () => {
+    const file = new File(["a"], "mystery.csv", { type: "text/csv" })
+    render(
+      <UploadTab
+        {...defaultProps}
+        files={{ ...defaultProps.files, claimsME: file }}
+        verdicts={[
+          {
+            file,
+            side: null,
+            problem: "MCN or JFM is unclear — 48% of these videos are ours.",
+            rows: 600,
+            ratio: 0.48,
+            manual: false,
+          },
+        ]}
+      />
+    )
+
+    expect(screen.getByText(/48% of these videos are ours/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Run Pipeline/ })).toBeDisabled()
+
+    fireEvent.change(
+      screen.getByRole("combobox", { name: /Which verdicts is mystery.csv/ }),
+      { target: { value: "jfm" } }
+    )
+    expect(mockHandleVerdictAssign).toHaveBeenCalledWith("mystery.csv", "jfm")
   })
 
   it("should render action buttons", () => {
