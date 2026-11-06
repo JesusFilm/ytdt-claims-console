@@ -2,12 +2,13 @@
 
 import { useState, useCallback, useEffect } from "react"
 
-import { Activity, AlertTriangle } from "lucide-react"
+import { Activity, AlertTriangle, BarChart3 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 import ClaimsCollectionTab from "@/components/ClaimsCollectionTab"
 import PipelineHistoryTab from "@/components/PipelineHistoryTab"
+import PipelineMonitorTab from "@/components/PipelineMonitorTab"
 import PipelineStatusTab from "@/components/PipelineStatusTab"
 import type { PipelineStep } from "@/components/PipelineSteps"
 import UploadTab from "@/components/UploadTab"
@@ -107,7 +108,7 @@ export default function Home() {
   // Claims arrive on a schedule now, so collection is what you land on;
   // uploading is the fallback rather than the starting point.
   const [activeTab, setActiveTab] = useState<
-    "collection" | "upload" | "status" | "history"
+    "collection" | "upload" | "status" | "history" | "monitor"
   >("collection")
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>([])
   const [ingests, setIngests] = useState<ClaimsIngestSummary[]>([])
@@ -789,6 +790,19 @@ export default function Home() {
                   )}
                 </div>
               </button>
+              <button
+                onClick={() => setActiveTab("monitor")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "monitor"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Plays
+                </div>
+              </button>
             </nav>
           </div>
         </div>
@@ -851,6 +865,7 @@ export default function Home() {
             onDownload={handleDownload}
           />
         )}
+        {activeTab === "monitor" && <PipelineMonitorTab />}
       </main>
 
       {/* Footer */}

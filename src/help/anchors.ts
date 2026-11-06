@@ -20,6 +20,11 @@ export const HELP = {
   history: "history",
   runModes: "run-modes",
   invalidIds: "invalid-ids",
+  playsMissing: "plays-missing",
+  gapDays: "days-behind",
+  playsWindow: "plays-window",
+  streamQuiet: "quiet-for",
+  mcnSeparate: "mcn-separate",
 } as const
 
 export type HelpKey = keyof typeof HELP

@@ -253,6 +253,81 @@ const SECTIONS: Array<{
       },
     ],
   },
+  {
+    title: "Plays monitor",
+    entries: [
+      {
+        id: HELP.playsWindow,
+        term: "Plays, last 30 days",
+        body: (
+          <>
+            How many plays we hold for that channel over the last thirty days,
+            counting up to yesterday. Today is left out because it is still
+            being collected. This counts what is in our own store, so it falls
+            short whenever a day is missing.
+          </>
+        ),
+      },
+      {
+        id: HELP.gapDays,
+        term: "Days behind",
+        body: (
+          <>
+            How many days in the window we hold no plays for at all. A channel
+            we started collecting last week is only counted from its own first
+            day, so a new channel does not look like a broken one.
+          </>
+        ),
+      },
+      {
+        id: HELP.playsMissing,
+        term: "Plays missing (estimate)",
+        body: (
+          <>
+            A rough guess at how many plays the missing days would have held. We
+            take the channel&rsquo;s average plays per day across the days we do
+            have, and multiply by the number of days we are missing.
+            <br />
+            <br />
+            It is deliberately simple, so treat it as a sense of size rather
+            than a number to report. A channel that was unusually quiet or
+            unusually busy during the days we are missing will be guessed wrong,
+            and a flat average cannot know which.
+            <br />
+            <br />
+            We may improve this later by weighting recent days more heavily,
+            allowing for the weekly rhythm most channels have, and following
+            each channel&rsquo;s own trend instead of one flat average.
+          </>
+        ),
+      },
+      {
+        id: HELP.mcnSeparate,
+        term: "Why MCN is counted separately",
+        body: (
+          <>
+            The MCN figures cover videos claimed through Matter Entertainment
+            and Matter 2. Some of those are videos we own and already count
+            under their channel. Adding the two totals together would count
+            those videos twice, so they are kept apart and never summed.
+          </>
+        ),
+      },
+      {
+        id: HELP.streamQuiet,
+        term: "Quiet for",
+        body: (
+          <>
+            How many hours since that stream last wrote anything. Each stream
+            has its own rhythm, shown next to it: most run daily, the MCN plays
+            weekly, and retention once a month. A stream is only flagged when it
+            has been quiet longer than its own rhythm allows, so a monthly
+            stream resting for three weeks is normal and not a fault.
+          </>
+        ),
+      },
+    ],
+  },
 ]
 
 export default function HelpPage() {
